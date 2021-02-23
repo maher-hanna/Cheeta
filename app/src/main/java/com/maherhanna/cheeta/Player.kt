@@ -1,4 +1,4 @@
 package com.maherhanna.cheeta
 
-class Player {
+open class Player {
 }
