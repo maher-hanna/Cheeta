@@ -1,36 +1,23 @@
 package com.maherhanna.cheeta
 
 import java.lang.Exception
-import java.lang.IndexOutOfBoundsException
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.experimental.xor
 
-enum class PieceType(val type:Byte) {PAWN(1), ROOK(2), KNIGHT(4),
+enum class PieceType(val value:Byte) {EMPTY(0),PAWN(1), ROOK(2), KNIGHT(4),
     BISHOP(8),QUEEN(16),KING(32)}
 
-enum class PieceColor(val color:Byte) {BLACK(0), WHITE(64)}
+enum class PieceColor(val value:Byte) {BLACK(0), WHITE(64)}
 
-public class Piece {
+public class Piece(pieceType: PieceType,pieceColor: PieceColor = PieceColor.BLACK) {
 
-    private var bitValue:Byte = PieceType.PAWN.type or PieceColor.BLACK.color
-    //position in chessboard array with values from 0 to 63
-    private var position:Byte = 0
+    private var bitValue:Byte = pieceType.value or PieceColor.BLACK.value
 
-
-    constructor(pieceType: PieceType = PieceType.PAWN
-    , pieceColor: PieceColor = PieceColor.BLACK,
-    position: Byte = 0){
+    init {
         setType(pieceType)
         setColor(pieceColor)
-
     }
-
-    constructor(bitValue:Byte,position: Byte){
-        this.bitValue = this.bitValue
-        setPosition(position)
-    }
-
 
     fun getType(): PieceType{
         return when(bitValue){
@@ -86,22 +73,6 @@ public class Piece {
             bitValue xor 64
     }
 
-    fun getPosition(): Byte{
-        return this.position
-    }
-    fun setPosition(position: Byte){
-        if(position < 0 || position > 63)
-            throw IndexOutOfBoundsException("Given position of piece is out of board range")
-        else
-            this.position = position
-    }
 
-    fun getValue():Byte{
-        return this.bitValue
-    }
-    fun setValue(bitValue: Byte){
-        this.bitValue = bitValue
-
-    }
 
 }
