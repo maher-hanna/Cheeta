@@ -4,30 +4,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChessBoard {
-    private Piece[] squares;
-
-    private Piece.PieceColor firstPlayerColor;
-
     public static final int MIN_POSITION = 0;
     public static final int MAX_POSITION = 63;
 
-    public ChessBoard(Piece.PieceColor firstPlayerColor) {
+
+    private Piece[] squares;
+    Player firstPlayer;
+    Player secondPlayer;
+
+
+    public ChessBoard(Player firstPlayer, Player secondPlayer) {
         squares = new Piece[64];
 
         for (int i = 0; i < 64; ++i) {
             squares[i] = null;
         }
+        this.firstPlayer = firstPlayer;
+        this.secondPlayer = secondPlayer;
 
-        this.firstPlayerColor = firstPlayerColor;
         setUpBoard();
     }
 
     private void setUpBoard() {
-        setUpFirstPlayerPieces(firstPlayerColor);
-        if (firstPlayerColor == Piece.PieceColor.BLACK)
-            setUpSecondPlayerPieces(Piece.PieceColor.WHITE);
-        else
-            setUpSecondPlayerPieces(Piece.PieceColor.BLACK);
+        setUpFirstPlayerPieces(firstPlayer.color);
+
+        setUpSecondPlayerPieces(secondPlayer.color);
+
 
 
     }
