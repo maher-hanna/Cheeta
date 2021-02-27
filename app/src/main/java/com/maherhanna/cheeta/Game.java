@@ -17,17 +17,19 @@ class Game{
         int i = random.nextInt(2);
         if(i == 0)
         {
-            firstPlayer = new Player(Piece.PieceColor.BLACK);
-            secondPlayer = new Player(Piece.PieceColor.WHITE);
+            firstPlayer = new Player(Piece.PieceColor.BLACK,chessBoard);
+            secondPlayer = new Player(Piece.PieceColor.WHITE,chessBoard);
 
         }
         else {
-            firstPlayer = new Player(Piece.PieceColor.WHITE);
-            secondPlayer = new Player(Piece.PieceColor.BLACK);
+            firstPlayer = new Player(Piece.PieceColor.WHITE,chessBoard);
+            secondPlayer = new Player(Piece.PieceColor.BLACK,chessBoard);
         }
         //--------------------------------
 
 
         this.chessBoard = new ChessBoard(firstPlayer,secondPlayer);
+        drawing.chessBoard = this.chessBoard;
+
     }
 }

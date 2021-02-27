@@ -37,33 +37,30 @@ public class ChessBoard {
 
     private void setUpFirstPlayerPieces(Piece.PieceColor color) {
 
-        int i = 0;
-
-        for (byte var4 = 7; i <= var4; ++i) {
+        for (int i = 0; i < 8; ++i) {
             int index = getIndex(i, 1);
             this.squares[index] = new Piece(Piece.PieceType.PAWN, color, index);
         }
 
-        this.squares[8] = new Piece(Piece.PieceType.ROOK, color,0);
-        this.squares[9] = new Piece(Piece.PieceType.KNIGHT, color,1);
-        this.squares[10] = new Piece(Piece.PieceType.BISHOP, color,2);
+        this.squares[0] = new Piece(Piece.PieceType.ROOK, color,0);
+        this.squares[1] = new Piece(Piece.PieceType.KNIGHT, color,1);
+        this.squares[2] = new Piece(Piece.PieceType.BISHOP, color,2);
         if (color == Piece.PieceColor.WHITE) {
-            this.squares[11] = new Piece(Piece.PieceType.QUEEN, color,3);
-            this.squares[12] = new Piece(Piece.PieceType.KING, color,4);
+            this.squares[3] = new Piece(Piece.PieceType.QUEEN, color,3);
+            this.squares[4] = new Piece(Piece.PieceType.KING, color,4);
         } else {
-            this.squares[11] = new Piece(Piece.PieceType.KING, color,3);
-            this.squares[12] = new Piece(Piece.PieceType.QUEEN, color,4);
+            this.squares[3] = new Piece(Piece.PieceType.KING, color,3);
+            this.squares[4] = new Piece(Piece.PieceType.QUEEN, color,4);
         }
 
-        this.squares[13] = new Piece(Piece.PieceType.BISHOP, color,5);
-        this.squares[14] = new Piece(Piece.PieceType.KNIGHT, color,6);
-        this.squares[15] = new Piece(Piece.PieceType.ROOK, color,7);
+        this.squares[5] = new Piece(Piece.PieceType.BISHOP, color,5);
+        this.squares[6] = new Piece(Piece.PieceType.KNIGHT, color,6);
+        this.squares[7] = new Piece(Piece.PieceType.ROOK, color,7);
 
     }
 
     private void setUpSecondPlayerPieces(Piece.PieceColor color) {
-        int i = 0;
-        for (byte var4 = 7; i <= var4; ++i) {
+        for (int i = 0; i < 8; ++i) {
             this.squares[getIndex(i, 6)] = new Piece(Piece.PieceType.PAWN, color,getIndex(i, 6));
         }
 
@@ -84,7 +81,13 @@ public class ChessBoard {
     }
 
     public int getIndex(int file, int rank) {
-        return rank * 8 + file;
+        return (rank * 8 )+ file;
+    }
+    public int getFile(int position){return position % 8; }
+    public int getRank(int position){return position / 8;}
+
+    public Piece getPieceAt(int position){
+        return squares[position];
     }
 
 }
