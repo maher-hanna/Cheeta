@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
                 Game game = new Game(drawing);
                 btn_start.setVisibility(View.INVISIBLE);
                 drawing.drawAllPieces();
+                game.start();
             }
         });
 
