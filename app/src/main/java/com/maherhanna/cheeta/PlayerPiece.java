@@ -14,8 +14,8 @@ public class PlayerPiece {
     }
 
     public PlayerPiece(Piece.Type type, Piece.Color color, int position){
-        this(new Piece(type, color),
-                position);
+        this.piece = new Piece(type,color,this);
+        this.position = position;
     }
 
     public void setPosition(int newPosition){

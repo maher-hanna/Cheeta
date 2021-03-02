@@ -33,11 +33,17 @@ public class LegalMoves {
 
     private ArrayList<Integer> getPawnMoves(int position){
         ArrayList<Integer> pawnMoves = new ArrayList<Integer>();
+        if(ChessBoard.GetRank(position) == ChessBoard.RANK_8) return pawnMoves;
+        Piece pawn = chessBoard.getPieceAt(position);
+        //first move for the pawn can be tow squares top
         if(ChessBoard.GetRank(position) == ChessBoard.RANK_2){
-            if(chessBoard.isSquareEmpty(position + 8))
+            //check if the top square is empty or contains opponent piece
+            if(chessBoard.isSquareEmpty(position + 8) ||
+                    pawn.color != chessBoard.getPieceAt(position + 8).color)
             {
                 pawnMoves.add(position + 8);
-                if(chessBoard.isSquareEmpty(position + 16)){
+                if(chessBoard.isSquareEmpty(position + 16) ||
+                        pawn.color != chessBoard.getPieceAt(position + 16).color){
                     pawnMoves.add(position + 16);
                 }
 
@@ -46,7 +52,8 @@ public class LegalMoves {
         }
         else{
             int movePosition = position + 8;
-            if(chessBoard.isSquareEmpty(movePosition)){
+            if(chessBoard.isSquareEmpty(movePosition)||
+                    pawn.color != chessBoard.getPieceAt(position + 16).color){
                 if(movePosition <= ChessBoard.MAX_POSITION){
                     pawnMoves.add(movePosition);
                 }

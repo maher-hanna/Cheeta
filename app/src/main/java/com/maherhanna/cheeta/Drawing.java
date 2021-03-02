@@ -11,7 +11,7 @@ public class Drawing {
     public ChessBoard chessBoard;
 
 
-    //pieces drawables and corresponding drawing dimensions
+    //pieces drawables
     private final Bitmap blackPawnBitmap;
     private final Bitmap whitePawnBitmap;
     private final Bitmap blackBishopBitmap;
@@ -24,17 +24,19 @@ public class Drawing {
     private final Bitmap whiteQueenBitmap;
     private final Bitmap blackKingBitmap;
     private final Bitmap whiteKingBitmap;
-    //drawing dimensions
+    //pieces drawing dimensions
     private RectF pawnDrawingRect;
     private RectF bishopDrawingRect;
     private RectF knightDrawingRect;
     private RectF rookDrawingRect;
     private RectF queenDrawingRect;
     private RectF kingDrawingRect;
-    //
+    //chess board dimensions
     private Rect chessBoardViewRect;
-    private float squareSize;
+    public float squareSize;
+    private static float SCALE_PIECES_DOWN = 0.8f;
     //----------------
+
 
 
     public Drawing(MainActivity activity) {
@@ -59,125 +61,80 @@ public class Drawing {
         updateDrawingRects(new Rect(0,0,chessboardView.getWidth()
                 ,chessboardView.getHeight()));
 
+
     }
 
     public void updateDrawingRects(Rect newChessBoardRect){
+        //called when the size of chessboard view change
         chessBoardViewRect = newChessBoardRect;
 
         squareSize = chessBoardViewRect.height() / 8.0f;
-        float pieceScaleDownFactor = 0.8f;
 
 
         //----------
-        float pawnWidth = blackPawnBitmap.getWidth();
-        float pawnHeight = blackPawnBitmap.getHeight();
-        float pawnScaleDownFactor = Math.max(pawnWidth, pawnHeight)
-                / squareSize;
-        pawnWidth = pawnWidth / pawnScaleDownFactor;
-        pawnHeight = pawnHeight / pawnScaleDownFactor;
-        pawnWidth *= pieceScaleDownFactor;
-        pawnHeight *= pieceScaleDownFactor;
-        float pawnLeft = (squareSize - pawnWidth) / 2;
-        float pawnTop = (squareSize - pawnHeight) / 2;
-        pawnDrawingRect = new RectF(0,0,pawnWidth,pawnHeight);
-        pawnDrawingRect.offset(pawnLeft,pawnTop);
-        //------------
-
-        //----------
-        float bishopWidth = blackBishopBitmap.getWidth();
-        float bishopHeight = blackBishopBitmap.getHeight();
-        float bishopScaleDownFactor = Math.max(bishopWidth, bishopHeight)
-                / squareSize;
-        bishopWidth = bishopWidth / bishopScaleDownFactor;
-        bishopHeight = bishopHeight / bishopScaleDownFactor;
-        bishopWidth *= pieceScaleDownFactor;
-        bishopHeight *= pieceScaleDownFactor;
-        float bishopLeft = (squareSize - bishopWidth) / 2;
-        float bishopTop = (squareSize - bishopHeight) / 2;
-        bishopDrawingRect = new RectF(0,0,bishopWidth,bishopHeight);
-        bishopDrawingRect.offset(bishopLeft,bishopTop);
+        pawnDrawingRect = calculateRect(blackPawnBitmap.getWidth(),blackPawnBitmap.getHeight());
+        bishopDrawingRect = calculateRect(blackBishopBitmap.getWidth(),blackBishopBitmap.getHeight());
+        knightDrawingRect = calculateRect(blackKnightBitmap.getWidth(),blackKnightBitmap.getHeight());
+        rookDrawingRect = calculateRect(blackRookBitmap.getWidth(),blackRookBitmap.getHeight());
+        queenDrawingRect = calculateRect(blackQueenBitmap.getWidth(),blackQueenBitmap.getHeight());
+        kingDrawingRect = calculateRect(blackKingBitmap.getWidth(),blackKingBitmap.getHeight());
         //------------
 
 
-        //----------
-        float knightWidth = blackKnightBitmap.getWidth();
-        float knightHeight = blackKnightBitmap.getHeight();
-        float knightScaleDownFactor = Math.max(knightWidth, knightHeight)
+
+    }
+
+    private RectF calculateRect(float bitmapWidth,float bitmapHeight){
+        RectF result;
+        float squareScaleDownFactor = Math.max(bitmapWidth, bitmapHeight)
                 / squareSize;
-        knightWidth = knightWidth / knightScaleDownFactor;
-        knightHeight = knightHeight / knightScaleDownFactor;
-        knightWidth *= pieceScaleDownFactor;
-        knightHeight *= pieceScaleDownFactor;
-        float knightLeft = (squareSize - knightWidth) / 2;
-        float knightTop = (squareSize - knightHeight) / 2;
-        knightDrawingRect = new RectF(0,0,knightWidth,knightHeight);
-        knightDrawingRect.offset(knightLeft,knightTop);
-        //------------
+        float width = bitmapWidth / squareScaleDownFactor;
+        float height = bitmapHeight / squareScaleDownFactor;
+        width *= SCALE_PIECES_DOWN;
+        height *= SCALE_PIECES_DOWN;
+        float left = (squareSize - width) / 2;
+        float top = (squareSize - height) / 2;
+        result = new RectF(0,0,width,height);
+        result.offset(left,top);
+        return result;
+
+    }
 
 
-        //----------
-        float rookWidth = blackRookBitmap.getWidth();
-        float rookHeight = blackRookBitmap.getHeight();
-        float rookScaleDownFactor = Math.max(rookWidth, rookHeight)
-                / squareSize;
-        rookWidth = rookWidth / rookScaleDownFactor;
-        rookHeight = rookHeight / rookScaleDownFactor;
-        rookWidth *= pieceScaleDownFactor;
-        rookHeight *= pieceScaleDownFactor;
-        float rookLeft = (squareSize - rookWidth) / 2;
-        float rookTop = (squareSize - rookHeight) / 2;
-        rookDrawingRect = new RectF(0,0,rookWidth,rookHeight);
-        rookDrawingRect.offset(rookLeft,rookTop);
-        //------------
-
-        //----------
-        float queenWidth = blackQueenBitmap.getWidth();
-        float queenHeight = blackQueenBitmap.getHeight();
-        float queenScaleDownFactor = Math.max(queenWidth, queenHeight)
-                / squareSize;
-        queenWidth = queenWidth / queenScaleDownFactor;
-        queenHeight = queenHeight / queenScaleDownFactor;
-        queenWidth *= pieceScaleDownFactor;
-        queenHeight *= pieceScaleDownFactor;
-        float queenLeft = (squareSize - queenWidth) / 2;
-        float queenTop = (squareSize - queenHeight) / 2;
-        queenDrawingRect = new RectF(0,0,queenWidth,queenHeight);
-        queenDrawingRect.offset(queenLeft,queenTop);
-        //------------
-
-
-        //----------
-        float kingWidth = blackKingBitmap.getWidth();
-        float kingHeight = blackKingBitmap.getHeight();
-        float kingScaleDownFactor = Math.max(kingWidth, kingHeight)
-                / squareSize;
-        kingWidth = kingWidth / kingScaleDownFactor;
-        kingHeight = kingHeight / kingScaleDownFactor;
-        kingWidth *= pieceScaleDownFactor;
-        kingHeight *= pieceScaleDownFactor;
-        float kingLeft = (squareSize - kingWidth) / 2;
-        float kingTop = (squareSize - kingHeight) / 2;
-        kingDrawingRect = new RectF(0,0,kingWidth,kingHeight);
-        kingDrawingRect.offset(kingLeft,kingTop);
-        //------------
-
+    public void dragPiece(int position,float xOffset,float yOffset){
+        chessboardView.clearBoard();
+        for(int i = ChessBoard.MIN_POSITION ; i <= ChessBoard.MAX_POSITION; i++)
+        {
+            Piece piece = chessBoard.getPieceAt(i);
+            if(piece != null) {
+                if(i == position) continue;
+                drawPiece(piece,i,0f,0f);
+            }
+        }
+        drawPiece(chessBoard.getPieceAt(position),position,xOffset,yOffset);
+        chessboardView.invalidate();
 
     }
 
     public void drawAllPieces()
     {
+
         for(int i = ChessBoard.MIN_POSITION ; i <= ChessBoard.MAX_POSITION; i++)
         {
             Piece piece = chessBoard.getPieceAt(i);
             if(piece != null) {
-                drawPiece(piece,i);
+                drawPiece(piece,i, 0,0);
             }
         }
+        chessboardView.invalidate();
 
     }
 
-    private void drawPiece(Piece piece,int position) {
+    private void drawPiece(Piece piece, int position,float xOffset,float yOffset) {
+
         RectF pieceRect = getPieceDrawingRect(piece,position);
+        pieceRect.offset(xOffset,yOffset);
+
         switch (piece.type){
 
             case PAWN:
@@ -230,8 +187,6 @@ public class Drawing {
         //which has x and y starts at top left corner
         float yOnDrawingBoard = chessBoardViewRect.width() - y - squareSize;
 
-
-
         switch (piece.type){
 
             case PAWN:
@@ -262,5 +217,7 @@ public class Drawing {
     return result;
 
     }
+
+
 
 }

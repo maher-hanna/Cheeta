@@ -1,5 +1,9 @@
 package com.maherhanna.cheeta;
 
+import android.util.Log;
+
+import java.util.ArrayList;
+
 public class ChessBoard {
     public static final int MIN_POSITION = 0;
     public static final int MAX_POSITION = 63;
@@ -27,6 +31,7 @@ public class ChessBoard {
     Player firstPlayer;
     Player secondPlayer;
     private LegalMoves legalMoves;
+    public Player playerPlaying;
 
 
     public ChessBoard() {
@@ -37,6 +42,7 @@ public class ChessBoard {
         }
 
         legalMoves = new LegalMoves(this);
+        playerPlaying = null;
     }
 
     public void setPlayers(Player firstPlayer, Player secondPlayer){
@@ -49,8 +55,6 @@ public class ChessBoard {
         setUpFirstPlayerPieces(firstPlayer.color);
 
         setUpSecondPlayerPieces(secondPlayer.color);
-
-
 
     }
 
@@ -122,6 +126,14 @@ public class ChessBoard {
         squares[position] = piece;
     }
     public boolean isSquareEmpty(int position){return getPieceAt(position) == null;}
+    public Player getPieceOwner(int position){
+        if(getPieceAt(position).color == firstPlayer.color){
+            return firstPlayer;
+        }
+        else{
+            return secondPlayer;
+        }
+    }
 
     public static int GetPosition(int file, int rank) {
         return (rank * 8 )+ file;
@@ -131,5 +143,27 @@ public class ChessBoard {
 
 
 
+    public boolean requestMove(int fromSquare, int toSquare) {
+        if(getPieceAt(fromSquare) == null) return false;
+        if(getPieceOwner(fromSquare) == secondPlayer) return false;
+        if(fromSquare == toSquare) return false;
 
+        if(firstPlayer.canMove(fromSquare,toSquare)) {
+
+            firstPlayer.movePice(fromSquare,toSquare);
+            return true;
+        }
+        else {
+            return false;
+        }
+
+    }
+
+    public ArrayList<Integer> getLegalMovesFor(int position) {
+
+        ArrayList<Integer> result = legalMoves.getLegalMoves(position);
+
+        return result;
+
+    }
 }
