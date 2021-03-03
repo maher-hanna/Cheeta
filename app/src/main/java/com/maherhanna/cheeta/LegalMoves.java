@@ -5,11 +5,11 @@ import java.util.ArrayList;
 public class LegalMoves {
     private ChessBoard chessBoard;
 
-    public LegalMoves(ChessBoard chessBoard){
+    public LegalMoves(ChessBoard chessBoard) {
         this.chessBoard = chessBoard;
     }
 
-    public ArrayList<Integer> getLegalMoves(int position){
+    public ArrayList<Integer> getLegalMoves(int position) {
         ArrayList<Integer> pieceMoves = new ArrayList<Integer>();
         Piece piece = chessBoard.getPieceAt(position);
 
@@ -31,41 +31,45 @@ public class LegalMoves {
         return pieceMoves;
     }
 
-    private ArrayList<Integer> getPawnMoves(int position){
-        ArrayList<Integer> pawnMoves = new ArrayList<Integer>();
-        if(ChessBoard.GetRank(position) == ChessBoard.RANK_8) return pawnMoves;
+    private ArrayList<Integer> getPawnMoves(int position) {
+        ArrayList<Integer> pawnLegalMoves = new ArrayList<Integer>();
         Piece pawn = chessBoard.getPieceAt(position);
-        //first move for the pawn can be tow squares top
-        if(ChessBoard.GetRank(position) == ChessBoard.RANK_2){
-            //check if the top square is empty or contains opponent piece
-            if(chessBoard.isSquareEmpty(position + 8) ||
-                    pawn.color != chessBoard.getPieceAt(position + 8).color)
-            {
-                pawnMoves.add(position + 8);
-                if(chessBoard.isSquareEmpty(position + 16) ||
-                        pawn.color != chessBoard.getPieceAt(position + 16).color){
-                    pawnMoves.add(position + 16);
-                }
+        if (pawn.getRank() == ChessBoard.RANK_8) return pawnLegalMoves;
 
-            }
-
-        }
-        else{
-            int movePosition = position + 8;
-            if(chessBoard.isSquareEmpty(movePosition)||
-                    pawn.color != chessBoard.getPieceAt(position + 16).color){
-                if(movePosition <= ChessBoard.MAX_POSITION){
-                    pawnMoves.add(movePosition);
+        //check if the upper square is empty
+        int oneSquareUp = pawn.offsetRank(1);
+        if (chessBoard.isSquareEmpty(oneSquareUp)) {
+            pawnLegalMoves.add(oneSquareUp);
+            //first move for the pawn can be tow squares up
+            if (pawn.getRank() == ChessBoard.RANK_2) {
+                int twoSquaresUp = pawn.offsetRank(2);
+                if (chessBoard.isSquareEmpty(twoSquaresUp)) {
+                    pawnLegalMoves.add(twoSquaresUp);
                 }
             }
-
-
         }
-        return pawnMoves;
+
+
+        //check for takes
+        int upperRightSquare = pawn.offset(1, 1);
+        if(!chessBoard.isSquareEmpty(upperRightSquare)) {
+            if (chessBoard.getPieceAt(upperRightSquare).color != pawn.color) {
+                pawnLegalMoves.add(upperRightSquare);
+            }
+        }
+        int upperLeftSquare = pawn.offset(-1, 1);
+        if(!chessBoard.isSquareEmpty(upperLeftSquare)) {
+            if (chessBoard.getPieceAt(upperLeftSquare).color != pawn.color) {
+                pawnLegalMoves.add(upperLeftSquare);
+            }
+        }
+
+
+        return pawnLegalMoves;
 
     }
 
-    private ArrayList<Integer> getRookMoves(Piece rook){
+    private ArrayList<Integer> getRookMoves(Piece rook) {
         ArrayList<Integer> rookMoves = new ArrayList<Integer>();
 
         return rookMoves;

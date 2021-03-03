@@ -21,6 +21,20 @@ public class Piece {
 
     }
 
+    public int getPosition(){return playerPiece.getPosition();}
+    public int getFile(){return playerPiece.getFile();}
+    public int getRank(){return playerPiece.getRank();}
+    public int offset(int file, int rank){
+        return ChessBoard.GetPosition(getFile() + file, getRank() + rank);
+    }
+    public int offsetFile(int file){
+        return ChessBoard.GetPosition(getFile() + file, getRank());
+    }
+    public int offsetRank(int rank){
+        return ChessBoard.GetPosition(getFile(), getRank() + rank);
+    }
+
+
 
     public enum Type {PAWN, ROOK, KNIGHT,BISHOP,QUEEN,KING }
 

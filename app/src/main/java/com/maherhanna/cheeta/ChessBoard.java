@@ -7,6 +7,7 @@ import java.util.ArrayList;
 public class ChessBoard {
     public static final int MIN_POSITION = 0;
     public static final int MAX_POSITION = 63;
+    public static final int OUT_OF_BOARD = -1;
 
     public static final int RANK_1 = 0;
     public static final int RANK_2 = 1;
@@ -119,27 +120,6 @@ public class ChessBoard {
     }
 
 
-    public Piece getPieceAt(int position){
-        return squares[position];
-    }
-    public void setPieceAt(int position,Piece piece){
-        squares[position] = piece;
-    }
-    public boolean isSquareEmpty(int position){return getPieceAt(position) == null;}
-    public Player getPieceOwner(int position){
-        if(getPieceAt(position).color == firstPlayer.color){
-            return firstPlayer;
-        }
-        else{
-            return secondPlayer;
-        }
-    }
-
-    public static int GetPosition(int file, int rank) {
-        return (rank * 8 )+ file;
-    }
-    public static int GetFile(int position){return position % 8; }
-    public static int GetRank(int position){return position / 8;}
 
 
 
@@ -166,4 +146,37 @@ public class ChessBoard {
         return result;
 
     }
+
+    //get and set a square info
+    public Piece getPieceAt(int position){
+        if(position < MIN_POSITION || position > MAX_POSITION){
+            throw new IndexOutOfBoundsException("Trying to put a piece outside of chess board");
+
+        }
+        return squares[position];
+    }
+    public Piece getPieceAt(int file, int rank){
+        return squares[GetPosition(file,rank)];
+    }
+    public void setPieceAt(int position,Piece piece){
+        squares[position] = piece;
+    }
+    public boolean isSquareEmpty(int position){return getPieceAt(position) == null;}
+    public Player getPieceOwner(int position){
+        if(getPieceAt(position).color == firstPlayer.color){
+            return firstPlayer;
+        }
+        else{
+            return secondPlayer;
+        }
+    }
+    public static int GetPosition(int file, int rank) {
+        if(file < FILE_A || file > FILE_H) return OUT_OF_BOARD;
+        if(rank < RANK_1 || rank > RANK_8) return OUT_OF_BOARD;
+
+        return (rank * 8 )+ file;
+    }
+    public static int GetFile(int position){return position % 8; }
+    public static int GetRank(int position){return position / 8;}
+    //------------------------
 }
