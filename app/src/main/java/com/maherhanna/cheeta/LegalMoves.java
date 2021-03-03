@@ -31,9 +31,36 @@ public class LegalMoves {
 
                 break;
             case KING:
+                pieceMoves = getKingMoves(position);
                 break;
         }
         return pieceMoves;
+    }
+
+    private ArrayList<Integer> getKingMoves(int position) {
+        ArrayList<Integer> kingLegalMoves = new ArrayList<Integer>();
+        Piece king = chessBoard.getPieceAt(position);
+
+        int fileOffset = 0;
+        int rankOffset = 0;
+
+        for(fileOffset = -1; fileOffset <= 1;fileOffset++){
+            for(rankOffset = -1; rankOffset <= 1; rankOffset++){
+                int adjacentSquare = king.offset(fileOffset,rankOffset);
+                if (adjacentSquare == ChessBoard.OUT_OF_BOARD){
+                    continue ;
+                }
+                if (chessBoard.isSquareEmpty(adjacentSquare)) {
+                    kingLegalMoves.add(adjacentSquare);
+                } else {
+                    //check take
+                    if (king.color != chessBoard.getPieceAt(adjacentSquare).color) {
+                        kingLegalMoves.add(adjacentSquare);
+                    }
+                }
+            }
+        }
+        return kingLegalMoves;
     }
 
     private ArrayList<Integer> getQueenMoves(int position) {
