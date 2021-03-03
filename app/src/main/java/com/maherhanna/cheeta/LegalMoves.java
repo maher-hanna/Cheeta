@@ -46,7 +46,7 @@ public class LegalMoves {
         int rankOffset = 0;
 
         for (fileOffset = -2; fileOffset <= 2; fileOffset += 4) {
-            for (rankOffset = -1; rankOffset <= 1; rankOffset++) {
+            for (rankOffset = -1; rankOffset <= 1; rankOffset += 2) {
                 int targetSquare = knight.offset(fileOffset, rankOffset);
                 if (targetSquare == ChessBoard.OUT_OF_BOARD) {
                     continue;
@@ -63,7 +63,7 @@ public class LegalMoves {
         }
 
         for (rankOffset = -2; rankOffset <= 2; rankOffset += 4) {
-            for (fileOffset = -1; fileOffset <= 1; fileOffset++) {
+            for (fileOffset = -1; fileOffset <= 1; fileOffset += 2) {
                 int targetSquare = knight.offset(fileOffset, rankOffset);
                 if (targetSquare == ChessBoard.OUT_OF_BOARD) {
                     continue;
