@@ -23,6 +23,8 @@ public class LegalMoves {
             case KNIGHT:
                 break;
             case BISHOP:
+                pieceMoves = getBishopMoves(position);
+
                 break;
             case QUEEN:
                 break;
@@ -31,6 +33,8 @@ public class LegalMoves {
         }
         return pieceMoves;
     }
+
+
 
     private ArrayList<Integer> getPawnMoves(int position) {
         ArrayList<Integer> pawnLegalMoves = new ArrayList<Integer>();
@@ -192,6 +196,107 @@ public class LegalMoves {
         //-----------------
 
         return rookLegalMoves;
+
+    }
+
+    private ArrayList<Integer> getBishopMoves(int position) {
+        ArrayList<Integer> bishopLegalMoves = new ArrayList<Integer>();
+        Piece bishop = chessBoard.getPieceAt(position);
+
+        int fileOffset = 0;
+        int rankOffset = 0;
+
+        //check the diagonal line along the upper right direction
+        fileOffset = 1;
+        rankOffset = 1;
+
+        while (true) {
+            int upperRightSquare = bishop.offset(fileOffset,rankOffset);
+            if (upperRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(upperRightSquare)) {
+                bishopLegalMoves.add(upperRightSquare);
+            } else {
+                //check take
+                if (bishop.color != chessBoard.getPieceAt(upperRightSquare).color) {
+                    bishopLegalMoves.add(upperRightSquare);
+                }
+                break;
+
+            }
+            fileOffset++;
+            rankOffset++;
+        }
+        //--------------------
+
+        //check the diagonal line along the upper left direction
+        fileOffset = -1;
+        rankOffset = 1;
+        while (true) {
+            int upperLeftSquare = bishop.offset(fileOffset,rankOffset);
+            if (upperLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(upperLeftSquare)) {
+                bishopLegalMoves.add(upperLeftSquare);
+            } else {
+                //check take
+                if (bishop.color != chessBoard.getPieceAt(upperLeftSquare).color) {
+                    bishopLegalMoves.add(upperLeftSquare);
+                }
+                break;
+
+            }
+            fileOffset--;
+            rankOffset++;
+        }
+        //--------------------
+
+
+
+        //check the diagonal line along the lower right direction
+        fileOffset = 1;
+        rankOffset = -1;
+        while (true) {
+            int lowerRightSquare = bishop.offset(fileOffset,rankOffset);
+            if (lowerRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(lowerRightSquare)) {
+                bishopLegalMoves.add(lowerRightSquare);
+            } else {
+                //check take
+                if (bishop.color != chessBoard.getPieceAt(lowerRightSquare).color) {
+                    bishopLegalMoves.add(lowerRightSquare);
+                }
+                break;
+
+            }
+            fileOffset++;
+            rankOffset--;
+        }
+        //--------------------
+
+        //check the diagonal line along the lower left direction
+        fileOffset = -1;
+        rankOffset = -1;
+        while (true) {
+            int lowerLeftSquare = bishop.offset(fileOffset,rankOffset);
+            if (lowerLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(lowerLeftSquare)) {
+                bishopLegalMoves.add(lowerLeftSquare);
+            } else {
+                //check take
+                if (bishop.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
+                    bishopLegalMoves.add(lowerLeftSquare);
+                }
+                break;
+
+            }
+            fileOffset--;
+            rankOffset--;
+        }
+        //--------------------
+
+
+
+        return bishopLegalMoves;
+
 
     }
 
