@@ -1,7 +1,5 @@
 package com.maherhanna.cheeta;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 
 public class ChessBoard {
@@ -29,8 +27,12 @@ public class ChessBoard {
 
 
     private Piece[] squares;
-    Player firstPlayer;
-    Player secondPlayer;
+
+    //players
+    Player playerAtBottom;
+    Player playerAtTop;
+    //-----
+
     private LegalMoves legalMoves;
     public Player playerPlaying;
 
@@ -46,76 +48,76 @@ public class ChessBoard {
         playerPlaying = null;
     }
 
-    public void setPlayers(Player firstPlayer, Player secondPlayer){
-        this.firstPlayer = firstPlayer;
-        this.secondPlayer = secondPlayer;
+    public void setPlayers(Player playerAtBottom, Player playerAtTop){
+        this.playerAtBottom = playerAtBottom;
+        this.playerAtTop = playerAtTop;
 
     }
 
     public void setUpBoard() {
-        setUpFirstPlayerPieces(firstPlayer.color);
+        setUpBottomPlayerPieces(playerAtBottom.color);
 
-        setUpSecondPlayerPieces(secondPlayer.color);
+        setUpTopPlayerPieces(playerAtTop.color);
 
     }
 
 
-    private void setUpFirstPlayerPieces(Piece.Color color) {
+    private void setUpBottomPlayerPieces(Piece.Color color) {
 
         Piece piece;
         PlayerPiece playerPiece;
         for (int i = 0; i < 8; ++i) {
             int position = GetPosition(i, 1);
-            firstPlayer.addPiece(new PlayerPiece(Piece.Type.PAWN,color,position));
+            playerAtBottom.addPiece(new PlayerPiece(Piece.Type.PAWN,color,position));
 
         }
 
-        firstPlayer.addPiece(new PlayerPiece(Piece.Type.ROOK,color,0));
+        playerAtBottom.addPiece(new PlayerPiece(Piece.Type.ROOK,color,0));
 
-        firstPlayer.addPiece(new PlayerPiece(Piece.Type.KNIGHT,color,1));
+        playerAtBottom.addPiece(new PlayerPiece(Piece.Type.KNIGHT,color,1));
 
-        firstPlayer.addPiece(new PlayerPiece(Piece.Type.BISHOP,color,2));
+        playerAtBottom.addPiece(new PlayerPiece(Piece.Type.BISHOP,color,2));
 
 
 
         if (color == Piece.Color.WHITE) {
 
-            firstPlayer.addPiece(new PlayerPiece(Piece.Type.QUEEN,color,3));
-            firstPlayer.addPiece(new PlayerPiece(Piece.Type.KING,color,4));
+            playerAtBottom.addPiece(new PlayerPiece(Piece.Type.QUEEN,color,3));
+            playerAtBottom.addPiece(new PlayerPiece(Piece.Type.KING,color,4));
 
         } else {
-            firstPlayer.addPiece(new PlayerPiece(Piece.Type.KING,color,3));
-            firstPlayer.addPiece(new PlayerPiece(Piece.Type.QUEEN,color,4));
+            playerAtBottom.addPiece(new PlayerPiece(Piece.Type.KING,color,3));
+            playerAtBottom.addPiece(new PlayerPiece(Piece.Type.QUEEN,color,4));
         }
 
-            firstPlayer.addPiece(new PlayerPiece(Piece.Type.BISHOP,color,5));
-        firstPlayer.addPiece(new PlayerPiece(Piece.Type.KNIGHT,color,6));
-        firstPlayer.addPiece(new PlayerPiece(Piece.Type.ROOK,color,7));
+            playerAtBottom.addPiece(new PlayerPiece(Piece.Type.BISHOP,color,5));
+        playerAtBottom.addPiece(new PlayerPiece(Piece.Type.KNIGHT,color,6));
+        playerAtBottom.addPiece(new PlayerPiece(Piece.Type.ROOK,color,7));
 
 
     }
 
-    private void setUpSecondPlayerPieces(Piece.Color color) {
+    private void setUpTopPlayerPieces(Piece.Color color) {
         for (int i = 0; i < 8; ++i) {
-            secondPlayer.addPiece(new PlayerPiece(Piece.Type.PAWN,color,GetPosition(i, 6)));
+            playerAtTop.addPiece(new PlayerPiece(Piece.Type.PAWN,color,GetPosition(i, 6)));
         }
 
-        secondPlayer.addPiece(new PlayerPiece(Piece.Type.ROOK,color,GetPosition(0, 7)));
-        secondPlayer.addPiece(new PlayerPiece(Piece.Type.KNIGHT,color,GetPosition(1, 7)));
-        secondPlayer.addPiece(new PlayerPiece(Piece.Type.BISHOP,color,GetPosition(2, 7)));
+        playerAtTop.addPiece(new PlayerPiece(Piece.Type.ROOK,color,GetPosition(0, 7)));
+        playerAtTop.addPiece(new PlayerPiece(Piece.Type.KNIGHT,color,GetPosition(1, 7)));
+        playerAtTop.addPiece(new PlayerPiece(Piece.Type.BISHOP,color,GetPosition(2, 7)));
 
         if (color == Piece.Color.WHITE) {
-            secondPlayer.addPiece(new PlayerPiece(Piece.Type.KING,color,GetPosition(3, 7)));
-            secondPlayer.addPiece(new PlayerPiece(Piece.Type.QUEEN,color,GetPosition(4, 7)));
+            playerAtTop.addPiece(new PlayerPiece(Piece.Type.KING,color,GetPosition(3, 7)));
+            playerAtTop.addPiece(new PlayerPiece(Piece.Type.QUEEN,color,GetPosition(4, 7)));
 
         } else {
-            secondPlayer.addPiece(new PlayerPiece(Piece.Type.QUEEN,color,GetPosition(3, 7)));
-            secondPlayer.addPiece(new PlayerPiece(Piece.Type.KING,color,GetPosition(4, 7)));
+            playerAtTop.addPiece(new PlayerPiece(Piece.Type.QUEEN,color,GetPosition(3, 7)));
+            playerAtTop.addPiece(new PlayerPiece(Piece.Type.KING,color,GetPosition(4, 7)));
         }
 
-        secondPlayer.addPiece(new PlayerPiece(Piece.Type.BISHOP,color,GetPosition(5, 7)));
-        secondPlayer.addPiece(new PlayerPiece(Piece.Type.KNIGHT,color,GetPosition(6, 7)));
-        secondPlayer.addPiece(new PlayerPiece(Piece.Type.ROOK,color,GetPosition(7, 7)));
+        playerAtTop.addPiece(new PlayerPiece(Piece.Type.BISHOP,color,GetPosition(5, 7)));
+        playerAtTop.addPiece(new PlayerPiece(Piece.Type.KNIGHT,color,GetPosition(6, 7)));
+        playerAtTop.addPiece(new PlayerPiece(Piece.Type.ROOK,color,GetPosition(7, 7)));
 
     }
 
@@ -125,12 +127,12 @@ public class ChessBoard {
 
     public boolean requestMove(int fromSquare, int toSquare) {
         if(getPieceAt(fromSquare) == null) return false;
-        if(getPieceOwner(fromSquare) == secondPlayer) return false;
+        if(getPieceOwner(fromSquare) == playerAtTop) return false;
         if(fromSquare == toSquare) return false;
 
-        if(firstPlayer.canMove(fromSquare,toSquare)) {
+        if(playerAtBottom.canMove(fromSquare,toSquare)) {
 
-            firstPlayer.movePice(fromSquare,toSquare);
+            playerAtBottom.movePice(fromSquare,toSquare);
             return true;
         }
         else {
@@ -163,11 +165,11 @@ public class ChessBoard {
     }
     public boolean isSquareEmpty(int position){return getPieceAt(position) == null;}
     public Player getPieceOwner(int position){
-        if(getPieceAt(position).color == firstPlayer.color){
-            return firstPlayer;
+        if(getPieceAt(position).color == playerAtBottom.color){
+            return playerAtBottom;
         }
         else{
-            return secondPlayer;
+            return playerAtTop;
         }
     }
     public static int GetPosition(int file, int rank) {

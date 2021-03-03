@@ -6,8 +6,8 @@ class Game{
     public static final String DEBUG = "game";
     private Drawing drawing;
     private ChessBoard chessBoard;
-    private Player firstPlayer;
-    private Player secondPlayer;
+    private Player playerAtBottom;
+    private Player playerAtTop;
     private LegalMoves legalMoves;
 
 
@@ -21,32 +21,32 @@ class Game{
         int i = random.nextInt(2);
         if(i == 0)
         {
-            firstPlayer = new HumanPlayer(Piece.Color.BLACK,chessBoard,secondPlayer);
-            secondPlayer = new Player(Piece.Color.WHITE,chessBoard,firstPlayer);
+            playerAtBottom = new HumanPlayer(Piece.Color.BLACK,chessBoard, playerAtTop);
+            playerAtTop = new Player(Piece.Color.WHITE,chessBoard, playerAtBottom);
 
         }
         else {
-            firstPlayer = new HumanPlayer(Piece.Color.WHITE,chessBoard,secondPlayer);
-            secondPlayer = new Player(Piece.Color.BLACK,chessBoard,firstPlayer);
+            playerAtBottom = new HumanPlayer(Piece.Color.WHITE,chessBoard, playerAtTop);
+            playerAtTop = new Player(Piece.Color.BLACK,chessBoard, playerAtBottom);
         }
         //--------------------------------
 
-        chessBoard.setPlayers(firstPlayer,secondPlayer);
+        chessBoard.setPlayers(playerAtBottom, playerAtTop);
         chessBoard.setUpBoard();
         drawing.chessBoard = this.chessBoard;
 
     }
 
     public void start(){
-        if(firstPlayer.color == Piece.Color.WHITE){
-            firstPlayer.play();
+        if(playerAtBottom.color == Piece.Color.WHITE){
+            playerAtBottom.play();
         }
         else {
-            secondPlayer.play();
+            playerAtTop.play();
         }
     }
 
     public void humanPlayed(){
-        secondPlayer.play();
+        playerAtTop.play();
     }
 }
