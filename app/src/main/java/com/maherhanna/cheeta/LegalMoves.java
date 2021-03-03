@@ -27,6 +27,8 @@ public class LegalMoves {
 
                 break;
             case QUEEN:
+                pieceMoves = getQueenMoves(position);
+
                 break;
             case KING:
                 break;
@@ -34,6 +36,180 @@ public class LegalMoves {
         return pieceMoves;
     }
 
+    private ArrayList<Integer> getQueenMoves(int position) {
+        ArrayList<Integer> queenLegalMoves = new ArrayList<Integer>();
+        Piece queen = chessBoard.getPieceAt(position);
+
+        int fileOffset = 0;
+        int rankOffset = 0;
+
+        //check the diagonal line along the upper right direction
+        fileOffset = 1;
+        rankOffset = 1;
+
+        while (true) {
+            int upperRightSquare = queen.offset(fileOffset,rankOffset);
+            if (upperRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(upperRightSquare)) {
+                queenLegalMoves.add(upperRightSquare);
+            } else {
+                //check take
+                if (queen.color != chessBoard.getPieceAt(upperRightSquare).color) {
+                    queenLegalMoves.add(upperRightSquare);
+                }
+                break;
+
+            }
+            fileOffset++;
+            rankOffset++;
+        }
+        //--------------------
+
+        //check the diagonal line along the upper left direction
+        fileOffset = -1;
+        rankOffset = 1;
+        while (true) {
+            int upperLeftSquare = queen.offset(fileOffset,rankOffset);
+            if (upperLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(upperLeftSquare)) {
+                queenLegalMoves.add(upperLeftSquare);
+            } else {
+                //check take
+                if (queen.color != chessBoard.getPieceAt(upperLeftSquare).color) {
+                    queenLegalMoves.add(upperLeftSquare);
+                }
+                break;
+
+            }
+            fileOffset--;
+            rankOffset++;
+        }
+        //--------------------
+
+
+
+        //check the diagonal line along the lower right direction
+        fileOffset = 1;
+        rankOffset = -1;
+        while (true) {
+            int lowerRightSquare = queen.offset(fileOffset,rankOffset);
+            if (lowerRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(lowerRightSquare)) {
+                queenLegalMoves.add(lowerRightSquare);
+            } else {
+                //check take
+                if (queen.color != chessBoard.getPieceAt(lowerRightSquare).color) {
+                    queenLegalMoves.add(lowerRightSquare);
+                }
+                break;
+
+            }
+            fileOffset++;
+            rankOffset--;
+        }
+        //--------------------
+
+        //check the diagonal line along the lower left direction
+        fileOffset = -1;
+        rankOffset = -1;
+        while (true) {
+            int lowerLeftSquare = queen.offset(fileOffset,rankOffset);
+            if (lowerLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(lowerLeftSquare)) {
+                queenLegalMoves.add(lowerLeftSquare);
+            } else {
+                //check take
+                if (queen.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
+                    queenLegalMoves.add(lowerLeftSquare);
+                }
+                break;
+
+            }
+            fileOffset--;
+            rankOffset--;
+        }
+        //--------------------
+
+
+        //check the rank
+        //to the right of the queen
+        int offset = 1;
+        while (true) {
+            int toRightSquare = queen.offsetFile(offset);
+            if (toRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(toRightSquare)) {
+                queenLegalMoves.add(toRightSquare);
+            } else {
+                //check take
+                if (queen.color != chessBoard.getPieceAt(toRightSquare).color) {
+                    queenLegalMoves.add(toRightSquare);
+                }
+                break;
+
+            }
+            offset++;
+        }
+        //to the left of the queen
+        offset = -1;
+        while (true) {
+            int toLeftSquare = queen.offsetFile(offset);
+            if (toLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(toLeftSquare)) {
+                queenLegalMoves.add(toLeftSquare);
+            } else {
+                //check take
+                if (queen.color != chessBoard.getPieceAt(toLeftSquare).color) {
+                    queenLegalMoves.add(toLeftSquare);
+
+                }
+                break;
+
+            }
+            offset--;
+        }
+        //-----------------
+
+
+        //check the file
+        //to the top of the queen
+        offset = 1;
+        while (true) {
+            int toTopSquare = queen.offsetRank(offset);
+            if (toTopSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(toTopSquare)) {
+                queenLegalMoves.add(toTopSquare);
+            } else {
+                //check take
+                if (queen.color != chessBoard.getPieceAt(toTopSquare).color) {
+                    queenLegalMoves.add(toTopSquare);
+                }
+                break;
+
+            }
+            offset++;
+        }
+        //to the bottom of the queen
+        offset = -1;
+        while (true) {
+            int toBottomSquare = queen.offsetRank(offset);
+            if (toBottomSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(toBottomSquare)) {
+                queenLegalMoves.add(toBottomSquare);
+            } else {
+                //check take
+                if (queen.color != chessBoard.getPieceAt(toBottomSquare).color) {
+                    queenLegalMoves.add(toBottomSquare);
+                }
+
+                break;
+
+            }
+            offset--;
+        }
+        //-----------------
+
+        return queenLegalMoves;
+    }
 
 
     private ArrayList<Integer> getPawnMoves(int position) {
