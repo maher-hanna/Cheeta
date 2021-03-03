@@ -6,7 +6,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 
 public class Drawing {
-    private MainActivity activity;
+    private GameActivity activity;
     private ChessboardView chessboardView;
     public ChessBoard chessBoard;
 
@@ -39,7 +39,7 @@ public class Drawing {
 
 
 
-    public Drawing(MainActivity activity) {
+    public Drawing(GameActivity activity) {
         this.activity = activity;
         this.chessboardView = this.activity.findViewById(R.id.chessboardView);
         this.chessboardView.drawing = this;
