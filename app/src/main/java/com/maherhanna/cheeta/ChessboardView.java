@@ -66,7 +66,8 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
         switch (action){
             case MotionEvent.ACTION_DOWN:
                 draggedSquare = getTouchSquare(x,y);
-                if(drawing.chessBoard.getPieceAt(draggedSquare) == null)
+                if(drawing.chessBoard.getPieceAt(draggedSquare) == null ||
+                drawing.chessBoard.playerAtBottom instanceof ComputerPlayer)
                 {
                     draggedSquare = -1;
                 }

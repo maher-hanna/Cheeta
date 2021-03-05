@@ -7,6 +7,26 @@
     tools:context=".MainActivity">
 
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/btn_start"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/game_between"></TextView>
+        <Spinner
+            android:id="@+id/spinner_gameType"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:entries="@array/game_between_types"></Spinner>
+    </LinearLayout>
+
+
     <Button
         android:id="@+id/btn_start"
         android:layout_width="wrap_content"
@@ -14,6 +34,9 @@
         android:text="@string/start_a_new_game"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.545"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.809" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

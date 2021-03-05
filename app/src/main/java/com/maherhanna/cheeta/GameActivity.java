@@ -1,7 +1,9 @@
 package com.maherhanna.cheeta;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 
@@ -25,8 +27,8 @@ public class GameActivity extends AppCompatActivity {
             drawing = new Drawing(this);
 
         }
-
-        Game game = new Game(drawing);
+        int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
+        Game game = new Game(drawing,gameType);
         game.start();
 
 
@@ -44,6 +46,29 @@ public class GameActivity extends AppCompatActivity {
         }, 100);
         //------------------------------
 
+    }
 
+    @Override
+    public void onBackPressed() {
+        finishGame(getString(R.string.finish_game_message));
+    }
+
+    private void finishGame(String alertMessage) {
+        DialogInterface.OnClickListener dialogClickListner = new DialogInterface.OnClickListener(){
+            @Override
+            public void onClick(DialogInterface dialogInterface, int which) {
+                switch (which){
+                    case DialogInterface.BUTTON_POSITIVE:
+                        finish();
+                        break;
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            break;
+                }
+            }
+        };
+        AlertDialog.Builder builder = new AlertDialog.Builder(GameActivity.this);
+        builder.setMessage(alertMessage)
+                .setPositiveButton("Yes",dialogClickListner)
+                .setNegativeButton("No" ,dialogClickListner).show();
     }
 }

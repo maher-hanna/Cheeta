@@ -1,5 +1,7 @@
 package com.maherhanna.cheeta;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 public class ChessBoard {
@@ -34,7 +36,6 @@ public class ChessBoard {
     //-----
 
     private LegalMoves legalMoves;
-    public Player playerPlaying;
 
 
     public ChessBoard() {
@@ -45,7 +46,6 @@ public class ChessBoard {
         }
 
         legalMoves = new LegalMoves(this);
-        playerPlaying = null;
     }
 
     public void setPlayers(Player playerAtBottom, Player playerAtTop){
@@ -53,11 +53,31 @@ public class ChessBoard {
         this.playerAtTop = playerAtTop;
 
     }
+    public void print(){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(" 0,");
+        for(int row = 7;row >= 0;row--){
+            for(int column = 0; column < 8; column++){
+                if(getPieceAt(column,row) == null) {
+                    stringBuilder.append(" 0,");
+                    continue;
+                }
+                stringBuilder.append(String.format("%2d,",getPieceAt(column,row).position));
+            }
+            stringBuilder.append('\n');
+
+
+        }
+        Log.d(Game.DEBUG, stringBuilder.toString());
+    }
 
     public void setUpBoard() {
         setUpBottomPlayerPieces(playerAtBottom.color);
 
         setUpTopPlayerPieces(playerAtTop.color);
+
+        playerAtTop.updateLegalMoves();
+        playerAtBottom.updateLegalMoves();
 
     }
 
@@ -148,6 +168,11 @@ public class ChessBoard {
         return result;
 
     }
+    public void movePice(int fromSquare, int toSquare) {
+        setPieceAt(toSquare, getPieceAt(fromSquare));
+        setPieceAt(fromSquare, null);
+        getPieceAt(toSquare).position = toSquare;
+    }
 
     //get and set a square info
     public Piece getPieceAt(int position){
@@ -180,5 +205,6 @@ public class ChessBoard {
     }
     public static int GetFile(int position){return position % 8; }
     public static int GetRank(int position){return position / 8;}
+
     //------------------------
 }

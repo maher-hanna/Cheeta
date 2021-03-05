@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Cheeta</string>
+    <string name="app_name">شيتا</string>
     <string name="start_a_new_game">ابدأ لعبة جديدة</string>
+    <string name="game_between">اللعب بين</string>
+    <string name="finish_game_message">هل تريد حقا إنهاء هذه اللعبة</string>
 </resources>
