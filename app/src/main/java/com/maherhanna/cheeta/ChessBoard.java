@@ -36,9 +36,10 @@ public class ChessBoard {
     //-----
 
     private LegalMoves legalMoves;
+    public Drawing drawing;
 
 
-    public ChessBoard() {
+    public ChessBoard(Drawing drawing) {
         squares = new Piece[64];
 
         for (int i = 0; i < 64; ++i) {
@@ -46,6 +47,7 @@ public class ChessBoard {
         }
 
         legalMoves = new LegalMoves(this);
+        this.drawing = drawing;
     }
 
     public void setPlayers(Player playerAtBottom, Player playerAtTop){
@@ -140,7 +142,6 @@ public class ChessBoard {
         playerAtTop.addPiece(new PlayerPiece(Piece.Type.ROOK,color,GetPosition(7, 7)));
 
     }
-
 
 
 

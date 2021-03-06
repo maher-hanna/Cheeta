@@ -29,6 +29,7 @@ public class GameActivity extends AppCompatActivity {
         }
         int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
         Game game = new Game(drawing,gameType);
+
         game.start();
 
 

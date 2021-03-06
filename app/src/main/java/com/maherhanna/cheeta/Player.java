@@ -7,11 +7,12 @@ class Player {
 
     public Piece.Color color;
     protected ChessBoard chessBoard;
+
     protected boolean myTurn;
 
-    private Player opponent;
-    private ArrayList<PlayerPiece> pieces;
-    private HashMap<Integer,ArrayList<Integer>> legalMoves;
+    protected Player opponent;
+    protected ArrayList<PlayerPiece> pieces;
+    protected HashMap<Integer,ArrayList<Integer>> legalMoves;
 
 
     public Player(Piece.Color color, ChessBoard chessBoard, Player opponent) {
@@ -67,16 +68,38 @@ class Player {
     }
 
     public void movePice(int fromSquare, int toSquare) {
-        chessBoard.movePice(fromSquare,toSquare);
         getPieceAt(fromSquare).moveTo(toSquare);
-        myTurn = false;
+        if(opponent.hasPiece(toSquare)){
+
+            opponent.removePiece(toSquare);
+        }
+        chessBoard.movePice(fromSquare,toSquare);
+
+
         updateLegalMoves();
-
-
-
+        myTurn = false;
 
     }
 
+    public void removePiece(int position){
+        for (int i = 0; i < pieces.size(); i++) {
+            if (pieces.get(i).getPosition() == position) {
+                pieces.remove(i);
+                break;
+            }
+        }
+    }
+
+    public boolean hasPiece(int position){
+        Piece targetPiece = chessBoard.getPieceAt(position);
+        if(targetPiece == null) return false;
+        if(this.color == targetPiece.color){
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 
     protected void updateLegalMoves(){
         legalMoves.clear();

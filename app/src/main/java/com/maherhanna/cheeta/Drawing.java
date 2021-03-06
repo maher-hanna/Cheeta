@@ -118,6 +118,7 @@ public class Drawing {
 
     public void drawAllPieces()
     {
+        chessboardView.clearBoard();
 
         for(int i = ChessBoard.MIN_POSITION ; i <= ChessBoard.MAX_POSITION; i++)
         {

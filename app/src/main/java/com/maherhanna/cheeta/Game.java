@@ -1,6 +1,8 @@
 package com.maherhanna.cheeta;
 
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 class Game{
     public static final String DEBUG = "game";
@@ -17,9 +19,9 @@ class Game{
 
     public Game(Drawing drawing,int gameType){
         this.drawing = drawing;
-        this.chessBoard = new ChessBoard();
-        Player playerAtBottom = null;
+        this.chessBoard = new ChessBoard(drawing);
         Player playerAtTop = null;
+        Player playerAtBottom = null;
         this.gameType = gameType;
 
         //give players random piece color
@@ -52,16 +54,47 @@ class Game{
 
         chessBoard.setPlayers(playerAtBottom, playerAtTop);
         chessBoard.setUpBoard();
+        playerAtTop.opponent = playerAtBottom;
+        playerAtBottom.opponent = playerAtTop;
         drawing.chessBoard = this.chessBoard;
 
     }
 
     public void start(){
+        /* start playing with the white pieces player
+        and if the starting player is the computer
+        add a delay to his first move because the computer
+        updates the drawing of chess board after moving
+        his piece and at first the chess board view
+        is not ready yet for drawing */
+
         if(chessBoard.playerAtBottom.color == Piece.Color.WHITE){
-            chessBoard.playerAtBottom.play();
+            if(chessBoard.playerAtBottom instanceof ComputerPlayer){
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        chessBoard.playerAtBottom.play();
+                    }
+                },1000);
+            }
+            else{
+                chessBoard.playerAtBottom.play();
+
+            }
         }
         else {
-            chessBoard.playerAtTop.play();
+            if(chessBoard.playerAtTop instanceof ComputerPlayer){
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        chessBoard.playerAtTop.play();
+                    }
+                },1000);
+            }
+            else{
+                chessBoard.playerAtTop.play();
+
+            }
         }
     }
 
