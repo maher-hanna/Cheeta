@@ -12,6 +12,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
 
     //for dragging a piece
     int draggedSquare;
+    int selectedSquare;
     float xTouchStart;
     float yTouchStart;
     //---------------------
@@ -21,8 +22,9 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
         xTouchStart = 0;
         yTouchStart = 0;
 
-        //-1 means no dragging
+        //-1 means no dragging or selection
         draggedSquare = -1;
+        selectedSquare = -1;
 
 
     }
@@ -65,9 +67,30 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
 
         switch (action){
             case MotionEvent.ACTION_DOWN:
+                //if piece is selected
+                if(selectedSquare != -1){
+                    //check for selecting other piece
+                    Piece targetSquare = drawing.chessBoard.getPieceAt(getTouchSquare(x,y));
+                    if(targetSquare == null){
+                        drawing.chessBoard.requestMove(selectedSquare,getTouchSquare(x,y));
+                        clearBoard();
+                        drawing.drawAllPieces();
+                        selectedSquare = -1;
+                        break;
+                    }
+                    else {
+                        if(targetSquare.color == drawing.chessBoard.playerAtBottom.color){
+                            selectedSquare = getTouchSquare(x,y);
+                        }
+                    }
+
+
+                }
+                //--------------------
                 draggedSquare = getTouchSquare(x,y);
                 if(drawing.chessBoard.getPieceAt(draggedSquare) == null ||
-                drawing.chessBoard.playerAtBottom instanceof ComputerPlayer)
+                drawing.chessBoard.playerAtBottom instanceof ComputerPlayer ||
+                drawing.chessBoard.getPieceAt(draggedSquare).color == drawing.chessBoard.playerAtTop.color)
                 {
                     draggedSquare = -1;
                 }
@@ -83,6 +106,15 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
                 xTouchStart = 0;
                 yTouchStart = 0;
                 if(draggedSquare == -1)break;
+
+                //check for selecting a square
+                if(draggedSquare == getTouchSquare(x,y)){
+                    selectedSquare = draggedSquare;
+                    draggedSquare = -1;
+                    clearBoard();
+                    drawing.drawAllPieces();
+                    break;
+                }
                 drawing.chessBoard.requestMove(draggedSquare,getTouchSquare(x,y));
                 clearBoard();
                 drawing.drawAllPieces();

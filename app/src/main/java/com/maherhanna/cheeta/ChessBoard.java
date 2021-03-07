@@ -149,7 +149,6 @@ public class ChessBoard {
     public boolean requestMove(int fromSquare, int toSquare) {
         if(getPieceAt(fromSquare) == null) return false;
         if(getPieceOwner(fromSquare) == playerAtTop) return false;
-        if(fromSquare == toSquare) return false;
 
         if(playerAtBottom.canMove(fromSquare,toSquare)) {
 
