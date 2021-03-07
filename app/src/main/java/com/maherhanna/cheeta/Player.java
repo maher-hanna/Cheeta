@@ -77,6 +77,7 @@ class Player {
 
 
         updateLegalMoves();
+        opponent.updateLegalMoves();
         myTurn = false;
 
     }
