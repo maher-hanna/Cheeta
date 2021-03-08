@@ -26,7 +26,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent gameIntent = new Intent(MainActivity.this,GameActivity.class);
                 int gameType = spinner_gameType.getSelectedItemPosition();
+                int computerPlayerDelay = 500;
                 gameIntent.putExtra("game_type",gameType);
+                gameIntent.putExtra("computer_player_delay",computerPlayerDelay);
                 startActivity(gameIntent);
             }
         });

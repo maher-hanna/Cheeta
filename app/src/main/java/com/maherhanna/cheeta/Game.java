@@ -17,7 +17,7 @@ class Game{
     public static final int COMPUTER_COMPUTER = 1;
     //------------
 
-    public Game(Drawing drawing,int gameType){
+    public Game(Drawing drawing,int gameType,int computerPlayerDelay){
         this.drawing = drawing;
         this.chessBoard = new ChessBoard(drawing);
         Player playerAtTop = null;
@@ -30,23 +30,23 @@ class Game{
         if(i == 0)
         {
 
-            playerAtTop = new ComputerPlayer(Piece.Color.WHITE,chessBoard, playerAtBottom);
+            playerAtTop = new ComputerPlayer(Piece.Color.WHITE,chessBoard, playerAtBottom,computerPlayerDelay);
             if(gameType == Game.COMPUTER_HUMAN){
                 playerAtBottom = new HumanPlayer(Piece.Color.BLACK,chessBoard, playerAtTop);
             }
             else {
-                playerAtBottom = new ComputerPlayer(Piece.Color.BLACK,chessBoard, playerAtTop);
+                playerAtBottom = new ComputerPlayer(Piece.Color.BLACK,chessBoard, playerAtTop,computerPlayerDelay);
 
             }
 
         }
         else {
-            playerAtTop = new ComputerPlayer(Piece.Color.BLACK,chessBoard, playerAtBottom);
+            playerAtTop = new ComputerPlayer(Piece.Color.BLACK,chessBoard, playerAtBottom,computerPlayerDelay);
             if(gameType == Game.COMPUTER_HUMAN){
                 playerAtBottom = new HumanPlayer(Piece.Color.WHITE,chessBoard, playerAtTop);
             }
             else {
-                playerAtBottom = new ComputerPlayer(Piece.Color.WHITE,chessBoard, playerAtTop);
+                playerAtBottom = new ComputerPlayer(Piece.Color.WHITE,chessBoard, playerAtTop,computerPlayerDelay);
 
             }
         }

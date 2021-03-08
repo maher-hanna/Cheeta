@@ -5,10 +5,14 @@ import android.graphics.*;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
     public Drawing drawing;
     private Canvas piecesCanvas;
     private Bitmap piecesBitmap;
+    private Paint highlightPaint;
 
     //for dragging a piece
     int draggedSquare;
@@ -26,6 +30,10 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
         draggedSquare = -1;
         selectedSquare = -1;
 
+        highlightPaint = new Paint();
+        highlightPaint.setColor(Color.YELLOW);
+        highlightPaint.setAlpha(100);
+
 
     }
 
@@ -33,10 +41,14 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
 
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        piecesBitmap = Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
+        float horizontalPadding = (float)(getPaddingLeft() + getPaddingRight());
+        float verticalPadding = (float)(getPaddingTop() + getPaddingBottom());
+        float drawingWidth = w - horizontalPadding;
+        float drawingHeight = h - verticalPadding;
+        piecesBitmap = Bitmap.createBitmap((int)drawingWidth,(int)drawingHeight,Bitmap.Config.ARGB_8888);
         piecesCanvas = new Canvas(piecesBitmap);
         if(drawing != null){
-            this.drawing.updateDrawingRects(new Rect(0,0,w,h));
+            this.drawing.updateDrawingRects(new RectF(0,0,drawingWidth,drawingHeight));
 
         }
 
@@ -58,72 +70,141 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
         }
 
     }
+    public void drawHighlight(RectF highlightRect){
+        if(piecesCanvas != null){
+            piecesCanvas.drawRect(highlightRect,highlightPaint);
+        }
+
+
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
         float x = event.getX();
         float y = event.getY();
+        int targetPosition = getTouchSquare(x,y);
+        Piece targetPiece = drawing.chessBoard.getPieceAt(targetPosition);
+
+        boolean playerAtBottomPlayed = false;
 
         switch (action){
             case MotionEvent.ACTION_DOWN:
-                //if piece is selected
-                if(selectedSquare != -1){
-                    //check for selecting other piece
-                    Piece targetSquare = drawing.chessBoard.getPieceAt(getTouchSquare(x,y));
-                    if(targetSquare == null){
-                        drawing.chessBoard.requestMove(selectedSquare,getTouchSquare(x,y));
-                        clearBoard();
-                        drawing.drawAllPieces();
-                        selectedSquare = -1;
-                        break;
-                    }
-                    else {
-                        if(targetSquare.color == drawing.chessBoard.playerAtBottom.color){
-                            selectedSquare = getTouchSquare(x,y);
-                        }
-                    }
 
 
-                }
-                //--------------------
-                draggedSquare = getTouchSquare(x,y);
-                if(drawing.chessBoard.getPieceAt(draggedSquare) == null ||
+                if(targetPiece == null ||
                 drawing.chessBoard.playerAtBottom instanceof ComputerPlayer ||
-                drawing.chessBoard.getPieceAt(draggedSquare).color == drawing.chessBoard.playerAtTop.color)
+                targetPiece.color == drawing.chessBoard.playerAtTop.color)
                 {
                     draggedSquare = -1;
+                    break;
                 }
+                draggedSquare = targetPosition;
+                selectedSquare = targetPosition;
                 xTouchStart = x;
                 yTouchStart = y;
                 break;
+
+
+
             case MotionEvent.ACTION_MOVE:
                 if(draggedSquare != -1) {
+                    drawing.clearBoard();
+                    drawing.drawHighlight(draggedSquare);
                     drawing.dragPiece(draggedSquare, x - xTouchStart, y - yTouchStart);
+                    drawing.show();
                 }
                 break;
+
+
+
             case MotionEvent.ACTION_UP:
                 xTouchStart = 0;
                 yTouchStart = 0;
-                if(draggedSquare == -1)break;
 
-                //check for selecting a square
-                if(draggedSquare == getTouchSquare(x,y)){
-                    selectedSquare = draggedSquare;
-                    draggedSquare = -1;
-                    clearBoard();
+
+
+                if(draggedSquare != ChessBoard.OUT_OF_BOARD){
+                    //check for selecting a square
+                    if(draggedSquare == targetPosition){
+                        selectedSquare = draggedSquare;
+                        draggedSquare = -1;
+                        drawing.clearBoard();
+                        drawing.drawHighlight(selectedSquare);
+                        drawing.drawAllPieces();
+                        drawing.show();
+                        break;
+                    }
+
+
+                    if(drawing.chessBoard.requestMove(draggedSquare,targetPosition)){
+                        playerAtBottomPlayed = true;
+                        drawing.clearBoard();
+                        drawing.drawMoveHighlight(draggedSquare,targetPosition);
+                        drawing.drawAllPieces();
+                        draggedSquare = -1;
+                        drawing.show();
+                        break;
+                    }
+                    drawing.clearBoard();
+                    drawing.drawHighlight(draggedSquare);
                     drawing.drawAllPieces();
+                    draggedSquare = -1;
+                    drawing.show();
                     break;
                 }
-                drawing.chessBoard.requestMove(draggedSquare,getTouchSquare(x,y));
-                clearBoard();
-                drawing.drawAllPieces();
-                draggedSquare = -1;
+
+                //if piece is selected
+                if(selectedSquare != ChessBoard.OUT_OF_BOARD){
+                    if(selectedSquare == targetPosition) break;
+                    //check for selecting other piece
+                    if(drawing.chessBoard.requestMove(selectedSquare,targetPosition)){
+                        playerAtBottomPlayed = true;
+                        drawing.clearBoard();
+                        drawing.drawMoveHighlight(selectedSquare,targetPosition);
+                        drawing.drawAllPieces();
+                        drawing.show();
+                        selectedSquare = -1;
+                        break;
+
+                    }
+                    else {
+                        if(targetPiece == null) break;
+                        if(targetPiece.color == drawing.chessBoard.playerAtBottom.color){
+                            selectedSquare = targetPosition;
+                            clearBoard();
+                            drawing.drawHighlight(selectedSquare);
+                            drawing.drawAllPieces();
+                            drawing.show();
+                            break;
+                        }
+
+                    }
+
+
+                }
+
+                //--------------------
+
                 break;
+
+
 
             default:
 
         }
+        if(playerAtBottomPlayed == true){
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    drawing.chessBoard.playerAtTop.play();
+
+                }
+            },((ComputerPlayer)drawing.chessBoard.playerAtTop).playDelay);
+        }
+
+
+
         return true;
 
     }
@@ -137,6 +218,9 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView{
 
     }
     public void clearBoard(){
-        piecesCanvas.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
+        if(piecesCanvas != null){
+            piecesCanvas.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
+
+        }
     }
 }

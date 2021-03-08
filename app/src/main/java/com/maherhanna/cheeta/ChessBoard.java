@@ -151,7 +151,6 @@ public class ChessBoard {
         if(getPieceOwner(fromSquare) == playerAtTop) return false;
 
         if(playerAtBottom.canMove(fromSquare,toSquare)) {
-
             playerAtBottom.movePice(fromSquare,toSquare);
             return true;
         }

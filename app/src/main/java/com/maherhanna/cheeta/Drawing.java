@@ -32,11 +32,10 @@ public class Drawing {
     private RectF queenDrawingRect;
     private RectF kingDrawingRect;
     //chess board dimensions
-    private Rect chessBoardViewRect;
+    private RectF chessBoardViewRect;
     public float squareSize;
     private static float SCALE_PIECES_DOWN = 0.8f;
     //----------------
-
 
 
     public Drawing(GameActivity activity) {
@@ -58,13 +57,14 @@ public class Drawing {
         blackKingBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.black_king_transparent);
         whiteKingBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.white_king);
 
-        updateDrawingRects(new Rect(0,0,chessboardView.getWidth()
-                ,chessboardView.getHeight()));
+        updateDrawingRects(new RectF(0, 0, chessboardView.getWidth()
+                , chessboardView.getHeight()));
 
 
     }
 
-    public void updateDrawingRects(Rect newChessBoardRect){
+
+    public void updateDrawingRects(RectF newChessBoardRect) {
         //called when the size of chessboard view change
         chessBoardViewRect = newChessBoardRect;
 
@@ -72,19 +72,18 @@ public class Drawing {
 
 
         //----------
-        pawnDrawingRect = calculateRect(blackPawnBitmap.getWidth(),blackPawnBitmap.getHeight());
-        bishopDrawingRect = calculateRect(blackBishopBitmap.getWidth(),blackBishopBitmap.getHeight());
-        knightDrawingRect = calculateRect(blackKnightBitmap.getWidth(),blackKnightBitmap.getHeight());
-        rookDrawingRect = calculateRect(blackRookBitmap.getWidth(),blackRookBitmap.getHeight());
-        queenDrawingRect = calculateRect(blackQueenBitmap.getWidth(),blackQueenBitmap.getHeight());
-        kingDrawingRect = calculateRect(blackKingBitmap.getWidth(),blackKingBitmap.getHeight());
+        pawnDrawingRect = calculateRect(blackPawnBitmap.getWidth(), blackPawnBitmap.getHeight());
+        bishopDrawingRect = calculateRect(blackBishopBitmap.getWidth(), blackBishopBitmap.getHeight());
+        knightDrawingRect = calculateRect(blackKnightBitmap.getWidth(), blackKnightBitmap.getHeight());
+        rookDrawingRect = calculateRect(blackRookBitmap.getWidth(), blackRookBitmap.getHeight());
+        queenDrawingRect = calculateRect(blackQueenBitmap.getWidth(), blackQueenBitmap.getHeight());
+        kingDrawingRect = calculateRect(blackKingBitmap.getWidth(), blackKingBitmap.getHeight());
         //------------
-
 
 
     }
 
-    private RectF calculateRect(float bitmapWidth,float bitmapHeight){
+    private RectF calculateRect(float bitmapWidth, float bitmapHeight) {
         RectF result;
         float squareScaleDownFactor = Math.max(bitmapWidth, bitmapHeight)
                 / squareSize;
@@ -94,131 +93,153 @@ public class Drawing {
         height *= SCALE_PIECES_DOWN;
         float left = (squareSize - width) / 2;
         float top = (squareSize - height) / 2;
-        result = new RectF(0,0,width,height);
-        result.offset(left,top);
+        result = new RectF(0, 0, width, height);
+        result.offset(left, top);
         return result;
 
     }
 
 
-    public void dragPiece(int position,float xOffset,float yOffset){
+    public void clearBoard(){
         chessboardView.clearBoard();
-        for(int i = ChessBoard.MIN_POSITION ; i <= ChessBoard.MAX_POSITION; i++)
-        {
-            Piece piece = chessBoard.getPieceAt(i);
-            if(piece != null) {
-                if(i == position) continue;
-                drawPiece(piece,i,0f,0f);
-            }
-        }
-        drawPiece(chessBoard.getPieceAt(position),position,xOffset,yOffset);
-        chessboardView.invalidate();
+    }
+
+
+
+    public void drawHighlight(int square){
+        float highlightLeft = ChessBoard.GetFile(square) * squareSize;
+        float highlightTop = (8 - ChessBoard.GetRank(square) - 1) * squareSize;
+        float highlightRight = highlightLeft + squareSize;
+        float highlightBottom = highlightTop + squareSize;
+        RectF highlightRect = new RectF(highlightLeft,highlightTop,highlightRight,highlightBottom);
+
+        chessboardView.drawHighlight(highlightRect);
+    }
+
+
+    public void drawMoveHighlight(int fromSquare, int toSquare){
+            drawHighlight(fromSquare);
+            drawHighlight(toSquare);
 
     }
 
-    public void drawAllPieces()
-    {
-        chessboardView.clearBoard();
+    public void drawAllPieces() {
 
-        for(int i = ChessBoard.MIN_POSITION ; i <= ChessBoard.MAX_POSITION; i++)
-        {
+        for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
             Piece piece = chessBoard.getPieceAt(i);
-            if(piece != null) {
-                drawPiece(piece,i, 0,0);
+            if (piece != null) {
+                drawPiece(piece, i, 0, 0);
             }
         }
-        chessboardView.invalidate();
 
     }
 
-    private void drawPiece(Piece piece, int position,float xOffset,float yOffset) {
+    public void show(){
+        chessboardView.invalidate();
+    }
 
-        RectF pieceRect = getPieceDrawingRect(piece,position);
-        pieceRect.offset(xOffset,yOffset);
 
-        switch (piece.type){
+    public void dragPiece(int position, float xOffset, float yOffset) {
+        for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
+            Piece piece = chessBoard.getPieceAt(i);
+            if (piece != null) {
+                if (i == position) continue;
+                drawPiece(piece, i, 0f, 0f);
+            }
+        }
+        drawPiece(chessBoard.getPieceAt(position), position, xOffset, yOffset);
+
+
+    }
+
+
+
+    private void drawPiece(Piece piece, int position, float xOffset, float yOffset) {
+
+        RectF pieceRect = getPieceDrawingRect(piece, position);
+        pieceRect.offset(xOffset, yOffset);
+
+        switch (piece.type) {
 
             case PAWN:
-                if(piece.color == Piece.Color.WHITE)
-                    chessboardView.drawPiece(whitePawnBitmap,pieceRect);
+                if (piece.color == Piece.Color.WHITE)
+                    chessboardView.drawPiece(whitePawnBitmap, pieceRect);
                 else
-                    chessboardView.drawPiece(blackPawnBitmap,pieceRect);
+                    chessboardView.drawPiece(blackPawnBitmap, pieceRect);
                 break;
             case ROOK:
-                if(piece.color == Piece.Color.WHITE)
-                    chessboardView.drawPiece(whiteRookBitmap,pieceRect);
+                if (piece.color == Piece.Color.WHITE)
+                    chessboardView.drawPiece(whiteRookBitmap, pieceRect);
                 else
-                    chessboardView.drawPiece(blackRookBitmap,pieceRect);
+                    chessboardView.drawPiece(blackRookBitmap, pieceRect);
                 break;
             case KNIGHT:
-                if(piece.color == Piece.Color.WHITE)
-                    chessboardView.drawPiece(whiteKnightBitmap,pieceRect);
+                if (piece.color == Piece.Color.WHITE)
+                    chessboardView.drawPiece(whiteKnightBitmap, pieceRect);
                 else
-                    chessboardView.drawPiece(blackKnightBitmap,pieceRect);
+                    chessboardView.drawPiece(blackKnightBitmap, pieceRect);
                 break;
             case BISHOP:
-                if(piece.color == Piece.Color.WHITE)
-                    chessboardView.drawPiece(whiteBishopBitmap,pieceRect);
+                if (piece.color == Piece.Color.WHITE)
+                    chessboardView.drawPiece(whiteBishopBitmap, pieceRect);
                 else
-                    chessboardView.drawPiece(blackBishopBitmap,pieceRect);
+                    chessboardView.drawPiece(blackBishopBitmap, pieceRect);
                 break;
             case QUEEN:
-                if(piece.color == Piece.Color.WHITE)
-                    chessboardView.drawPiece(whiteQueenBitmap,pieceRect);
+                if (piece.color == Piece.Color.WHITE)
+                    chessboardView.drawPiece(whiteQueenBitmap, pieceRect);
                 else
-                    chessboardView.drawPiece(blackQueenBitmap,pieceRect);
+                    chessboardView.drawPiece(blackQueenBitmap, pieceRect);
                 break;
             case KING:
-                if(piece.color == Piece.Color.WHITE)
-                    chessboardView.drawPiece(whiteKingBitmap,pieceRect);
+                if (piece.color == Piece.Color.WHITE)
+                    chessboardView.drawPiece(whiteKingBitmap, pieceRect);
                 else
-                    chessboardView.drawPiece(blackKingBitmap,pieceRect);
+                    chessboardView.drawPiece(blackKingBitmap, pieceRect);
                 break;
         }
     }
 
 
-
-    private RectF getPieceDrawingRect(Piece piece,int position) {
+    private RectF getPieceDrawingRect(Piece piece, int position) {
         RectF result = new RectF();
         float x = chessBoard.GetFile(position) * squareSize;
-        float y =  chessBoard.GetRank(position) * squareSize;
+        float y = chessBoard.GetRank(position) * squareSize;
 
         //convert the y to the canvas drawing coordinates
         //which has x and y starts at top left corner
         float yOnDrawingBoard = chessBoardViewRect.width() - y - squareSize;
 
-        switch (piece.type){
+        switch (piece.type) {
 
             case PAWN:
-                  result = new RectF(pawnDrawingRect);
-                  result.offset(x,yOnDrawingBoard);
+                result = new RectF(pawnDrawingRect);
+                result.offset(x, yOnDrawingBoard);
                 break;
             case ROOK:
                 result = new RectF(rookDrawingRect);
-                result.offset(x,yOnDrawingBoard);
+                result.offset(x, yOnDrawingBoard);
                 break;
             case KNIGHT:
                 result = new RectF(knightDrawingRect);
-                result.offset(x,yOnDrawingBoard);
+                result.offset(x, yOnDrawingBoard);
                 break;
             case BISHOP:
                 result = new RectF(bishopDrawingRect);
-                result.offset(x,yOnDrawingBoard);
+                result.offset(x, yOnDrawingBoard);
                 break;
             case QUEEN:
                 result = new RectF(queenDrawingRect);
-                result.offset(x,yOnDrawingBoard);
+                result.offset(x, yOnDrawingBoard);
                 break;
             case KING:
                 result = new RectF(kingDrawingRect);
-                result.offset(x,yOnDrawingBoard);
+                result.offset(x, yOnDrawingBoard);
                 break;
         }
-    return result;
+        return result;
 
     }
-
 
 
 }

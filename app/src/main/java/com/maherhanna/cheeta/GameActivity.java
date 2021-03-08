@@ -28,7 +28,8 @@ public class GameActivity extends AppCompatActivity {
 
         }
         int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
-        Game game = new Game(drawing,gameType);
+        int computerPlayerDelay = getIntent().getIntExtra("computer_player_delay",0);
+        Game game = new Game(drawing,gameType,computerPlayerDelay);
 
         game.start();
 
@@ -43,6 +44,7 @@ public class GameActivity extends AppCompatActivity {
             @Override
             public void run() {
                 drawing.drawAllPieces();
+                drawing.show();
             }
         }, 100);
         //------------------------------

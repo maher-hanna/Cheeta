@@ -17,7 +17,7 @@ public class HumanPlayer extends Player{
     @Override
     public void movePice(int fromSquare, int toSquare) {
         super.movePice(fromSquare, toSquare);
-        opponent.play();
+
 
 
     }
