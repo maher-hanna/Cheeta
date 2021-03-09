@@ -159,6 +159,21 @@ public class Drawing {
         RectF pieceRect = getPieceDrawingRect(piece, position);
         pieceRect.offset(xOffset, yOffset);
 
+        //limit the piece drawing rect inside the board
+        if(pieceRect.left < 0){
+            pieceRect.offset(-pieceRect.left,0);
+        }
+
+        if(pieceRect.top < 0){
+            pieceRect.offset(0,-pieceRect.top);
+        }
+        if(pieceRect.right > chessBoardViewRect.width()){
+            pieceRect.offset(-(pieceRect.right - chessBoardViewRect.width()),0);
+        }
+        if(pieceRect.bottom > chessBoardViewRect.height()){
+            pieceRect.offset(0,-(pieceRect.bottom - chessBoardViewRect.height()));
+        }
+        //---------------------
         switch (piece.type) {
 
             case PAWN:
