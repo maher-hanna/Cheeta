@@ -2,7 +2,6 @@ package com.maherhanna.cheeta;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
 import android.graphics.RectF;
 
 public class Drawing {
@@ -126,9 +125,9 @@ public class Drawing {
     public void drawAllPieces() {
 
         for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-            Piece piece = chessBoard.getPieceAt(i);
-            if (piece != null) {
-                drawPiece(piece, i, 0, 0);
+            Square square = chessBoard.getPieceAt(i);
+            if (square != null) {
+                drawPiece(square, i, 0, 0);
             }
         }
 
@@ -141,10 +140,10 @@ public class Drawing {
 
     public void dragPiece(int position, float xOffset, float yOffset) {
         for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-            Piece piece = chessBoard.getPieceAt(i);
-            if (piece != null) {
+            Square square = chessBoard.getPieceAt(i);
+            if (square != null) {
                 if (i == position) continue;
-                drawPiece(piece, i, 0f, 0f);
+                drawPiece(square, i, 0f, 0f);
             }
         }
         drawPiece(chessBoard.getPieceAt(position), position, xOffset, yOffset);
@@ -154,9 +153,9 @@ public class Drawing {
 
 
 
-    private void drawPiece(Piece piece, int position, float xOffset, float yOffset) {
+    private void drawPiece(Square square, int position, float xOffset, float yOffset) {
 
-        RectF pieceRect = getPieceDrawingRect(piece, position);
+        RectF pieceRect = getPieceDrawingRect(square, position);
         pieceRect.offset(xOffset, yOffset);
 
         //limit the piece drawing rect inside the board
@@ -174,40 +173,40 @@ public class Drawing {
             pieceRect.offset(0,-(pieceRect.bottom - chessBoardViewRect.height()));
         }
         //---------------------
-        switch (piece.type) {
+        switch (square.type) {
 
             case PAWN:
-                if (piece.color == Piece.Color.WHITE)
+                if (square.color == Square.Color.WHITE)
                     chessboardView.drawPiece(whitePawnBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackPawnBitmap, pieceRect);
                 break;
             case ROOK:
-                if (piece.color == Piece.Color.WHITE)
+                if (square.color == Square.Color.WHITE)
                     chessboardView.drawPiece(whiteRookBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackRookBitmap, pieceRect);
                 break;
             case KNIGHT:
-                if (piece.color == Piece.Color.WHITE)
+                if (square.color == Square.Color.WHITE)
                     chessboardView.drawPiece(whiteKnightBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackKnightBitmap, pieceRect);
                 break;
             case BISHOP:
-                if (piece.color == Piece.Color.WHITE)
+                if (square.color == Square.Color.WHITE)
                     chessboardView.drawPiece(whiteBishopBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackBishopBitmap, pieceRect);
                 break;
             case QUEEN:
-                if (piece.color == Piece.Color.WHITE)
+                if (square.color == Square.Color.WHITE)
                     chessboardView.drawPiece(whiteQueenBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackQueenBitmap, pieceRect);
                 break;
             case KING:
-                if (piece.color == Piece.Color.WHITE)
+                if (square.color == Square.Color.WHITE)
                     chessboardView.drawPiece(whiteKingBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackKingBitmap, pieceRect);
@@ -216,7 +215,7 @@ public class Drawing {
     }
 
 
-    private RectF getPieceDrawingRect(Piece piece, int position) {
+    private RectF getPieceDrawingRect(Square square, int position) {
         RectF result = new RectF();
         float x = chessBoard.GetFile(position) * squareSize;
         float y = chessBoard.GetRank(position) * squareSize;
@@ -225,7 +224,7 @@ public class Drawing {
         //which has x and y starts at top left corner
         float yOnDrawingBoard = chessBoardViewRect.width() - y - squareSize;
 
-        switch (piece.type) {
+        switch (square.type) {
 
             case PAWN:
                 result = new RectF(pawnDrawingRect);

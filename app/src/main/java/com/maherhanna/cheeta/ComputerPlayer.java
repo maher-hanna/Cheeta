@@ -8,7 +8,7 @@ import java.util.TimerTask;
 public class ComputerPlayer extends Player {
     public int playDelay;
 
-    public ComputerPlayer(Piece.Color color, ChessBoard chessBoard, Player opponent,int playDelay) {
+    public ComputerPlayer(Square.Color color, ChessBoard chessBoard, Player opponent, int playDelay) {
         super(color, chessBoard, opponent);
         //delay in milliseconds before the computer plays
         this.playDelay = playDelay;
@@ -26,13 +26,13 @@ public class ComputerPlayer extends Player {
         do {
             randomPieceIndex = random.nextInt(numPieces);
             randomPiecePosition = pieces.get(randomPieceIndex).getPosition();
-            numOfLegalMoves = legalMoves.get(randomPiecePosition).size();
+            numOfLegalMoves = pieces.get(randomPieceIndex).legalMoves.size();
 
         } while (numOfLegalMoves == 0);
 
         int randomLegalMove = random.nextInt(numOfLegalMoves);
-        int randomMove = legalMoves.get(randomPiecePosition).get(randomLegalMove);
-        movePice(randomPiecePosition, randomMove);
+        int randomMove = pieces.get(randomPieceIndex).legalMoves.get(randomLegalMove);
+        movePiece(randomPiecePosition, randomMove);
 
         chessBoard.drawing.clearBoard();
         chessBoard.drawing.drawMoveHighlight(randomPiecePosition,randomMove);

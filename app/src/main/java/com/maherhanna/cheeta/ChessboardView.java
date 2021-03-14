@@ -3,7 +3,6 @@ package com.maherhanna.cheeta;
 import android.content.Context;
 import android.graphics.*;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 
 import java.util.Timer;
@@ -92,16 +91,16 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         y = Math.max(0, Math.min(getHeight() - 1, y));
 
         int targetPosition = getTouchSquare(x, y);
-        Piece targetPiece = drawing.chessBoard.getPieceAt(targetPosition);
+        Square targetSquare = drawing.chessBoard.getPieceAt(targetPosition);
 
         switch (action) {
 
             case MotionEvent.ACTION_DOWN:
 
 
-                if (targetPiece == null ||
+                if (targetSquare == null ||
                         drawing.chessBoard.playerAtBottom instanceof ComputerPlayer ||
-                        targetPiece.color == drawing.chessBoard.playerAtTop.color) {
+                        targetSquare.color == drawing.chessBoard.playerAtTop.color) {
                     draggedSquare = -1;
                     break;
                 }
@@ -175,8 +174,8 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                         break;
 
                     } else {
-                        if (targetPiece == null) break;
-                        if (targetPiece.color == drawing.chessBoard.playerAtBottom.color) {
+                        if (targetSquare == null) break;
+                        if (targetSquare.color == drawing.chessBoard.playerAtBottom.color) {
                             selectedSquare = targetPosition;
                             clearBoard();
                             drawing.drawHighlight(selectedSquare);

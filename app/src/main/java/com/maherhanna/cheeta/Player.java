@@ -5,27 +5,26 @@ import java.util.HashMap;
 
 class Player {
 
-    public Piece.Color color;
+    public Square.Color color;
     protected ChessBoard chessBoard;
 
     protected boolean myTurn;
 
     protected Player opponent;
-    protected ArrayList<PlayerPiece> pieces;
-    protected HashMap<Integer,ArrayList<Integer>> legalMoves;
+    protected ArrayList<Piece> pieces;
 
 
-    public Player(Piece.Color color, ChessBoard chessBoard, Player opponent) {
+    public Player(Square.Color color, ChessBoard chessBoard, Player opponent) {
         this.color = color;
         this.chessBoard = chessBoard;
         this.opponent = opponent;
         myTurn = false;
         this.pieces = new ArrayList<>();
-        legalMoves = new HashMap<>();
+
     }
 
-    protected PlayerPiece getPieceAt(int square) {
-        PlayerPiece piece = null;
+    protected Piece getPieceAt(int square) {
+        Piece piece = null;
         for (int i = 0; i < pieces.size(); i++) {
             if (pieces.get(i).getPosition() == square) {
                 piece = pieces.get(i);
@@ -36,9 +35,9 @@ class Player {
 
     }
 
-    public void addPiece(PlayerPiece piece) {
+    public void addPiece(Piece piece) {
         pieces.add(piece);
-        chessBoard.setPieceAt(piece.getPosition(), new Piece(piece.getPiece()));
+        chessBoard.setPieceAt(piece.getPosition(), new Square(piece.getSquare()));
 
     }
 
@@ -53,12 +52,9 @@ class Player {
     }
 
 
-
-
-
     public boolean canMove(int fromSquare, int toSquare) {
 
-        if(legalMoves.get(fromSquare).contains(toSquare)){
+        if(getPieceAt(fromSquare).canMoveTo(toSquare)){
             return true;
         }
         else {
@@ -67,7 +63,7 @@ class Player {
 
     }
 
-    public void movePice(int fromSquare, int toSquare) {
+    public void movePiece(int fromSquare, int toSquare) {
         getPieceAt(fromSquare).moveTo(toSquare);
         if(opponent.hasPiece(toSquare)){
 
@@ -92,9 +88,9 @@ class Player {
     }
 
     public boolean hasPiece(int position){
-        Piece targetPiece = chessBoard.getPieceAt(position);
-        if(targetPiece == null) return false;
-        if(this.color == targetPiece.color){
+        Square targetSquare = chessBoard.getPieceAt(position);
+        if(targetSquare == null) return false;
+        if(this.color == targetSquare.color){
             return true;
         }
         else {
@@ -103,10 +99,9 @@ class Player {
     }
 
     protected void updateLegalMoves(){
-        legalMoves.clear();
+        LegalMovesChecker legalMovesChecker = new LegalMovesChecker(chessBoard);
         for(int i = 0; i < pieces.size();i++){
-            legalMoves.put(pieces.get(i).getPosition(),
-                    chessBoard.getLegalMovesFor(pieces.get(i).getPosition()));
+            pieces.get(i).updateLegalMoves(legalMovesChecker);
         }
 
     }

@@ -10,7 +10,6 @@ class Game{
     private ChessBoard chessBoard;
     private int gameType;
 
-    private LegalMoves legalMoves;
 
     //game between
     public static final int COMPUTER_HUMAN = 0;
@@ -30,23 +29,23 @@ class Game{
         if(i == 0)
         {
 
-            playerAtTop = new ComputerPlayer(Piece.Color.WHITE,chessBoard, playerAtBottom,computerPlayerDelay);
+            playerAtTop = new ComputerPlayer(Square.Color.WHITE,chessBoard, playerAtBottom,computerPlayerDelay);
             if(gameType == Game.COMPUTER_HUMAN){
-                playerAtBottom = new HumanPlayer(Piece.Color.BLACK,chessBoard, playerAtTop);
+                playerAtBottom = new HumanPlayer(Square.Color.BLACK,chessBoard, playerAtTop);
             }
             else {
-                playerAtBottom = new ComputerPlayer(Piece.Color.BLACK,chessBoard, playerAtTop,computerPlayerDelay);
+                playerAtBottom = new ComputerPlayer(Square.Color.BLACK,chessBoard, playerAtTop,computerPlayerDelay);
 
             }
 
         }
         else {
-            playerAtTop = new ComputerPlayer(Piece.Color.BLACK,chessBoard, playerAtBottom,computerPlayerDelay);
+            playerAtTop = new ComputerPlayer(Square.Color.BLACK,chessBoard, playerAtBottom,computerPlayerDelay);
             if(gameType == Game.COMPUTER_HUMAN){
-                playerAtBottom = new HumanPlayer(Piece.Color.WHITE,chessBoard, playerAtTop);
+                playerAtBottom = new HumanPlayer(Square.Color.WHITE,chessBoard, playerAtTop);
             }
             else {
-                playerAtBottom = new ComputerPlayer(Piece.Color.WHITE,chessBoard, playerAtTop,computerPlayerDelay);
+                playerAtBottom = new ComputerPlayer(Square.Color.WHITE,chessBoard, playerAtTop,computerPlayerDelay);
 
             }
         }
@@ -68,7 +67,7 @@ class Game{
         his piece and at first the chess board view
         is not ready yet for drawing */
 
-        if(chessBoard.playerAtBottom.color == Piece.Color.WHITE){
+        if(chessBoard.playerAtBottom.color == Square.Color.WHITE){
             if(chessBoard.playerAtBottom instanceof ComputerPlayer){
                 new Timer().schedule(new TimerTask() {
                     @Override

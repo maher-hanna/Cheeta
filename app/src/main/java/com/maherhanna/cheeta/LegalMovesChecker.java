@@ -2,45 +2,45 @@ package com.maherhanna.cheeta;
 
 import java.util.ArrayList;
 
-public class LegalMoves {
+public class LegalMovesChecker {
     private ChessBoard chessBoard;
 
-    public LegalMoves(ChessBoard chessBoard) {
+    public LegalMovesChecker(ChessBoard chessBoard) {
         this.chessBoard = chessBoard;
     }
 
-    public ArrayList<Integer> getLegalMoves(int position) {
-        ArrayList<Integer> pieceMoves = new ArrayList<Integer>();
-        Piece piece = chessBoard.getPieceAt(position);
+    public ArrayList<Integer> getLegalMoves(Piece piece) {
+        ArrayList<Integer> pieceLegalMoves = new ArrayList<Integer>();
+        Square square = piece.getSquare();
 
-        switch (piece.type) {
+        switch (square.type) {
             case PAWN:
-                pieceMoves = getPawnMoves(position);
+                pieceLegalMoves = getPawnMoves(piece);
                 break;
             case ROOK:
-                pieceMoves = getRookMoves(position);
+                pieceLegalMoves = getRookMoves(piece);
                 break;
             case KNIGHT:
-                pieceMoves = getKnightMoves(position);
+                pieceLegalMoves = getKnightMoves(piece);
                 break;
             case BISHOP:
-                pieceMoves = getBishopMoves(position);
+                pieceLegalMoves = getBishopMoves(piece);
 
                 break;
             case QUEEN:
-                pieceMoves = getQueenMoves(position);
+                pieceLegalMoves = getQueenMoves(piece);
 
                 break;
             case KING:
-                pieceMoves = getKingMoves(position);
+                pieceLegalMoves = getKingMoves(piece);
                 break;
         }
-        return pieceMoves;
+        return pieceLegalMoves;
     }
 
-    private ArrayList<Integer> getKnightMoves(int position) {
+    private ArrayList<Integer> getKnightMoves(Piece piece) {
         ArrayList<Integer> knightLegalMoves = new ArrayList<Integer>();
-        Piece knight = chessBoard.getPieceAt(position);
+        Square knight = piece.getSquare();
 
         int fileOffset = 0;
         int rankOffset = 0;
@@ -83,9 +83,9 @@ public class LegalMoves {
 
     }
 
-    private ArrayList<Integer> getKingMoves(int position) {
+    private ArrayList<Integer> getKingMoves(Piece piece) {
         ArrayList<Integer> kingLegalMoves = new ArrayList<Integer>();
-        Piece king = chessBoard.getPieceAt(position);
+        Square king = piece.getSquare();
 
         int fileOffset = 0;
         int rankOffset = 0;
@@ -109,9 +109,9 @@ public class LegalMoves {
         return kingLegalMoves;
     }
 
-    private ArrayList<Integer> getQueenMoves(int position) {
+    private ArrayList<Integer> getQueenMoves(Piece piece) {
         ArrayList<Integer> queenLegalMoves = new ArrayList<Integer>();
-        Piece queen = chessBoard.getPieceAt(position);
+        Square queen = piece.getSquare();
 
         int fileOffset = 0;
         int rankOffset = 0;
@@ -284,9 +284,9 @@ public class LegalMoves {
     }
 
 
-    private ArrayList<Integer> getPawnMoves(int position) {
+    private ArrayList<Integer> getPawnMoves(Piece piece) {
         ArrayList<Integer> pawnLegalMoves = new ArrayList<Integer>();
-        Piece pawn = chessBoard.getPieceAt(position);
+        Square pawn = piece.getSquare();
 
         //the player at the bottom of chess board
         if (pawn.color == chessBoard.playerAtBottom.color) {
@@ -361,9 +361,9 @@ public class LegalMoves {
 
     }
 
-    private ArrayList<Integer> getRookMoves(int position) {
+    private ArrayList<Integer> getRookMoves(Piece piece) {
         ArrayList<Integer> rookLegalMoves = new ArrayList<Integer>();
-        Piece rook = chessBoard.getPieceAt(position);
+        Square rook = piece.getSquare();
         int offset = 0;
 
         //check the rank
@@ -447,9 +447,9 @@ public class LegalMoves {
 
     }
 
-    private ArrayList<Integer> getBishopMoves(int position) {
+    private ArrayList<Integer> getBishopMoves(Piece piece) {
         ArrayList<Integer> bishopLegalMoves = new ArrayList<Integer>();
-        Piece bishop = chessBoard.getPieceAt(position);
+        Square bishop = piece.getSquare();
 
         int fileOffset = 0;
         int rankOffset = 0;
