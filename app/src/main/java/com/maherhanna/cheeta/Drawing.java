@@ -116,9 +116,9 @@ public class Drawing {
     }
 
 
-    public void drawMoveHighlight(int fromSquare, int toSquare){
-            drawHighlight(fromSquare);
-            drawHighlight(toSquare);
+    public void drawMoveHighlight(Move move){
+            drawHighlight(move.from);
+            drawHighlight(move.to);
 
     }
 

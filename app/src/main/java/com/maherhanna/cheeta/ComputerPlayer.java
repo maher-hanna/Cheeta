@@ -7,35 +7,25 @@ import java.util.TimerTask;
 
 public class ComputerPlayer extends Player {
     public int playDelay;
+    ComputerAi computerAi;
 
     public ComputerPlayer(Square.Color color, ChessBoard chessBoard, Player opponent, int playDelay) {
         super(color, chessBoard, opponent);
         //delay in milliseconds before the computer plays
         this.playDelay = playDelay;
+        computerAi = new ComputerAi();
+
     }
 
 
     @Override
     public void play() {
         super.play();
-        Random random = new Random();
-        int numPieces = pieces.size();
-        int numOfLegalMoves = 0;
-        int randomPieceIndex = 0;
-        int randomPiecePosition = 0;
-        do {
-            randomPieceIndex = random.nextInt(numPieces);
-            randomPiecePosition = pieces.get(randomPieceIndex).getPosition();
-            numOfLegalMoves = pieces.get(randomPieceIndex).legalMoves.size();
-
-        } while (numOfLegalMoves == 0);
-
-        int randomLegalMove = random.nextInt(numOfLegalMoves);
-        int randomMove = pieces.get(randomPieceIndex).legalMoves.get(randomLegalMove);
-        movePiece(randomPiecePosition, randomMove);
+        Move move = computerAi.getMove(pieces);
+        movePiece(move.from, move.to);
 
         chessBoard.drawing.clearBoard();
-        chessBoard.drawing.drawMoveHighlight(randomPiecePosition,randomMove);
+        chessBoard.drawing.drawMoveHighlight(move);
         chessBoard.drawing.drawAllPieces();
         chessBoard.drawing.show();
 

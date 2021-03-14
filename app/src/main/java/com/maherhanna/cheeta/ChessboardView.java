@@ -146,7 +146,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                     if (drawing.chessBoard.requestMove(draggedSquare, targetPosition)) {
                         playerAtBottomPlayed = true;
                         drawing.clearBoard();
-                        drawing.drawMoveHighlight(draggedSquare, targetPosition);
+                        drawing.drawMoveHighlight(new Move(draggedSquare, targetPosition));
                         drawing.drawAllPieces();
                         draggedSquare = -1;
                         drawing.show();
@@ -167,7 +167,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                     if (drawing.chessBoard.requestMove(selectedSquare, targetPosition)) {
                         playerAtBottomPlayed = true;
                         drawing.clearBoard();
-                        drawing.drawMoveHighlight(selectedSquare, targetPosition);
+                        drawing.drawMoveHighlight(new Move(selectedSquare, targetPosition));
                         drawing.drawAllPieces();
                         drawing.show();
                         selectedSquare = -1;
