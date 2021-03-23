@@ -59,8 +59,8 @@ public class ChessBoard {
 
         setUpTopPlayerPieces(playerAtTop.color);
 
-        playerAtTop.updateLegalMoves();
-        playerAtBottom.updateLegalMoves();
+        playerAtTop.updateLegalMoves(false);
+        playerAtBottom.updateLegalMoves(false);
 
     }
 
@@ -150,10 +150,7 @@ public class ChessBoard {
 
     //get and set a square info
     public Square getPieceAt(int position){
-        if(position < MIN_POSITION || position > MAX_POSITION){
-            throw new IndexOutOfBoundsException("Trying to put a piece outside of chess board");
 
-        }
         return squares[position];
     }
     public Square getPieceAt(int file, int rank){
@@ -200,5 +197,9 @@ public class ChessBoard {
 
         }
         Log.d(Game.DEBUG, stringBuilder.toString());
+    }
+
+    public void finishGame(Square.Color color) {
+        drawing.finishGame(color);
     }
 }

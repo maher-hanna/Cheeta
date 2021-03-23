@@ -1,5 +1,6 @@
 package com.maherhanna.cheeta;
 
+import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.RectF;
@@ -256,4 +257,7 @@ public class Drawing {
     }
 
 
+    public void finishGame(Square.Color color) {
+        chessboardView.finishGame(color);
+    }
 }

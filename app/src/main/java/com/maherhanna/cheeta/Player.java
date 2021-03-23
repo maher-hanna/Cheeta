@@ -23,6 +23,30 @@ class Player {
 
     }
 
+    public ArrayList<Integer> getLegalMoves(){
+        ArrayList<Integer> legalMoves = new ArrayList<>();
+        for(int i = 0 ; i < pieces.size();i++){
+            legalMoves.addAll(pieces.get(i).legalMoves);
+        }
+        return legalMoves;
+    }
+
+    public boolean isKingInCheck(){
+        return opponent.getLegalMoves().contains(getKingPosition());
+
+
+    }
+
+    public int getKingPosition(){
+        int kingPosition = ChessBoard.OUT_OF_BOARD;
+        for(int i =0 ; i< pieces.size();i++){
+            if(pieces.get(i).getSquare().type == Square.Type.KING){
+                kingPosition =  pieces.get(i).getPosition();
+            }
+        }
+        return kingPosition;
+    }
+
     protected Piece getPieceAt(int square) {
         Piece piece = null;
         for (int i = 0; i < pieces.size(); i++) {
@@ -72,11 +96,14 @@ class Player {
         chessBoard.movePice(fromSquare,toSquare);
 
 
-        updateLegalMoves();
-        opponent.updateLegalMoves();
+        updateLegalMoves(false);
+
+        opponent.updateLegalMoves(opponent.isKingInCheck());
+
         myTurn = false;
 
     }
+
 
     public void removePiece(int position){
         for (int i = 0; i < pieces.size(); i++) {
@@ -98,11 +125,12 @@ class Player {
         }
     }
 
-    protected void updateLegalMoves(){
+
+    public void updateLegalMoves(boolean kingInCheck) {
         LegalMovesChecker legalMovesChecker = new LegalMovesChecker(chessBoard);
         for(int i = 0; i < pieces.size();i++){
-            pieces.get(i).updateLegalMoves(legalMovesChecker);
+            pieces.get(i).updateLegalMoves(legalMovesChecker,kingInCheck);
         }
-
     }
+
 }

@@ -1,6 +1,8 @@
 package com.maherhanna.cheeta;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.*;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -226,5 +228,19 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
             piecesCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         }
+    }
+
+    public void finishGame(Square.Color color) {
+        AlertDialog gameFinishedDialog = new AlertDialog.Builder(getContext()).create();
+        gameFinishedDialog.setTitle("Game finished");
+        gameFinishedDialog.setMessage(color.toString() + " Won");
+        gameFinishedDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        gameFinishedDialog.show();
     }
 }

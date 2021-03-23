@@ -21,9 +21,11 @@ public class Piece {
 
     }
 
-    protected void updateLegalMoves(LegalMovesChecker legalMovesChecker){
+
+
+    protected void updateLegalMoves(LegalMovesChecker legalMovesChecker,boolean kingInCheck){
         legalMoves.clear();
-        legalMoves = legalMovesChecker.getLegalMoves(this);
+        legalMoves = legalMovesChecker.getLegalMoves(this,kingInCheck);
 
     }
 

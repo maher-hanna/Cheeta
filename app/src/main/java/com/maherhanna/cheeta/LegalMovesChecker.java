@@ -9,36 +9,37 @@ public class LegalMovesChecker {
         this.chessBoard = chessBoard;
     }
 
-    public ArrayList<Integer> getLegalMoves(Piece piece) {
+    public ArrayList<Integer> getLegalMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> pieceLegalMoves = new ArrayList<Integer>();
         Square square = piece.getSquare();
 
         switch (square.type) {
             case PAWN:
-                pieceLegalMoves = getPawnMoves(piece);
+                pieceLegalMoves = getPawnMoves(piece,kingInCheck);
                 break;
             case ROOK:
-                pieceLegalMoves = getRookMoves(piece);
+                pieceLegalMoves = getRookMoves(piece,kingInCheck);
                 break;
             case KNIGHT:
-                pieceLegalMoves = getKnightMoves(piece);
+                pieceLegalMoves = getKnightMoves(piece,kingInCheck);
                 break;
             case BISHOP:
-                pieceLegalMoves = getBishopMoves(piece);
+                pieceLegalMoves = getBishopMoves(piece,kingInCheck);
 
                 break;
             case QUEEN:
-                pieceLegalMoves = getQueenMoves(piece);
+                pieceLegalMoves = getQueenMoves(piece,kingInCheck);
 
                 break;
             case KING:
-                pieceLegalMoves = getKingMoves(piece);
+                pieceLegalMoves = getKingMoves(piece,kingInCheck);
                 break;
         }
         return pieceLegalMoves;
     }
 
-    private ArrayList<Integer> getKnightMoves(Piece piece) {
+
+    private ArrayList<Integer> getKnightMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> knightLegalMoves = new ArrayList<Integer>();
         Square knight = piece.getSquare();
 
@@ -83,7 +84,7 @@ public class LegalMovesChecker {
 
     }
 
-    private ArrayList<Integer> getKingMoves(Piece piece) {
+    private ArrayList<Integer> getKingMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> kingLegalMoves = new ArrayList<Integer>();
         Square king = piece.getSquare();
 
@@ -109,7 +110,7 @@ public class LegalMovesChecker {
         return kingLegalMoves;
     }
 
-    private ArrayList<Integer> getQueenMoves(Piece piece) {
+    private ArrayList<Integer> getQueenMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> queenLegalMoves = new ArrayList<Integer>();
         Square queen = piece.getSquare();
 
@@ -284,7 +285,7 @@ public class LegalMovesChecker {
     }
 
 
-    private ArrayList<Integer> getPawnMoves(Piece piece) {
+    private ArrayList<Integer> getPawnMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> pawnLegalMoves = new ArrayList<Integer>();
         Square pawn = piece.getSquare();
 
@@ -361,7 +362,7 @@ public class LegalMovesChecker {
 
     }
 
-    private ArrayList<Integer> getRookMoves(Piece piece) {
+    private ArrayList<Integer> getRookMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> rookLegalMoves = new ArrayList<Integer>();
         Square rook = piece.getSquare();
         int offset = 0;
@@ -447,7 +448,7 @@ public class LegalMovesChecker {
 
     }
 
-    private ArrayList<Integer> getBishopMoves(Piece piece) {
+    private ArrayList<Integer> getBishopMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> bishopLegalMoves = new ArrayList<Integer>();
         Square bishop = piece.getSquare();
 
@@ -545,6 +546,7 @@ public class LegalMovesChecker {
 
 
     }
+
 
 
 }
