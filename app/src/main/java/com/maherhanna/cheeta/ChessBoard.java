@@ -2,6 +2,8 @@ package com.maherhanna.cheeta;
 
 import android.util.Log;
 
+import java.util.ArrayList;
+
 public class ChessBoard {
     public static final int MIN_POSITION = 0;
     public static final int MAX_POSITION = 63;
@@ -26,148 +28,226 @@ public class ChessBoard {
     public static final int FILE_H = 7;
 
 
-    private Square[] squares;
+    private Piece[] pieces;
+    Piece.Color bottomPlayerColor;
+    Piece.Color topPlayerColor;
 
-    //players
-    Player playerAtBottom;
-    Player playerAtTop;
-    //-----
-
-    public Drawing drawing;
+    LegalMoves blackLegalMoves;
+    LegalMoves whiteLegalMoves;
 
 
-    public ChessBoard(Drawing drawing) {
-        squares = new Square[64];
+    public ChessBoard(Drawing drawing, Piece.Color bottomPlayerColor) {
+        pieces = new Piece[64];
 
         for (int i = 0; i < 64; ++i) {
-            squares[i] = null;
+            pieces[i] = null;
         }
+        this.bottomPlayerColor = bottomPlayerColor;
+        this.topPlayerColor = bottomPlayerColor.getOpposite();
 
-        this.drawing = drawing;
-    }
-
-    public void setPlayers(Player playerAtBottom, Player playerAtTop){
-        this.playerAtBottom = playerAtBottom;
-        this.playerAtTop = playerAtTop;
-
-    }
-
-
-
-    public void setUpBoard() {
-        setUpBottomPlayerPieces(playerAtBottom.color);
-
-        setUpTopPlayerPieces(playerAtTop.color);
-
-        playerAtTop.updateLegalMoves(false);
-        playerAtBottom.updateLegalMoves(false);
-
-    }
-
-
-    private void setUpBottomPlayerPieces(Square.Color color) {
-
-        Square square;
-        Piece piece;
-        for (int i = 0; i < 8; ++i) {
-            int position = GetPosition(i, 1);
-            playerAtBottom.addPiece(new Piece(Square.Type.PAWN,color,position));
-
-        }
-
-        playerAtBottom.addPiece(new Piece(Square.Type.ROOK,color,0));
-
-        playerAtBottom.addPiece(new Piece(Square.Type.KNIGHT,color,1));
-
-        playerAtBottom.addPiece(new Piece(Square.Type.BISHOP,color,2));
-
-
-
-        if (color == Square.Color.WHITE) {
-
-            playerAtBottom.addPiece(new Piece(Square.Type.QUEEN,color,3));
-            playerAtBottom.addPiece(new Piece(Square.Type.KING,color,4));
-
-        } else {
-            playerAtBottom.addPiece(new Piece(Square.Type.KING,color,3));
-            playerAtBottom.addPiece(new Piece(Square.Type.QUEEN,color,4));
-        }
-
-            playerAtBottom.addPiece(new Piece(Square.Type.BISHOP,color,5));
-        playerAtBottom.addPiece(new Piece(Square.Type.KNIGHT,color,6));
-        playerAtBottom.addPiece(new Piece(Square.Type.ROOK,color,7));
+        blackLegalMoves = new LegalMoves();
+        whiteLegalMoves = new LegalMoves();
 
 
     }
 
-    private void setUpTopPlayerPieces(Square.Color color) {
-        for (int i = 0; i < 8; ++i) {
-            playerAtTop.addPiece(new Piece(Square.Type.PAWN,color,GetPosition(i, 6)));
-        }
-
-        playerAtTop.addPiece(new Piece(Square.Type.ROOK,color,GetPosition(0, 7)));
-        playerAtTop.addPiece(new Piece(Square.Type.KNIGHT,color,GetPosition(1, 7)));
-        playerAtTop.addPiece(new Piece(Square.Type.BISHOP,color,GetPosition(2, 7)));
-
-        if (color == Square.Color.WHITE) {
-            playerAtTop.addPiece(new Piece(Square.Type.KING,color,GetPosition(3, 7)));
-            playerAtTop.addPiece(new Piece(Square.Type.QUEEN,color,GetPosition(4, 7)));
-
-        } else {
-            playerAtTop.addPiece(new Piece(Square.Type.QUEEN,color,GetPosition(3, 7)));
-            playerAtTop.addPiece(new Piece(Square.Type.KING,color,GetPosition(4, 7)));
-        }
-
-        playerAtTop.addPiece(new Piece(Square.Type.BISHOP,color,GetPosition(5, 7)));
-        playerAtTop.addPiece(new Piece(Square.Type.KNIGHT,color,GetPosition(6, 7)));
-        playerAtTop.addPiece(new Piece(Square.Type.ROOK,color,GetPosition(7, 7)));
-
-    }
-
-
-
-
-    public boolean requestMove(int fromSquare, int toSquare) {
-        if(getPieceAt(fromSquare) == null) return false;
-        if(getPieceOwner(fromSquare) == playerAtTop) return false;
-
-        if(playerAtBottom.canMove(fromSquare,toSquare)) {
-            playerAtBottom.movePiece(fromSquare,toSquare);
+    public boolean isPieceForPlayerAtTop(int position){
+        if(getPieceAt(position).color == topPlayerColor){
             return true;
         }
         else {
             return false;
         }
+    }
+
+
+
+    public void setUpBoard() {
+        setUpBottomPlayerPieces(bottomPlayerColor);
+
+        setUpTopPlayerPieces(bottomPlayerColor.getOpposite());
+
+        updateWhiteLegalMoves(false);
+        updateBlackLegalMoves(false);
+
+    }
+
+    public void updateBlackLegalMoves(boolean b) {
+        LegalMovesChecker legalMovesChecker = new LegalMovesChecker(this);
+        ArrayList<Integer> blackPositions = getBlackPositions();
+        for(int i = 0 ; i < blackPositions.size();i++) {
+            blackLegalMoves.addMovesFor(blackPositions.get(i),
+                    legalMovesChecker.getLegalMoves(getPieceAt(blackPositions.get(i)),false));
+        }
+    }
+
+
+    public void updateWhiteLegalMoves(boolean b) {
+        LegalMovesChecker legalMovesChecker = new LegalMovesChecker(this);
+        ArrayList<Integer> whitePositions = getWhitePositions();
+        for(int i = 0 ; i < whitePositions.size();i++) {
+            whiteLegalMoves.addMovesFor(whitePositions.get(i),
+                    legalMovesChecker.getLegalMoves(getPieceAt(whitePositions.get(i)),false));
+        }
+
+    }
+
+    public ArrayList<Integer> getBlackPositions() {
+        ArrayList<Integer> blackPositions = new ArrayList<>();
+        for(int i = MIN_POSITION; i <= MAX_POSITION;i++) {
+            if(isSquareEmpty(i)) continue;
+            if(isPieceBlackAt(i)) blackPositions.add(i);
+        }
+        return blackPositions;
+    }
+
+    public ArrayList<Integer> getWhitePositions() {
+        ArrayList<Integer> whitePositions = new ArrayList<>();
+        for (int i = MIN_POSITION; i <= MAX_POSITION;i++) {
+            if (isSquareEmpty(i)) continue;
+            if (isPieceWhiteAt(i)) whitePositions.add(i);
+        }
+        return whitePositions;
+    }
+
+    public ArrayList<Integer> getPositionsOf(Piece.Color color){
+        if(color == Piece.Color.WHITE){
+            return getWhitePositions();
+        }
+        else {
+            return getBlackPositions();
+        }
+    }
+
+    public ArrayList<Integer> getLegalMovesFor(int position){
+        if(getPieceAt(position).color == Piece.Color.WHITE){
+            return whiteLegalMoves.getLegalMovesFor(position);
+        }
+        else{
+            return blackLegalMoves.getLegalMovesFor(position);
+        }
+    }
+
+
+    private void setUpBottomPlayerPieces(Piece.Color color) {
+
+        Piece square;
+        Piece piece;
+        for (int i = 0; i < 8; ++i) {
+            int position = GetPosition(i, 1);
+            setPieceAt(position, new Piece(Piece.Type.PAWN,color,position));
+
+
+        }
+
+        setPieceAt(0, new Piece(Piece.Type.ROOK,color,0));
+        setPieceAt(1, new Piece(Piece.Type.KNIGHT,color,1));
+        setPieceAt(2, new Piece(Piece.Type.BISHOP,color,2));
+
+
+        if (color == Piece.Color.WHITE) {
+
+            setPieceAt(3, new Piece(Piece.Type.QUEEN,color,3));
+            setPieceAt(4, new Piece(Piece.Type.KING,color,4));
+
+
+        } else {
+            setPieceAt(3, new Piece(Piece.Type.KING,color,3));
+            setPieceAt(4, new Piece(Piece.Type.QUEEN,color,4));        }
+
+        setPieceAt(5, new Piece(Piece.Type.BISHOP,color,5));
+
+        setPieceAt(6, new Piece(Piece.Type.KNIGHT,color,6));
+
+        setPieceAt(7, new Piece(Piece.Type.ROOK,color,7));
+
+
+
+}
+
+    private void setUpTopPlayerPieces(Piece.Color color) {
+        for (int i = 0; i < 8; ++i) {
+            setPieceAt(GetPosition(i, 6), new Piece(Piece.Type.PAWN,color,GetPosition(i, 6)));
+
+    }
+
+        setPieceAt(GetPosition(0, 7), new Piece(Piece.Type.ROOK,color,GetPosition(0, 7)));
+
+        setPieceAt(GetPosition(1, 7), new Piece(Piece.Type.KNIGHT,color,GetPosition(1, 7)));
+
+        setPieceAt(GetPosition(2, 7), new Piece(Piece.Type.BISHOP,color,GetPosition(2, 7)));
+
+
+        if (color == Piece.Color.WHITE) {
+            setPieceAt(GetPosition(3, 7), new Piece(Piece.Type.KING,color,GetPosition(3, 7)));
+            setPieceAt(GetPosition(4, 7), new Piece(Piece.Type.QUEEN,color,GetPosition(4, 7)));
+
+
+        } else {
+            setPieceAt(GetPosition(3, 7), new Piece(Piece.Type.QUEEN,color,GetPosition(3, 7)));
+            setPieceAt(GetPosition(4, 7), new Piece(Piece.Type.KING,color,GetPosition(4, 7)));
+        }
+
+        setPieceAt(GetPosition(5, 7), new Piece(Piece.Type.BISHOP,color,GetPosition(5, 7)));
+
+        setPieceAt(GetPosition(6, 7), new Piece(Piece.Type.KNIGHT,color,GetPosition(6, 7)));
+
+        setPieceAt(GetPosition(7, 7), new Piece(Piece.Type.ROOK,color,GetPosition(7, 7)));
+
 
     }
 
 
-    public void movePice(int fromSquare, int toSquare) {
+
+
+    public boolean canMove(int fromSquare, int toSquare) {
+        boolean isLegal = false;
+        if(isPieceBlackAt(fromSquare)) {
+            if(blackLegalMoves.canMove(fromSquare,toSquare)) {
+                isLegal = true;
+            }
+            else {
+                isLegal = false;
+            }
+
+        }
+        else {
+            if(whiteLegalMoves.canMove(fromSquare,toSquare)) {
+                isLegal = true;
+            }
+            else {
+                isLegal = false;
+            }
+        }
+        return isLegal;
+
+    }
+
+
+    public void movePiece(int fromSquare, int toSquare) {
         setPieceAt(toSquare, getPieceAt(fromSquare));
         setPieceAt(fromSquare, null);
         getPieceAt(toSquare).position = toSquare;
     }
 
-    //get and set a square info
-    public Square getPieceAt(int position){
+    public void movePiece(Move move){
+        movePiece(move.from,move.to);
+    }
 
-        return squares[position];
+    //get and set a square info
+    public Piece getPieceAt(int position){
+
+        return pieces[position];
     }
-    public Square getPieceAt(int file, int rank){
-        return squares[GetPosition(file,rank)];
+    public Piece getPieceAt(int file, int rank){
+        return pieces[GetPosition(file,rank)];
     }
-    public void setPieceAt(int position, Square square){
-        squares[position] = square;
+    public void setPieceAt(int position, Piece piece){
+        pieces[position] = piece;
     }
     public boolean isSquareEmpty(int position){return getPieceAt(position) == null;}
-    public Player getPieceOwner(int position){
-        if(getPieceAt(position).color == playerAtBottom.color){
-            return playerAtBottom;
-        }
-        else{
-            return playerAtTop;
-        }
-    }
+    public boolean isPieceBlackAt(int position){return pieces[position].color == Piece.Color.BLACK;}
+    public boolean isPieceWhiteAt(int position){return pieces[position].color == Piece.Color.WHITE;}
     public static int GetPosition(int file, int rank) {
         if(file < FILE_A || file > FILE_H) return OUT_OF_BOARD;
         if(rank < RANK_1 || rank > RANK_8) return OUT_OF_BOARD;
@@ -199,7 +279,6 @@ public class ChessBoard {
         Log.d(Game.DEBUG, stringBuilder.toString());
     }
 
-    public void finishGame(Square.Color color) {
-        drawing.finishGame(color);
-    }
+
+
 }

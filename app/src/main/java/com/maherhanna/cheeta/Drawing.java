@@ -1,14 +1,15 @@
 package com.maherhanna.cheeta;
 
-import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 
 public class Drawing {
+    public Game game;
     private GameActivity activity;
     private ChessboardView chessboardView;
     public ChessBoard chessBoard;
+
 
 
     //pieces drawables
@@ -37,12 +38,13 @@ public class Drawing {
     private static float SCALE_PIECES_DOWN = 0.8f;
     //----------------
 
+    boolean waitingForHuman = false;
+
 
     public Drawing(GameActivity activity) {
         this.activity = activity;
         this.chessboardView = this.activity.findViewById(R.id.chessboardView);
         this.chessboardView.drawing = this;
-
 
         blackPawnBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.black_pawn);
         whitePawnBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.white_pawn);
@@ -126,9 +128,9 @@ public class Drawing {
     public void drawAllPieces() {
 
         for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-            Square square = chessBoard.getPieceAt(i);
-            if (square != null) {
-                drawPiece(square, i, 0, 0);
+            Piece piece = chessBoard.getPieceAt(i);
+            if (piece != null) {
+                drawPiece(piece, i, 0, 0);
             }
         }
 
@@ -141,10 +143,10 @@ public class Drawing {
 
     public void dragPiece(int position, float xOffset, float yOffset) {
         for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-            Square square = chessBoard.getPieceAt(i);
-            if (square != null) {
+            Piece piece = chessBoard.getPieceAt(i);
+            if (piece != null) {
                 if (i == position) continue;
-                drawPiece(square, i, 0f, 0f);
+                drawPiece(piece, i, 0f, 0f);
             }
         }
         drawPiece(chessBoard.getPieceAt(position), position, xOffset, yOffset);
@@ -154,9 +156,9 @@ public class Drawing {
 
 
 
-    private void drawPiece(Square square, int position, float xOffset, float yOffset) {
+    private void drawPiece(Piece piece, int position, float xOffset, float yOffset) {
 
-        RectF pieceRect = getPieceDrawingRect(square, position);
+        RectF pieceRect = getPieceDrawingRect(piece, position);
         pieceRect.offset(xOffset, yOffset);
 
         //limit the piece drawing rect inside the board
@@ -174,40 +176,40 @@ public class Drawing {
             pieceRect.offset(0,-(pieceRect.bottom - chessBoardViewRect.height()));
         }
         //---------------------
-        switch (square.type) {
+        switch (piece.type) {
 
             case PAWN:
-                if (square.color == Square.Color.WHITE)
+                if (piece.color == Piece.Color.WHITE)
                     chessboardView.drawPiece(whitePawnBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackPawnBitmap, pieceRect);
                 break;
             case ROOK:
-                if (square.color == Square.Color.WHITE)
+                if (piece.color == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteRookBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackRookBitmap, pieceRect);
                 break;
             case KNIGHT:
-                if (square.color == Square.Color.WHITE)
+                if (piece.color == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteKnightBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackKnightBitmap, pieceRect);
                 break;
             case BISHOP:
-                if (square.color == Square.Color.WHITE)
+                if (piece.color == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteBishopBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackBishopBitmap, pieceRect);
                 break;
             case QUEEN:
-                if (square.color == Square.Color.WHITE)
+                if (piece.color == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteQueenBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackQueenBitmap, pieceRect);
                 break;
             case KING:
-                if (square.color == Square.Color.WHITE)
+                if (piece.color == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteKingBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackKingBitmap, pieceRect);
@@ -216,7 +218,7 @@ public class Drawing {
     }
 
 
-    private RectF getPieceDrawingRect(Square square, int position) {
+    private RectF getPieceDrawingRect(Piece piece, int position) {
         RectF result = new RectF();
         float x = chessBoard.GetFile(position) * squareSize;
         float y = chessBoard.GetRank(position) * squareSize;
@@ -225,7 +227,7 @@ public class Drawing {
         //which has x and y starts at top left corner
         float yOnDrawingBoard = chessBoardViewRect.width() - y - squareSize;
 
-        switch (square.type) {
+        switch (piece.type) {
 
             case PAWN:
                 result = new RectF(pawnDrawingRect);
@@ -257,7 +259,22 @@ public class Drawing {
     }
 
 
-    public void finishGame(Square.Color color) {
-        chessboardView.finishGame(color);
+    public void finishGame(Piece.Color winnerColor) {
+        chessboardView.finishGame(winnerColor);
+    }
+
+    public void waitHumanToPlay() {
+        waitingForHuman = true;
+    }
+    public boolean isWaitingForHumanToPlay(){
+        return waitingForHuman;
+    }
+
+    public void humanPlayed(Move humanMove) {
+        game.humanPlayed(humanMove);
+
+    }
+    public int getGameType(){
+        return game.gameType;
     }
 }

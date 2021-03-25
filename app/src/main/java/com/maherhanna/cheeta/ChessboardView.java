@@ -7,9 +7,6 @@ import android.graphics.*;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     public Drawing drawing;
     private Canvas piecesCanvas;
@@ -86,23 +83,24 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         float x = event.getX();
         float y = event.getY();
 
-        boolean playerAtBottomPlayed = false;
+        boolean humanPlayed = false;
+        Move humanMove = null;
 
         //keep x an y inside chessboard
         x = Math.max(0, Math.min(getWidth() - 1, x));
         y = Math.max(0, Math.min(getHeight() - 1, y));
 
         int targetPosition = getTouchSquare(x, y);
-        Square targetSquare = drawing.chessBoard.getPieceAt(targetPosition);
+        Piece targetPiece = drawing.chessBoard.getPieceAt(targetPosition);
 
         switch (action) {
 
             case MotionEvent.ACTION_DOWN:
 
 
-                if (targetSquare == null ||
-                        drawing.chessBoard.playerAtBottom instanceof ComputerPlayer ||
-                        targetSquare.color == drawing.chessBoard.playerAtTop.color) {
+                if (targetPiece == null ||
+                        drawing.getGameType() == Game.COMPUTER_COMPUTER ||
+                        drawing.chessBoard.isPieceForPlayerAtTop(targetPosition)) {
                     draggedSquare = -1;
                     break;
                 }
@@ -132,6 +130,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                 xTouchStart = 0;
                 yTouchStart = 0;
 
+
                 if (draggedSquare != ChessBoard.OUT_OF_BOARD) {
                     //check for selecting a square
                     if (draggedSquare == targetPosition) {
@@ -145,8 +144,9 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                     }
 
 
-                    if (drawing.chessBoard.requestMove(draggedSquare, targetPosition)) {
-                        playerAtBottomPlayed = true;
+                    if (drawing.chessBoard.canMove(draggedSquare, targetPosition)) {
+                        humanPlayed = true;
+                        humanMove = new Move(draggedSquare,targetPosition);
                         drawing.clearBoard();
                         drawing.drawMoveHighlight(new Move(draggedSquare, targetPosition));
                         drawing.drawAllPieces();
@@ -166,8 +166,9 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                 if (selectedSquare != ChessBoard.OUT_OF_BOARD) {
                     if (selectedSquare == targetPosition) break;
                     //check for selecting other piece
-                    if (drawing.chessBoard.requestMove(selectedSquare, targetPosition)) {
-                        playerAtBottomPlayed = true;
+                    if (drawing.chessBoard.canMove(selectedSquare, targetPosition)) {
+                        humanPlayed = true;
+                        humanMove = new Move(selectedSquare,targetPosition);
                         drawing.clearBoard();
                         drawing.drawMoveHighlight(new Move(selectedSquare, targetPosition));
                         drawing.drawAllPieces();
@@ -176,8 +177,8 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                         break;
 
                     } else {
-                        if (targetSquare == null) break;
-                        if (targetSquare.color == drawing.chessBoard.playerAtBottom.color) {
+                        if (targetPiece == null) break;
+                        if (targetPiece.color == drawing.chessBoard.bottomPlayerColor) {
                             selectedSquare = targetPosition;
                             clearBoard();
                             drawing.drawHighlight(selectedSquare);
@@ -199,23 +200,17 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
             default:
 
         }
-        if (playerAtBottomPlayed == true) {
-            new Timer().schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    drawing.chessBoard.playerAtTop.play();
+        if(humanPlayed){
+            drawing.humanPlayed(humanMove);
 
-                }
-            }, ((ComputerPlayer) drawing.chessBoard.playerAtTop).playDelay);
         }
-
 
         return true;
 
     }
 
     private int getTouchSquare(float x, float y) {
-        //cheass board y starts at bottom
+        //chess board y starts at bottom
         y = getHeight() - y - 1;
         int touchFile = (int) Math.floor(x / drawing.squareSize);
         int touchRank = (int) Math.floor(y / drawing.squareSize);
@@ -230,7 +225,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         }
     }
 
-    public void finishGame(Square.Color color) {
+    public void finishGame(Piece.Color color) {
         AlertDialog gameFinishedDialog = new AlertDialog.Builder(getContext()).create();
         gameFinishedDialog.setTitle("Game finished");
         gameFinishedDialog.setMessage(color.toString() + " Won");

@@ -1,49 +1,67 @@
 package com.maherhanna.cheeta;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class Piece {
-    private Square square;
-    private ArrayList<Integer> moves;
-    public ArrayList<Integer> legalMoves;
+    public Type type;
+    public Color color;
+    public int position;
 
+    public Piece(Type type, Color color, int position) {
+        this.type = type;
+        this.color = color;
+        this.position = position;
 
-    public Piece(Square square){
-        this.square = new Square(square);
-        moves = new ArrayList<>();
-        moves.add(square.position);
-        legalMoves = new ArrayList<>();
-    }
-
-    public Piece(Square.Type type, Square.Color color, int position){
-        this(new Square(type,color,position));
 
     }
 
-
-
-    protected void updateLegalMoves(LegalMovesChecker legalMovesChecker,boolean kingInCheck){
-        legalMoves.clear();
-        legalMoves = legalMovesChecker.getLegalMoves(this,kingInCheck);
+    public Piece(Piece p) {
+        this.type = p.type;
+        this.color = p.color;
+        this.position = p.position;
 
     }
 
-    public void moveTo(int newPosition){
-        this.square.position = newPosition;
-        moves.add(newPosition);
+    public int getPosition(){return position;}
+    public int getFile(){return position % 8;}
+    public int getRank(){return position / 8;}
+    public int offset(int file, int rank){
+        int newFile = getFile() + file;
+        int newRank = getRank() + rank;
+        if(newFile < ChessBoard.FILE_A || newFile > ChessBoard.FILE_H) return ChessBoard.OUT_OF_BOARD;
+        if(newRank < ChessBoard.RANK_1 || newRank > ChessBoard.RANK_8) return ChessBoard.OUT_OF_BOARD;
+
+        return (newRank * 8 )  + newFile;
     }
-    public boolean canMoveTo(int position){
-        return legalMoves.contains(position);
+    public int offsetFile(int file){
+        return offset(file,0);
+    }
+    public int offsetRank(int rank){
+        return offset(0,rank);
     }
 
-    public Square getSquare(){return this.square;}
 
-    public int getPosition(){
-        return this.square.position;
+
+    public enum Type {PAWN, ROOK, KNIGHT,BISHOP,QUEEN,KING }
+
+    public enum Color {
+        BLACK(0),
+        WHITE(1);
+
+        private final int color;
+        private Color(final int color){this.color = color;}
+        public Color getOpposite(){
+            if(color == 0){
+                return WHITE;
+            }
+            else {
+                return BLACK;
+            }
+        }
+
     }
-    public int getFile(){return ChessBoard.GetFile(square.position);}
-    public int getRank(){return ChessBoard.GetRank(square.position);}
+
 
 
 }
+
+

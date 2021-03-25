@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 
 import java.sql.Time;
@@ -24,31 +25,33 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+
+
+        int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
+        int computerPlayerDelay = getIntent().getIntExtra("computer_player_delay",0);
+
         if(drawing == null){
             drawing = new Drawing(this);
 
         }
-        int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
-        int computerPlayerDelay = getIntent().getIntExtra("computer_player_delay",0);
+
+
         Game game = new Game(drawing,gameType,computerPlayerDelay);
+        drawing.game = game;
 
-        game.start();
-
-
-        /*
-        schedule drawing of pieces after a small amount of time
-        or the pieces will not draw if called immediately
-        after onResume because the chessboardView don't give
-        the correct dimensions yet
-        */
-        new Timer().schedule(new TimerTask() {
+        //delay drawing of board because at the start
+        //of activity the chessboardView is not active yet
+        new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                drawing.clearBoard();
                 drawing.drawAllPieces();
                 drawing.show();
             }
-        }, 100);
-        //------------------------------
+        },100);
+
+        game.start();
 
     }
 

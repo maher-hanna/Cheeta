@@ -11,9 +11,8 @@ public class LegalMovesChecker {
 
     public ArrayList<Integer> getLegalMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> pieceLegalMoves = new ArrayList<Integer>();
-        Square square = piece.getSquare();
 
-        switch (square.type) {
+        switch (piece.type) {
             case PAWN:
                 pieceLegalMoves = getPawnMoves(piece,kingInCheck);
                 break;
@@ -41,14 +40,13 @@ public class LegalMovesChecker {
 
     private ArrayList<Integer> getKnightMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> knightLegalMoves = new ArrayList<Integer>();
-        Square knight = piece.getSquare();
 
         int fileOffset = 0;
         int rankOffset = 0;
 
         for (fileOffset = -2; fileOffset <= 2; fileOffset += 4) {
             for (rankOffset = -1; rankOffset <= 1; rankOffset += 2) {
-                int targetSquare = knight.offset(fileOffset, rankOffset);
+                int targetSquare = piece.offset(fileOffset, rankOffset);
                 if (targetSquare == ChessBoard.OUT_OF_BOARD) {
                     continue;
                 }
@@ -56,7 +54,7 @@ public class LegalMovesChecker {
                     knightLegalMoves.add(targetSquare);
                 } else {
                     //check take
-                    if (knight.color != chessBoard.getPieceAt(targetSquare).color) {
+                    if (piece.color != chessBoard.getPieceAt(targetSquare).color) {
                         knightLegalMoves.add(targetSquare);
                     }
                 }
@@ -65,7 +63,7 @@ public class LegalMovesChecker {
 
         for (rankOffset = -2; rankOffset <= 2; rankOffset += 4) {
             for (fileOffset = -1; fileOffset <= 1; fileOffset += 2) {
-                int targetSquare = knight.offset(fileOffset, rankOffset);
+                int targetSquare = piece.offset(fileOffset, rankOffset);
                 if (targetSquare == ChessBoard.OUT_OF_BOARD) {
                     continue;
                 }
@@ -73,7 +71,7 @@ public class LegalMovesChecker {
                     knightLegalMoves.add(targetSquare);
                 } else {
                     //check take
-                    if (knight.color != chessBoard.getPieceAt(targetSquare).color) {
+                    if (piece.color != chessBoard.getPieceAt(targetSquare).color) {
                         knightLegalMoves.add(targetSquare);
                     }
                 }
@@ -86,14 +84,13 @@ public class LegalMovesChecker {
 
     private ArrayList<Integer> getKingMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> kingLegalMoves = new ArrayList<Integer>();
-        Square king = piece.getSquare();
 
         int fileOffset = 0;
         int rankOffset = 0;
 
         for (fileOffset = -1; fileOffset <= 1; fileOffset++) {
             for (rankOffset = -1; rankOffset <= 1; rankOffset++) {
-                int adjacentSquare = king.offset(fileOffset, rankOffset);
+                int adjacentSquare = piece.offset(fileOffset, rankOffset);
                 if (adjacentSquare == ChessBoard.OUT_OF_BOARD) {
                     continue;
                 }
@@ -101,7 +98,7 @@ public class LegalMovesChecker {
                     kingLegalMoves.add(adjacentSquare);
                 } else {
                     //check take
-                    if (king.color != chessBoard.getPieceAt(adjacentSquare).color) {
+                    if (piece.color != chessBoard.getPieceAt(adjacentSquare).color) {
                         kingLegalMoves.add(adjacentSquare);
                     }
                 }
@@ -112,7 +109,6 @@ public class LegalMovesChecker {
 
     private ArrayList<Integer> getQueenMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> queenLegalMoves = new ArrayList<Integer>();
-        Square queen = piece.getSquare();
 
         int fileOffset = 0;
         int rankOffset = 0;
@@ -122,13 +118,13 @@ public class LegalMovesChecker {
         rankOffset = 1;
 
         while (true) {
-            int upperRightSquare = queen.offset(fileOffset, rankOffset);
+            int upperRightSquare = piece.offset(fileOffset, rankOffset);
             if (upperRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(upperRightSquare)) {
                 queenLegalMoves.add(upperRightSquare);
             } else {
                 //check take
-                if (queen.color != chessBoard.getPieceAt(upperRightSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(upperRightSquare).color) {
                     queenLegalMoves.add(upperRightSquare);
                 }
                 break;
@@ -143,13 +139,13 @@ public class LegalMovesChecker {
         fileOffset = -1;
         rankOffset = 1;
         while (true) {
-            int upperLeftSquare = queen.offset(fileOffset, rankOffset);
+            int upperLeftSquare = piece.offset(fileOffset, rankOffset);
             if (upperLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(upperLeftSquare)) {
                 queenLegalMoves.add(upperLeftSquare);
             } else {
                 //check take
-                if (queen.color != chessBoard.getPieceAt(upperLeftSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(upperLeftSquare).color) {
                     queenLegalMoves.add(upperLeftSquare);
                 }
                 break;
@@ -165,13 +161,13 @@ public class LegalMovesChecker {
         fileOffset = 1;
         rankOffset = -1;
         while (true) {
-            int lowerRightSquare = queen.offset(fileOffset, rankOffset);
+            int lowerRightSquare = piece.offset(fileOffset, rankOffset);
             if (lowerRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(lowerRightSquare)) {
                 queenLegalMoves.add(lowerRightSquare);
             } else {
                 //check take
-                if (queen.color != chessBoard.getPieceAt(lowerRightSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(lowerRightSquare).color) {
                     queenLegalMoves.add(lowerRightSquare);
                 }
                 break;
@@ -186,13 +182,13 @@ public class LegalMovesChecker {
         fileOffset = -1;
         rankOffset = -1;
         while (true) {
-            int lowerLeftSquare = queen.offset(fileOffset, rankOffset);
+            int lowerLeftSquare = piece.offset(fileOffset, rankOffset);
             if (lowerLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(lowerLeftSquare)) {
                 queenLegalMoves.add(lowerLeftSquare);
             } else {
                 //check take
-                if (queen.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
                     queenLegalMoves.add(lowerLeftSquare);
                 }
                 break;
@@ -208,13 +204,13 @@ public class LegalMovesChecker {
         //to the right of the queen
         int offset = 1;
         while (true) {
-            int toRightSquare = queen.offsetFile(offset);
+            int toRightSquare = piece.offsetFile(offset);
             if (toRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toRightSquare)) {
                 queenLegalMoves.add(toRightSquare);
             } else {
                 //check take
-                if (queen.color != chessBoard.getPieceAt(toRightSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(toRightSquare).color) {
                     queenLegalMoves.add(toRightSquare);
                 }
                 break;
@@ -225,13 +221,13 @@ public class LegalMovesChecker {
         //to the left of the queen
         offset = -1;
         while (true) {
-            int toLeftSquare = queen.offsetFile(offset);
+            int toLeftSquare = piece.offsetFile(offset);
             if (toLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toLeftSquare)) {
                 queenLegalMoves.add(toLeftSquare);
             } else {
                 //check take
-                if (queen.color != chessBoard.getPieceAt(toLeftSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(toLeftSquare).color) {
                     queenLegalMoves.add(toLeftSquare);
 
                 }
@@ -247,13 +243,13 @@ public class LegalMovesChecker {
         //to the top of the queen
         offset = 1;
         while (true) {
-            int toTopSquare = queen.offsetRank(offset);
+            int toTopSquare = piece.offsetRank(offset);
             if (toTopSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toTopSquare)) {
                 queenLegalMoves.add(toTopSquare);
             } else {
                 //check take
-                if (queen.color != chessBoard.getPieceAt(toTopSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(toTopSquare).color) {
                     queenLegalMoves.add(toTopSquare);
                 }
                 break;
@@ -264,13 +260,13 @@ public class LegalMovesChecker {
         //to the bottom of the queen
         offset = -1;
         while (true) {
-            int toBottomSquare = queen.offsetRank(offset);
+            int toBottomSquare = piece.offsetRank(offset);
             if (toBottomSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toBottomSquare)) {
                 queenLegalMoves.add(toBottomSquare);
             } else {
                 //check take
-                if (queen.color != chessBoard.getPieceAt(toBottomSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(toBottomSquare).color) {
                     queenLegalMoves.add(toBottomSquare);
                 }
 
@@ -287,19 +283,18 @@ public class LegalMovesChecker {
 
     private ArrayList<Integer> getPawnMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> pawnLegalMoves = new ArrayList<Integer>();
-        Square pawn = piece.getSquare();
 
         //the player at the bottom of chess board
-        if (pawn.color == chessBoard.playerAtBottom.color) {
-            if (pawn.getRank() == ChessBoard.RANK_8) return pawnLegalMoves;
+        if (piece.color == chessBoard.bottomPlayerColor) {
+            if (piece.getRank() == ChessBoard.RANK_8) return pawnLegalMoves;
 
             //check if the upper square is empty
-            int oneSquareUp = pawn.offsetRank(1);
+            int oneSquareUp = piece.offsetRank(1);
             if (chessBoard.isSquareEmpty(oneSquareUp)) {
                 pawnLegalMoves.add(oneSquareUp);
                 //first move for the pawn can be tow squares up
-                if (pawn.getRank() == ChessBoard.RANK_2) {
-                    int twoSquaresUp = pawn.offsetRank(2);
+                if (piece.getRank() == ChessBoard.RANK_2) {
+                    int twoSquaresUp = piece.offsetRank(2);
                     if (chessBoard.isSquareEmpty(twoSquaresUp)) {
                         pawnLegalMoves.add(twoSquaresUp);
                     }
@@ -308,15 +303,15 @@ public class LegalMovesChecker {
 
 
             //check for takes
-            int upperRightSquare = pawn.offset(1, 1);
+            int upperRightSquare = piece.offset(1, 1);
             if (upperRightSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(upperRightSquare)) {
-                if (chessBoard.getPieceAt(upperRightSquare).color != pawn.color) {
+                if (chessBoard.getPieceAt(upperRightSquare).color != piece.color) {
                     pawnLegalMoves.add(upperRightSquare);
                 }
             }
-            int upperLeftSquare = pawn.offset(-1, 1);
+            int upperLeftSquare = piece.offset(-1, 1);
             if (upperLeftSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(upperLeftSquare)) {
-                if (chessBoard.getPieceAt(upperLeftSquare).color != pawn.color) {
+                if (chessBoard.getPieceAt(upperLeftSquare).color != piece.color) {
                     pawnLegalMoves.add(upperLeftSquare);
                 }
             }
@@ -325,16 +320,16 @@ public class LegalMovesChecker {
 
 
         //the player at the top of chess board
-        if (pawn.color == chessBoard.playerAtTop.color) {
-            if (pawn.getRank() == ChessBoard.RANK_1) return pawnLegalMoves;
+        if (piece.color == chessBoard.topPlayerColor) {
+            if (piece.getRank() == ChessBoard.RANK_1) return pawnLegalMoves;
 
             //check if the lower square is empty
-            int oneSquareDown = pawn.offsetRank(-1);
+            int oneSquareDown = piece.offsetRank(-1);
             if (chessBoard.isSquareEmpty(oneSquareDown)) {
                 pawnLegalMoves.add(oneSquareDown);
                 //first move for the pawn can be tow squares up
-                if (pawn.getRank() == ChessBoard.RANK_7) {
-                    int twoSquaresDown = pawn.offsetRank(-2);
+                if (piece.getRank() == ChessBoard.RANK_7) {
+                    int twoSquaresDown = piece.offsetRank(-2);
                     if (chessBoard.isSquareEmpty(twoSquaresDown)) {
                         pawnLegalMoves.add(twoSquaresDown);
                     }
@@ -343,15 +338,15 @@ public class LegalMovesChecker {
 
 
             //check for takes
-            int lowerRightSquare = pawn.offset(1, -1);
+            int lowerRightSquare = piece.offset(1, -1);
             if (lowerRightSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(lowerRightSquare)) {
-                if (chessBoard.getPieceAt(lowerRightSquare).color != pawn.color) {
+                if (chessBoard.getPieceAt(lowerRightSquare).color != piece.color) {
                     pawnLegalMoves.add(lowerRightSquare);
                 }
             }
-            int lowerLeftSquare = pawn.offset(-1, -1);
+            int lowerLeftSquare = piece.offset(-1, -1);
             if (lowerLeftSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(lowerLeftSquare)) {
-                if (chessBoard.getPieceAt(lowerLeftSquare).color != pawn.color) {
+                if (chessBoard.getPieceAt(lowerLeftSquare).color != piece.color) {
                     pawnLegalMoves.add(lowerLeftSquare);
                 }
             }
@@ -364,20 +359,19 @@ public class LegalMovesChecker {
 
     private ArrayList<Integer> getRookMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> rookLegalMoves = new ArrayList<Integer>();
-        Square rook = piece.getSquare();
         int offset = 0;
 
         //check the rank
         //to the right of the rook
         offset = 1;
         while (true) {
-            int toRightSquare = rook.offsetFile(offset);
+            int toRightSquare = piece.offsetFile(offset);
             if (toRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toRightSquare)) {
                 rookLegalMoves.add(toRightSquare);
             } else {
                 //check take
-                if (rook.color != chessBoard.getPieceAt(toRightSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(toRightSquare).color) {
                     rookLegalMoves.add(toRightSquare);
                 }
                 break;
@@ -388,13 +382,13 @@ public class LegalMovesChecker {
         //to the left of the rook
         offset = -1;
         while (true) {
-            int toLeftSquare = rook.offsetFile(offset);
+            int toLeftSquare = piece.offsetFile(offset);
             if (toLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toLeftSquare)) {
                 rookLegalMoves.add(toLeftSquare);
             } else {
                 //check take
-                if (rook.color != chessBoard.getPieceAt(toLeftSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(toLeftSquare).color) {
                     rookLegalMoves.add(toLeftSquare);
 
                 }
@@ -410,13 +404,13 @@ public class LegalMovesChecker {
         //to the top of the rook
         offset = 1;
         while (true) {
-            int toTopSquare = rook.offsetRank(offset);
+            int toTopSquare = piece.offsetRank(offset);
             if (toTopSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toTopSquare)) {
                 rookLegalMoves.add(toTopSquare);
             } else {
                 //check take
-                if (rook.color != chessBoard.getPieceAt(toTopSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(toTopSquare).color) {
                     rookLegalMoves.add(toTopSquare);
                 }
                 break;
@@ -427,13 +421,13 @@ public class LegalMovesChecker {
         //to the bottom of the rook
         offset = -1;
         while (true) {
-            int toBottomSquare = rook.offsetRank(offset);
+            int toBottomSquare = piece.offsetRank(offset);
             if (toBottomSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toBottomSquare)) {
                 rookLegalMoves.add(toBottomSquare);
             } else {
                 //check take
-                if (rook.color != chessBoard.getPieceAt(toBottomSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(toBottomSquare).color) {
                     rookLegalMoves.add(toBottomSquare);
                 }
 
@@ -450,7 +444,6 @@ public class LegalMovesChecker {
 
     private ArrayList<Integer> getBishopMoves(Piece piece, boolean kingInCheck) {
         ArrayList<Integer> bishopLegalMoves = new ArrayList<Integer>();
-        Square bishop = piece.getSquare();
 
         int fileOffset = 0;
         int rankOffset = 0;
@@ -460,13 +453,13 @@ public class LegalMovesChecker {
         rankOffset = 1;
 
         while (true) {
-            int upperRightSquare = bishop.offset(fileOffset, rankOffset);
+            int upperRightSquare = piece.offset(fileOffset, rankOffset);
             if (upperRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(upperRightSquare)) {
                 bishopLegalMoves.add(upperRightSquare);
             } else {
                 //check take
-                if (bishop.color != chessBoard.getPieceAt(upperRightSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(upperRightSquare).color) {
                     bishopLegalMoves.add(upperRightSquare);
                 }
                 break;
@@ -481,13 +474,13 @@ public class LegalMovesChecker {
         fileOffset = -1;
         rankOffset = 1;
         while (true) {
-            int upperLeftSquare = bishop.offset(fileOffset, rankOffset);
+            int upperLeftSquare = piece.offset(fileOffset, rankOffset);
             if (upperLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(upperLeftSquare)) {
                 bishopLegalMoves.add(upperLeftSquare);
             } else {
                 //check take
-                if (bishop.color != chessBoard.getPieceAt(upperLeftSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(upperLeftSquare).color) {
                     bishopLegalMoves.add(upperLeftSquare);
                 }
                 break;
@@ -503,13 +496,13 @@ public class LegalMovesChecker {
         fileOffset = 1;
         rankOffset = -1;
         while (true) {
-            int lowerRightSquare = bishop.offset(fileOffset, rankOffset);
+            int lowerRightSquare = piece.offset(fileOffset, rankOffset);
             if (lowerRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(lowerRightSquare)) {
                 bishopLegalMoves.add(lowerRightSquare);
             } else {
                 //check take
-                if (bishop.color != chessBoard.getPieceAt(lowerRightSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(lowerRightSquare).color) {
                     bishopLegalMoves.add(lowerRightSquare);
                 }
                 break;
@@ -524,13 +517,13 @@ public class LegalMovesChecker {
         fileOffset = -1;
         rankOffset = -1;
         while (true) {
-            int lowerLeftSquare = bishop.offset(fileOffset, rankOffset);
+            int lowerLeftSquare = piece.offset(fileOffset, rankOffset);
             if (lowerLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(lowerLeftSquare)) {
                 bishopLegalMoves.add(lowerLeftSquare);
             } else {
                 //check take
-                if (bishop.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
+                if (piece.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
                     bishopLegalMoves.add(lowerLeftSquare);
                 }
                 break;

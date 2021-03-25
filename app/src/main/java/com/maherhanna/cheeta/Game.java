@@ -1,14 +1,16 @@
 package com.maherhanna.cheeta;
 
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
+import android.os.Handler;
 
-class Game{
+import java.util.Random;
+
+class Game {
     public static final String DEBUG = "game";
     private Drawing drawing;
     private ChessBoard chessBoard;
-    private int gameType;
+    private ComputerAi computerAi;
+    public int gameType;
+    private int computerPlayDelayMilli;
 
 
     //game between
@@ -16,85 +18,87 @@ class Game{
     public static final int COMPUTER_COMPUTER = 1;
     //------------
 
-    public Game(Drawing drawing,int gameType,int computerPlayerDelay){
+    public Game(Drawing drawing, int gameType, int computerPlayerDelay) {
         this.drawing = drawing;
-        this.chessBoard = new ChessBoard(drawing);
-        Player playerAtTop = null;
-        Player playerAtBottom = null;
         this.gameType = gameType;
+        this.computerPlayDelayMilli = computerPlayerDelay;
+        computerAi = new ComputerAi();
 
-        //give players random piece color
+        //give players random color
         Random random = new Random();
         int i = random.nextInt(2);
-        if(i == 0)
-        {
+        if (i == 0) {
+            this.chessBoard = new ChessBoard(drawing, Piece.Color.BLACK);
+        } else {
+            this.chessBoard = new ChessBoard(drawing, Piece.Color.WHITE);
 
-            playerAtTop = new ComputerPlayer(Square.Color.WHITE,chessBoard, playerAtBottom,computerPlayerDelay);
-            if(gameType == Game.COMPUTER_HUMAN){
-                playerAtBottom = new HumanPlayer(Square.Color.BLACK,chessBoard, playerAtTop);
-            }
-            else {
-                playerAtBottom = new ComputerPlayer(Square.Color.BLACK,chessBoard, playerAtTop,computerPlayerDelay);
-
-            }
-
-        }
-        else {
-            playerAtTop = new ComputerPlayer(Square.Color.BLACK,chessBoard, playerAtBottom,computerPlayerDelay);
-            if(gameType == Game.COMPUTER_HUMAN){
-                playerAtBottom = new HumanPlayer(Square.Color.WHITE,chessBoard, playerAtTop);
-            }
-            else {
-                playerAtBottom = new ComputerPlayer(Square.Color.WHITE,chessBoard, playerAtTop,computerPlayerDelay);
-
-            }
         }
         //--------------------------------
 
-        chessBoard.setPlayers(playerAtBottom, playerAtTop);
         chessBoard.setUpBoard();
-        playerAtTop.opponent = playerAtBottom;
-        playerAtBottom.opponent = playerAtTop;
+
         drawing.chessBoard = this.chessBoard;
 
     }
 
-    public void start(){
-        /* start playing with the white pieces player
-        and if the starting player is the computer
-        add a delay to his first move because the computer
-        updates the drawing of chess board after moving
-        his piece and at first the chess board view
-        is not ready yet for drawing */
+    public void start() {
 
-        if(chessBoard.playerAtBottom.color == Square.Color.WHITE){
-            if(chessBoard.playerAtBottom instanceof ComputerPlayer){
-                new Timer().schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        chessBoard.playerAtBottom.play();
-                    }
-                },1000);
-            }
-            else{
-                chessBoard.playerAtBottom.play();
 
+        drawing.clearBoard();
+        drawing.drawAllPieces();
+        drawing.show();
+
+        if (gameType == COMPUTER_HUMAN) {
+            if (chessBoard.topPlayerColor == Piece.Color.WHITE) {
+                playComputer(Piece.Color.WHITE);
+            } else {
+                drawing.waitHumanToPlay();
             }
+        } else {
+
+
+            playComputer(Piece.Color.WHITE);
+
+
         }
-        else {
-            if(chessBoard.playerAtTop instanceof ComputerPlayer){
-                new Timer().schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        chessBoard.playerAtTop.play();
-                    }
-                },1000);
-            }
-            else{
-                chessBoard.playerAtTop.play();
 
-            }
+    }
+
+
+    public void humanPlayed(Move humanMove) {
+        chessBoard.movePiece(humanMove);
+        chessBoard.updateBlackLegalMoves(false);
+        chessBoard.updateWhiteLegalMoves(false);
+        playComputer(chessBoard.topPlayerColor);
+
+    }
+
+    public void computerPlayed(Move computerMove, Piece.Color color) {
+        Piece.Color opponentColor = color.getOpposite();
+        if (gameType == COMPUTER_COMPUTER) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    playComputer(opponentColor);
+                }
+            }, computerPlayDelayMilli);
+
+        } else {
+            drawing.waitHumanToPlay();
         }
     }
+
+    public void playComputer(Piece.Color color) {
+        Move computerMove = computerAi.getMove(chessBoard, color);
+        chessBoard.movePiece(computerMove);
+        chessBoard.updateBlackLegalMoves(false);
+        chessBoard.updateWhiteLegalMoves(false);
+        drawing.clearBoard();
+        drawing.drawMoveHighlight(computerMove);
+        drawing.drawAllPieces();
+        drawing.show();
+        computerPlayed(computerMove, color);
+    }
+
 
 }
