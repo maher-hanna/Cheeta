@@ -1,6 +1,7 @@
 package com.maherhanna.cheeta;
 
 import android.util.Log;
+import android.view.CollapsibleActionView;
 
 import java.util.ArrayList;
 
@@ -34,6 +35,12 @@ public class ChessBoard {
 
     LegalMoves blackLegalMoves;
     LegalMoves whiteLegalMoves;
+
+    public ChessBoard(ChessBoard copy){
+        this.pieces = copy.pieces.clone();
+        this.bottomPlayerColor = copy.bottomPlayerColor;
+        this.topPlayerColor = copy.topPlayerColor;
+    }
 
 
     public ChessBoard(Drawing drawing, Piece.Color bottomPlayerColor) {
@@ -72,24 +79,23 @@ public class ChessBoard {
 
     }
 
-    public void updateBlackLegalMoves(boolean b) {
-        LegalMovesChecker legalMovesChecker = new LegalMovesChecker(this);
-        ArrayList<Integer> blackPositions = getBlackPositions();
-        for(int i = 0 ; i < blackPositions.size();i++) {
-            blackLegalMoves.addMovesFor(blackPositions.get(i),
-                    legalMovesChecker.getLegalMoves(getPieceAt(blackPositions.get(i)),false));
-        }
+    public void updateBlackLegalMoves(boolean kingInCheck) {
+           blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this,kingInCheck);
     }
 
 
-    public void updateWhiteLegalMoves(boolean b) {
-        LegalMovesChecker legalMovesChecker = new LegalMovesChecker(this);
-        ArrayList<Integer> whitePositions = getWhitePositions();
-        for(int i = 0 ; i < whitePositions.size();i++) {
-            whiteLegalMoves.addMovesFor(whitePositions.get(i),
-                    legalMovesChecker.getLegalMoves(getPieceAt(whitePositions.get(i)),false));
-        }
+    public void updateWhiteLegalMoves(boolean kingInCheck) {
+        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this,kingInCheck);
 
+    }
+
+    public void updateLegalMovesFor(Piece.Color playerColor,boolean kingInCheck){
+        if(playerColor == Piece.Color.WHITE){
+            updateWhiteLegalMoves(kingInCheck);
+        }
+        else{
+            updateBlackLegalMoves(kingInCheck);
+        }
     }
 
     public ArrayList<Integer> getBlackPositions() {
@@ -199,6 +205,27 @@ public class ChessBoard {
 
 
 
+    public boolean isKingInCheck(Piece.Color kingColor){
+        if(kingColor == Piece.Color.WHITE){
+            return blackLegalMoves.contains(getKingPosition(kingColor));
+
+        }
+        else {
+            return whiteLegalMoves.contains(getKingPosition(kingColor));
+        }
+    }
+
+    public int getKingPosition(Piece.Color kingColor){
+        int kingPosition = OUT_OF_BOARD;
+        for(int i = MIN_POSITION; i <= MAX_POSITION; i++){
+            Piece piece = getPieceAt(i);
+            if(piece != null && piece.type == Piece.Type.KING && piece.color == kingColor){
+                kingPosition =  i;
+                break;
+            }
+        }
+        return kingPosition;
+    }
 
     public boolean canMove(int fromSquare, int toSquare) {
         boolean isLegal = false;
@@ -243,7 +270,12 @@ public class ChessBoard {
         return pieces[GetPosition(file,rank)];
     }
     public void setPieceAt(int position, Piece piece){
-        pieces[position] = piece;
+        if(piece == null)
+        {
+            pieces[position] = null;
+            return;
+        }
+        pieces[position] = new Piece(piece);
     }
     public boolean isSquareEmpty(int position){return getPieceAt(position) == null;}
     public boolean isPieceBlackAt(int position){return pieces[position].color == Piece.Color.BLACK;}

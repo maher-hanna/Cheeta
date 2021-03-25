@@ -67,7 +67,7 @@ class Game {
 
     public void humanPlayed(Move humanMove) {
         chessBoard.movePiece(humanMove);
-        chessBoard.updateBlackLegalMoves(false);
+        chessBoard.updateLegalMovesFor(chessBoard.bottomPlayerColor,false);
         chessBoard.updateWhiteLegalMoves(false);
         playComputer(chessBoard.topPlayerColor);
 

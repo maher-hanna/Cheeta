@@ -9,6 +9,9 @@ public class LegalMoves {
     public LegalMoves(){
         legalMoves = new HashMap<>();
     }
+    public LegalMoves(LegalMoves copy){
+        this.legalMoves = new HashMap<>(copy.legalMoves);
+    }
 
     public void addMovesFor(int position, ArrayList<Integer> moves){
         legalMoves.put(position,moves);
@@ -20,8 +23,8 @@ public class LegalMoves {
 
     public boolean contains(int position){
         boolean found = false;
-        for(int i = 0; i < legalMoves.size();i++){
-            if(legalMoves.get(i).contains(position)){
+        for(ArrayList<Integer> pieceLegalMoves: legalMoves.values()){
+            if(pieceLegalMoves.contains(position)){
                 found = true;
                 break;
             }
