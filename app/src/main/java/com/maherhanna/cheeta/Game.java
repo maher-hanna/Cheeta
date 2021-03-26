@@ -68,7 +68,8 @@ class Game {
     public void humanPlayed(Move humanMove) {
         chessBoard.movePiece(humanMove);
         chessBoard.updateLegalMovesFor(chessBoard.bottomPlayerColor,false);
-        chessBoard.updateWhiteLegalMoves(false);
+        Piece.Color opponentColor = chessBoard.topPlayerColor;
+        chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
         playComputer(chessBoard.topPlayerColor);
 
     }
@@ -91,8 +92,9 @@ class Game {
     public void playComputer(Piece.Color color) {
         Move computerMove = computerAi.getMove(chessBoard, color);
         chessBoard.movePiece(computerMove);
-        chessBoard.updateBlackLegalMoves(false);
-        chessBoard.updateWhiteLegalMoves(false);
+        chessBoard.updateLegalMovesFor(color,false);
+        Piece.Color opponentColor = color.getOpposite();
+        chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
         drawing.clearBoard();
         drawing.drawMoveHighlight(computerMove);
         drawing.drawAllPieces();

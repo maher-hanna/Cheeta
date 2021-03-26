@@ -116,6 +116,15 @@ public class ChessBoard {
         return whitePositions;
     }
 
+    public ArrayList<Integer> getPositionsFor(Piece.Color color){
+        if(color == Piece.Color.WHITE){
+            return getWhitePositions();
+        }
+        else{
+            return getBlackPositions();
+        }
+    }
+
     public ArrayList<Integer> getPositionsOf(Piece.Color color){
         if(color == Piece.Color.WHITE){
             return getWhitePositions();
