@@ -89,7 +89,7 @@ class Game {
         if(isGameFinished(chessBoard.bottomPlayerColor))
         {
             chessBoard.setGameFinished();
-            drawing.finishGame(chessBoard.bottomPlayerColor);
+            drawing.finishGame(chessBoard.bottomPlayerColor,gameType,true);
             return;
         } else{
             playComputer(chessBoard.topPlayerColor);
@@ -101,7 +101,8 @@ class Game {
     public void computerPlayed(Move computerMove, Piece.Color color) {
         if(isGameFinished(color)){
             chessBoard.setGameFinished();
-            drawing.finishGame(color);
+            drawing.finishGame(color,gameType,false);
+
             return;
         }
 

@@ -228,10 +228,19 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         }
     }
 
-    public void finishGame(Piece.Color color) {
+    public void finishGame(Piece.Color color,int gameType,boolean humanWon) {
         AlertDialog gameFinishedDialog = new AlertDialog.Builder(getContext()).create();
         gameFinishedDialog.setTitle(getContext().getString(R.string.game_finished));
-        gameFinishedDialog.setMessage(color.toString() + " Won");
+        String message = "";
+        if(gameType == Game.COMPUTER_COMPUTER){
+            if(color == Piece.Color.WHITE) message = getContext().getString(R.string.message_white_won);
+            else message = getContext().getString(R.string.message_black_won);
+        }
+        else {
+            if(humanWon) message = getContext().getString(R.string.message_you_won);
+            else message = getContext().getString(R.string.message_computer_won);
+        }
+        gameFinishedDialog.setMessage(message);
         gameFinishedDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
                 new DialogInterface.OnClickListener() {
                     @Override

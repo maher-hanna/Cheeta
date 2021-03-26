@@ -29,7 +29,6 @@ public class GameActivity extends AppCompatActivity {
 
 
         int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
-        int computerPlayerDelay = getIntent().getIntExtra("computer_player_delay",0);
 
         if(drawing == null){
             drawing = new Drawing(this);
@@ -37,7 +36,7 @@ public class GameActivity extends AppCompatActivity {
         }
 
 
-        Game game = new Game(drawing,gameType,computerPlayerDelay);
+        Game game = new Game(drawing,gameType,500);
         drawing.game = game;
 
         //delay drawing of board because at the start

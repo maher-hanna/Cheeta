@@ -1,11 +1,15 @@
 <resources>
     <string name="app_name">Cheeta</string>
     <string name="start_a_new_game">Start a new game</string>
-    <string name="game_between">Game between:</string>
+    <string name="game_between">Game type:</string>
     <string name="finish_game_message">Do you want to finish the game</string>
     <string name="game_finished">Game Finished</string>
-    <string-array name="game_between_types">
-        <item>Computer vs Human</item>
-        <item>Computer vs Computer</item>
-    </string-array>
+    <string name="message_white_won">White Won The Game</string>
+    <string name="message_black_won">Black Won The Game</string>
+    <string name="message_you_won">You Won The Game</string>
+    <string name="message_computer_won">Computer Won The Game</string>
+
+    <string name="me_vs_computer">Me vs Computer</string>
+    <string name="computer_vs_computer">Computer vs Computer</string>
+
 </resources>

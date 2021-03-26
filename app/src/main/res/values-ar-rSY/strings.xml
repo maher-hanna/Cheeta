@@ -2,7 +2,13 @@
 <resources>
     <string name="app_name">شيتا</string>
     <string name="start_a_new_game">ابدأ لعبة جديدة</string>
-    <string name="game_between">اللعب بين</string>
+    <string name="game_between">نوع اللعبة</string>
     <string name="finish_game_message">هل تريد حقا إنهاء هذه اللعبة</string>
     <string name="game_finished">انتهت اللعبة</string>
+    <string name="message_white_won">فاز الأبيض باللعبة</string>
+    <string name="message_black_won">فاز الأسود باللعبة</string>
+    <string name="message_you_won">لقد فزت باللعبة</string>
+    <string name="message_computer_won">فاز الكمبيوتر باللعبة</string>
+    <string name="me_vs_computer">أنا ضد الكمبيوتر</string>
+    <string name="computer_vs_computer">كمبيوتر ضد كمبيوتر</string>
 </resources>

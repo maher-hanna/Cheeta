@@ -259,8 +259,8 @@ public class Drawing {
     }
 
 
-    public void finishGame(Piece.Color winnerColor) {
-        chessboardView.finishGame(winnerColor);
+    public void finishGame(Piece.Color winnerColor,int gameType,boolean humanWon) {
+        chessboardView.finishGame(winnerColor,gameType,humanWon);
     }
 
     public void waitHumanToPlay() {
