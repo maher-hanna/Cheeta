@@ -36,7 +36,7 @@ public class LegalMovesChecker {
     private static boolean isKingExposedToCheck(ChessBoard chessBoard, Piece.Color kingColor) {
         LegalMoves legalMoves = new LegalMoves();
         ArrayList<Integer> opponentPositions;
-        opponentPositions = chessBoard.getPositionsFor(kingColor);
+        opponentPositions = chessBoard.getPositionsFor(kingColor.getOpposite());
 
         for (int i = 0; i < opponentPositions.size(); i++) {
             int position = opponentPositions.get(i);
