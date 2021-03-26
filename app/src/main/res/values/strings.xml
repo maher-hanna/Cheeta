@@ -3,6 +3,7 @@
     <string name="start_a_new_game">Start a new game</string>
     <string name="game_between">Game between:</string>
     <string name="finish_game_message">Do you want to finish the game</string>
+    <string name="game_finished">Game Finished</string>
     <string-array name="game_between_types">
         <item>Computer vs Human</item>
         <item>Computer vs Computer</item>

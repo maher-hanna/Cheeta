@@ -4,4 +4,5 @@
     <string name="start_a_new_game">ابدأ لعبة جديدة</string>
     <string name="game_between">اللعب بين</string>
     <string name="finish_game_message">هل تريد حقا إنهاء هذه اللعبة</string>
+    <string name="game_finished">انتهت اللعبة</string>
 </resources>

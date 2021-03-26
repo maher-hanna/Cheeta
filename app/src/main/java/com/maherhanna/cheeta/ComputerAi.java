@@ -6,7 +6,7 @@ import java.util.Random;
 public class ComputerAi {
     public Move getMove(ChessBoard chessBoard, Piece.Color color){
         Random random = new Random();
-        ArrayList<Integer> piecesPositions = chessBoard.getPositionsOf(color);
+        ArrayList<Integer> piecesPositions = chessBoard.getPositionsFor(color);
         int numPieces = piecesPositions.size();
         int numOfLegalMoves = 0;
         int randomPieceIndex = 0;

@@ -35,12 +35,16 @@ public class ChessBoard {
 
     LegalMoves blackLegalMoves;
     LegalMoves whiteLegalMoves;
+    private boolean gameFinished = false;
 
     public ChessBoard(ChessBoard copy){
         this.pieces = copy.pieces.clone();
         this.bottomPlayerColor = copy.bottomPlayerColor;
         this.topPlayerColor = copy.topPlayerColor;
+        this.gameFinished = copy.gameFinished;
     }
+
+
 
 
     public ChessBoard(Drawing drawing, Piece.Color bottomPlayerColor) {
@@ -77,6 +81,14 @@ public class ChessBoard {
         updateWhiteLegalMoves(false);
         updateBlackLegalMoves(false);
 
+    }
+
+    public boolean isGameFinished(){
+       return gameFinished;
+    }
+
+    public void setGameFinished(){
+        gameFinished = true;
     }
 
     public void updateBlackLegalMoves(boolean kingInCheck) {
@@ -125,14 +137,15 @@ public class ChessBoard {
         }
     }
 
-    public ArrayList<Integer> getPositionsOf(Piece.Color color){
+    public LegalMoves getLegalMovesFor(Piece.Color color){
         if(color == Piece.Color.WHITE){
-            return getWhitePositions();
+            return whiteLegalMoves;
         }
-        else {
-            return getBlackPositions();
+        else{
+            return blackLegalMoves;
         }
     }
+
 
     public ArrayList<Integer> getLegalMovesFor(int position){
         if(getPieceAt(position).color == Piece.Color.WHITE){

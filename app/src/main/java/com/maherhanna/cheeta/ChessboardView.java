@@ -79,6 +79,9 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+
+        if(drawing.chessBoard.isGameFinished()) return true;
+
         int action = event.getAction();
         float x = event.getX();
         float y = event.getY();
@@ -227,7 +230,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
     public void finishGame(Piece.Color color) {
         AlertDialog gameFinishedDialog = new AlertDialog.Builder(getContext()).create();
-        gameFinishedDialog.setTitle("Game finished");
+        gameFinishedDialog.setTitle(getContext().getString(R.string.game_finished));
         gameFinishedDialog.setMessage(color.toString() + " Won");
         gameFinishedDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
                 new DialogInterface.OnClickListener() {

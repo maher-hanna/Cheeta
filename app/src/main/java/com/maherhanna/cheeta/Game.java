@@ -13,6 +13,7 @@ class Game {
     private int computerPlayDelayMilli;
 
 
+
     //game between
     public static final int COMPUTER_HUMAN = 0;
     public static final int COMPUTER_COMPUTER = 1;
@@ -41,6 +42,7 @@ class Game {
 
     }
 
+
     public void start() {
 
 
@@ -64,17 +66,45 @@ class Game {
 
     }
 
+    public boolean isGameFinished(Piece.Color lastPlayed){
+        boolean isFinished = false;
+        Piece.Color currentToPlayColor = lastPlayed.getOpposite();
+        LegalMoves currentToPlayLegalMoves = chessBoard.getLegalMovesFor(currentToPlayColor);
+        if(currentToPlayLegalMoves.getNumberOfMoves() == 0){
+            if(chessBoard.isKingInCheck(currentToPlayColor)){
+                isFinished = true;
+            }
+        }
+        return isFinished;
+
+    }
+
 
     public void humanPlayed(Move humanMove) {
         chessBoard.movePiece(humanMove);
         chessBoard.updateLegalMovesFor(chessBoard.bottomPlayerColor,false);
         Piece.Color opponentColor = chessBoard.topPlayerColor;
         chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
-        playComputer(chessBoard.topPlayerColor);
+
+        if(isGameFinished(chessBoard.bottomPlayerColor))
+        {
+            chessBoard.setGameFinished();
+            drawing.finishGame(chessBoard.bottomPlayerColor);
+            return;
+        } else{
+            playComputer(chessBoard.topPlayerColor);
+
+        }
 
     }
 
     public void computerPlayed(Move computerMove, Piece.Color color) {
+        if(isGameFinished(color)){
+            chessBoard.setGameFinished();
+            drawing.finishGame(color);
+            return;
+        }
+
         Piece.Color opponentColor = color.getOpposite();
         if (gameType == COMPUTER_COMPUTER) {
             new Handler().postDelayed(new Runnable() {

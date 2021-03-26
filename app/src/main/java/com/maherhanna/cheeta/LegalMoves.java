@@ -39,6 +39,13 @@ public class LegalMoves {
         else {
             return false;
         }
+    }
 
+    public int getNumberOfMoves(){
+        int numberOfMoves = 0;
+        for(ArrayList<Integer> pieceLegalMoves: legalMoves.values()){
+            numberOfMoves += pieceLegalMoves.size();
+        }
+        return numberOfMoves;
     }
 }
