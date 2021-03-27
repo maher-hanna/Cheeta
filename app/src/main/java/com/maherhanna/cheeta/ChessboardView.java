@@ -100,7 +100,6 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
             case MotionEvent.ACTION_DOWN:
 
-
                 if (targetPiece == null ||
                         drawing.getGameType() == Game.COMPUTER_COMPUTER ||
                         drawing.chessBoard.isPieceForPlayerAtTop(targetPosition)) {
@@ -154,6 +153,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                         drawing.drawMoveHighlight(new Move(draggedSquare, targetPosition));
                         drawing.drawAllPieces();
                         draggedSquare = -1;
+                        selectedSquare = -1;
                         drawing.show();
                         break;
                     }
