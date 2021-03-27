@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -14,7 +15,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class GameActivity extends AppCompatActivity {
-    Drawing drawing;
+    Drawing drawing = null;
+    Game game = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,24 +24,24 @@ public class GameActivity extends AppCompatActivity {
         setContentView(R.layout.activity_game);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
+
+        drawing = new Drawing(this);
+
+        game = new Game(drawing,gameType,500);
+        drawing.game = game;
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-
-
-        int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
-
-        if(drawing == null){
-            drawing = new Drawing(this);
-
+        if(game.paused){
+            game.paused = false;
+            game.resume();
+            return;
         }
-
-
-        Game game = new Game(drawing,gameType,500);
-        drawing.game = game;
 
         //delay drawing of board because at the start
         //of activity the chessboardView is not active yet
@@ -54,6 +56,12 @@ public class GameActivity extends AppCompatActivity {
 
         game.start();
 
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        game.paused = true;
     }
 
     @Override

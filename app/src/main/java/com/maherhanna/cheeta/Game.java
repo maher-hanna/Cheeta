@@ -5,12 +5,14 @@ import android.os.Handler;
 import java.util.Random;
 
 class Game {
-    public static final String DEBUG = "game";
+    public static final String DEBUG = "Cheeta_Debug";
     private Drawing drawing;
     private ChessBoard chessBoard;
     private ComputerAi computerAi;
     public int gameType;
     private int computerPlayDelayMilli;
+    public boolean paused ;
+    Piece.Color currentPlayer;
 
 
 
@@ -24,6 +26,7 @@ class Game {
         this.gameType = gameType;
         this.computerPlayDelayMilli = computerPlayerDelay;
         computerAi = new ComputerAi();
+        paused = false;
 
         //give players random color
         Random random = new Random();
@@ -44,17 +47,13 @@ class Game {
 
 
     public void start() {
-
-
-        drawing.clearBoard();
-        drawing.drawAllPieces();
-        drawing.show();
-
         if (gameType == COMPUTER_HUMAN) {
             if (chessBoard.topPlayerColor == Piece.Color.WHITE) {
                 playComputer(Piece.Color.WHITE);
             } else {
+                currentPlayer = chessBoard.bottomPlayerColor;
                 drawing.waitHumanToPlay();
+                
             }
         } else {
 
@@ -65,6 +64,19 @@ class Game {
         }
 
     }
+
+    public void resume(){
+        if (gameType == COMPUTER_HUMAN) {
+            if(currentPlayer == chessBoard.bottomPlayerColor){
+                drawing.waitHumanToPlay();
+                return;
+            }
+        }
+        playComputer(currentPlayer);
+
+
+    }
+
 
     public boolean isGameFinished(Piece.Color lastPlayed){
         boolean isFinished = false;
@@ -82,6 +94,7 @@ class Game {
 
     public void humanPlayed(Move humanMove) {
         chessBoard.movePiece(humanMove);
+        currentPlayer = chessBoard.bottomPlayerColor.getOpposite();
         chessBoard.updateLegalMovesFor(chessBoard.bottomPlayerColor,false);
         Piece.Color opponentColor = chessBoard.topPlayerColor;
         chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
@@ -99,6 +112,7 @@ class Game {
     }
 
     public void computerPlayed(Move computerMove, Piece.Color color) {
+        currentPlayer = color.getOpposite();
         if(isGameFinished(color)){
             chessBoard.setGameFinished();
             drawing.finishGame(color,gameType,false);
@@ -121,6 +135,7 @@ class Game {
     }
 
     public void playComputer(Piece.Color color) {
+        if(paused) return;
         Move computerMove = computerAi.getMove(chessBoard, color);
         chessBoard.movePiece(computerMove);
         chessBoard.updateLegalMovesFor(color,false);
@@ -132,6 +147,7 @@ class Game {
         drawing.show();
         computerPlayed(computerMove, color);
     }
+
 
 
 }
