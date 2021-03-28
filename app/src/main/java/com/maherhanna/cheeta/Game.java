@@ -142,7 +142,7 @@ class Game {
         Piece.Color opponentColor = color.getOpposite();
         chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
         drawing.clearBoard();
-        drawing.drawMoveHighlight(computerMove);
+        drawing.drawAllPieces(computerMove);
         drawing.drawAllPieces();
         drawing.show();
         computerPlayed(computerMove, color);

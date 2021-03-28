@@ -11,7 +11,6 @@ public class Drawing {
     public ChessBoard chessBoard;
 
 
-
     //pieces drawables
     private final Bitmap blackPawnBitmap;
     private final Bitmap whitePawnBitmap;
@@ -102,28 +101,23 @@ public class Drawing {
     }
 
 
-    public void clearBoard(){
+    public void clearBoard() {
         chessboardView.clearBoard();
     }
 
 
-
-    public void drawHighlight(int square){
+    private void drawHighlight(int square) {
         float highlightLeft = ChessBoard.GetFile(square) * squareSize;
         float highlightTop = (8 - ChessBoard.GetRank(square) - 1) * squareSize;
         float highlightRight = highlightLeft + squareSize;
         float highlightBottom = highlightTop + squareSize;
-        RectF highlightRect = new RectF(highlightLeft,highlightTop,highlightRight,highlightBottom);
+        RectF highlightRect = new RectF(highlightLeft, highlightTop, highlightRight, highlightBottom);
 
         chessboardView.drawHighlight(highlightRect);
     }
 
 
-    public void drawMoveHighlight(Move move){
-            drawHighlight(move.from);
-            drawHighlight(move.to);
 
-    }
 
     public void drawAllPieces() {
 
@@ -136,24 +130,46 @@ public class Drawing {
 
     }
 
-    public void show(){
+    public void drawAllPieces(Move move) {
+        clearBoard();
+        drawHighlight(move.from);
+        drawHighlight(move.to);
+        drawAllPieces();
+        show();
+    }
+
+    public void drawAllPieces(int highlight){
+        clearBoard();
+        drawHighlight(highlight);
+        drawAllPieces();
+        show();
+    }
+
+
+
+    public void show() {
         chessboardView.invalidate();
     }
 
 
-    public void dragPiece(int position, float xOffset, float yOffset) {
+    public void dragPiece(int source, int target, float xOffset, float yOffset) {
+        clearBoard();
+        drawHighlight(source);
+        drawHighlight(target);
         for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
             Piece piece = chessBoard.getPieceAt(i);
             if (piece != null) {
-                if (i == position) continue;
+                if (i == source) continue;
                 drawPiece(piece, i, 0f, 0f);
             }
         }
-        drawPiece(chessBoard.getPieceAt(position), position, xOffset, yOffset);
-
-
+        drawPiece(chessBoard.getPieceAt(source), source, xOffset, yOffset);
+        show();
     }
 
+    public boolean canMove(int from, int to) {
+        return chessBoard.canMove(from, to);
+    }
 
 
     private void drawPiece(Piece piece, int position, float xOffset, float yOffset) {
@@ -162,18 +178,18 @@ public class Drawing {
         pieceRect.offset(xOffset, yOffset);
 
         //limit the piece drawing rect inside the board
-        if(pieceRect.left < 0){
-            pieceRect.offset(-pieceRect.left,0);
+        if (pieceRect.left < 0) {
+            pieceRect.offset(-pieceRect.left, 0);
         }
 
-        if(pieceRect.top < 0){
-            pieceRect.offset(0,-pieceRect.top);
+        if (pieceRect.top < 0) {
+            pieceRect.offset(0, -pieceRect.top);
         }
-        if(pieceRect.right > chessBoardViewRect.width()){
-            pieceRect.offset(-(pieceRect.right - chessBoardViewRect.width()),0);
+        if (pieceRect.right > chessBoardViewRect.width()) {
+            pieceRect.offset(-(pieceRect.right - chessBoardViewRect.width()), 0);
         }
-        if(pieceRect.bottom > chessBoardViewRect.height()){
-            pieceRect.offset(0,-(pieceRect.bottom - chessBoardViewRect.height()));
+        if (pieceRect.bottom > chessBoardViewRect.height()) {
+            pieceRect.offset(0, -(pieceRect.bottom - chessBoardViewRect.height()));
         }
         //---------------------
         switch (piece.type) {
@@ -259,14 +275,15 @@ public class Drawing {
     }
 
 
-    public void finishGame(Piece.Color winnerColor,int gameType,boolean humanWon) {
-        chessboardView.finishGame(winnerColor,gameType,humanWon);
+    public void finishGame(Piece.Color winnerColor, int gameType, boolean humanWon) {
+        chessboardView.finishGame(winnerColor, gameType, humanWon);
     }
 
     public void waitHumanToPlay() {
         waitingForHuman = true;
     }
-    public boolean isWaitingForHumanToPlay(){
+
+    public boolean isWaitingForHumanToPlay() {
         return waitingForHuman;
     }
 
@@ -274,7 +291,28 @@ public class Drawing {
         game.humanPlayed(humanMove);
 
     }
-    public int getGameType(){
+
+    public int getGameType() {
         return game.gameType;
+    }
+
+    public boolean isGameFinished() {
+        return chessBoard.isGameFinished();
+    }
+
+    public Piece getPieceAt(int position) {
+        return chessBoard.getPieceAt(position);
+    }
+
+    public boolean canSelect(int position) {
+        Piece targetPiece = chessBoard.getPieceAt(position);
+
+        if (targetPiece == null ||
+                getGameType() == Game.COMPUTER_COMPUTER ||
+                chessBoard.isPieceForPlayerAtTop(position)) {
+            return false;
+        }
+        return true;
+
     }
 }
