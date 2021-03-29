@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 
+import java.util.ArrayList;
+
 public class Drawing {
     public Game game;
     private GameActivity activity;
@@ -107,16 +109,19 @@ public class Drawing {
 
 
     private void drawHighlight(int square) {
-        float highlightLeft = ChessBoard.GetFile(square) * squareSize;
-        float highlightTop = (8 - ChessBoard.GetRank(square) - 1) * squareSize;
-        float highlightRight = highlightLeft + squareSize;
-        float highlightBottom = highlightTop + squareSize;
-        RectF highlightRect = new RectF(highlightLeft, highlightTop, highlightRight, highlightBottom);
-
+        RectF highlightRect = getSquareRect(square);
         chessboardView.drawHighlight(highlightRect);
     }
 
+    private RectF getSquareRect(int square){
+        float squareLeft = ChessBoard.GetFile(square) * squareSize;
+        float squareTop = (8 - ChessBoard.GetRank(square) - 1) * squareSize;
+        float squareRight = squareLeft + squareSize;
+        float squareBottom = squareTop + squareSize;
+        RectF squareRect = new RectF(squareLeft, squareTop, squareRight, squareBottom);
+        return squareRect;
 
+    }
 
 
     public void drawAllPieces() {
@@ -304,6 +309,10 @@ public class Drawing {
         return chessBoard.getPieceAt(position);
     }
 
+    public ArrayList<Integer> getLegalMoves(int square){
+        return chessBoard.getLegalMovesFor(square);
+    }
+
     public boolean canSelect(int position) {
         Piece targetPiece = chessBoard.getPieceAt(position);
 
@@ -314,5 +323,11 @@ public class Drawing {
         }
         return true;
 
+    }
+
+    public void drawLegalSquare(int square) {
+        RectF squareRect = getSquareRect(square);
+
+        chessboardView.drawLegalSquare(squareRect,!chessBoard.isSquareEmpty(square));
     }
 }

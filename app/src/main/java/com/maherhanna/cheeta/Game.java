@@ -94,6 +94,7 @@ class Game {
 
     public void humanPlayed(Move humanMove) {
         chessBoard.movePiece(humanMove);
+        drawing.drawAllPieces(humanMove);
         currentPlayer = chessBoard.bottomPlayerColor.getOpposite();
         chessBoard.updateLegalMovesFor(chessBoard.bottomPlayerColor,false);
         Piece.Color opponentColor = chessBoard.topPlayerColor;
@@ -112,6 +113,7 @@ class Game {
     }
 
     public void computerPlayed(Move computerMove, Piece.Color color) {
+        drawing.drawAllPieces(computerMove);
         currentPlayer = color.getOpposite();
         if(isGameFinished(color)){
             chessBoard.setGameFinished();
@@ -141,10 +143,6 @@ class Game {
         chessBoard.updateLegalMovesFor(color,false);
         Piece.Color opponentColor = color.getOpposite();
         chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
-        drawing.clearBoard();
-        drawing.drawAllPieces(computerMove);
-        drawing.drawAllPieces();
-        drawing.show();
         computerPlayed(computerMove, color);
     }
 

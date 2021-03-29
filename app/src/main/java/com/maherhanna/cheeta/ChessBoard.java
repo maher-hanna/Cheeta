@@ -30,6 +30,7 @@ public class ChessBoard {
 
 
     private Piece[] pieces;
+    private ArrayList<Move> moves;
     Piece.Color bottomPlayerColor;
     Piece.Color topPlayerColor;
 
@@ -42,6 +43,7 @@ public class ChessBoard {
         this.bottomPlayerColor = copy.bottomPlayerColor;
         this.topPlayerColor = copy.topPlayerColor;
         this.gameFinished = copy.gameFinished;
+        this.moves = (ArrayList<Move>)copy.moves.clone();
     }
 
 
@@ -56,6 +58,7 @@ public class ChessBoard {
         this.bottomPlayerColor = bottomPlayerColor;
         this.topPlayerColor = bottomPlayerColor.getOpposite();
 
+        moves = new ArrayList<Move>();
         blackLegalMoves = new LegalMoves();
         whiteLegalMoves = new LegalMoves();
 
@@ -277,6 +280,7 @@ public class ChessBoard {
         setPieceAt(toSquare, getPieceAt(fromSquare));
         setPieceAt(fromSquare, null);
         getPieceAt(toSquare).position = toSquare;
+        moves.add(new Move(fromSquare,toSquare));
     }
 
     public void movePiece(Move move){

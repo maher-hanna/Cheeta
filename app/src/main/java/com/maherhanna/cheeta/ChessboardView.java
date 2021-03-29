@@ -7,11 +7,15 @@ import android.graphics.*;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
+import java.util.ArrayList;
+
 class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     public Drawing drawing;
     private Canvas piecesCanvas;
     private Bitmap piecesBitmap;
     private Paint highlightPaint;
+    private Paint legalSquarePaint;
+    private Paint legalSquarePaintHasPiece;
 
     //for dragging a piece
     int draggedSquare;
@@ -32,6 +36,16 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         highlightPaint = new Paint();
         highlightPaint.setColor(Color.YELLOW);
         highlightPaint.setAlpha(100);
+
+        legalSquarePaint = new Paint();
+        legalSquarePaint.setColor(Color.GRAY);
+        legalSquarePaint.setAlpha(150);
+
+        legalSquarePaintHasPiece = new Paint();
+        legalSquarePaintHasPiece.setColor(Color.GRAY);
+        legalSquarePaintHasPiece.setAlpha(150);
+        legalSquarePaintHasPiece.setStrokeWidth(15);
+        legalSquarePaintHasPiece.setStyle(Paint.Style.STROKE);
 
 
     }
@@ -184,6 +198,15 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
             default:
 
         }
+
+        if(selectedSquare != ChessBoard.OUT_OF_BOARD || draggedSquare != ChessBoard.OUT_OF_BOARD){
+            int sourceSquare = Math.max(selectedSquare,draggedSquare);
+            ArrayList<Integer> squareLegalMoves = drawing.getLegalMoves(sourceSquare);
+            for(int square: squareLegalMoves){
+                drawing.drawLegalSquare(square);
+            }
+
+        }
         if(humanPlayed){
             drawing.humanPlayed(humanMove);
 
@@ -230,5 +253,20 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                     }
                 });
         gameFinishedDialog.show();
+    }
+
+    public void drawLegalSquare(RectF squareRect, boolean hasPiece) {
+        if (piecesCanvas != null) {
+
+            if(hasPiece){
+
+                piecesCanvas.drawCircle(squareRect.centerX(),squareRect.centerY(),
+                        squareRect.width() / 2.3f,legalSquarePaintHasPiece);
+            } else{
+                piecesCanvas.drawCircle(squareRect.centerX(),squareRect.centerY(),
+                        squareRect.width() /4,legalSquarePaint);
+
+            }
+        }
     }
 }
