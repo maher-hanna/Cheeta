@@ -1,7 +1,6 @@
 package com.maherhanna.cheeta;
 
 import android.util.Log;
-import android.view.CollapsibleActionView;
 
 import java.util.ArrayList;
 
@@ -30,7 +29,7 @@ public class ChessBoard {
 
 
     private Piece[] pieces;
-    private ArrayList<Move> moves;
+    public ChessboardMoves moves;
     Piece.Color bottomPlayerColor;
     Piece.Color topPlayerColor;
 
@@ -43,7 +42,7 @@ public class ChessBoard {
         this.bottomPlayerColor = copy.bottomPlayerColor;
         this.topPlayerColor = copy.topPlayerColor;
         this.gameFinished = copy.gameFinished;
-        this.moves = (ArrayList<Move>)copy.moves.clone();
+        this.moves = new ChessboardMoves(copy.moves);
     }
 
 
@@ -58,7 +57,7 @@ public class ChessBoard {
         this.bottomPlayerColor = bottomPlayerColor;
         this.topPlayerColor = bottomPlayerColor.getOpposite();
 
-        moves = new ArrayList<Move>();
+        moves = new ChessboardMoves();
         blackLegalMoves = new LegalMoves();
         whiteLegalMoves = new LegalMoves();
 
@@ -150,12 +149,14 @@ public class ChessBoard {
     }
 
 
+
+
     public ArrayList<Integer> getLegalMovesFor(int position){
         if(getPieceAt(position).color == Piece.Color.WHITE){
-            return whiteLegalMoves.getLegalMovesFor(position);
+            return whiteLegalMoves.getLegalTargetsFor(position);
         }
         else{
-            return blackLegalMoves.getLegalMovesFor(position);
+            return blackLegalMoves.getLegalTargetsFor(position);
         }
     }
 
@@ -277,14 +278,49 @@ public class ChessBoard {
 
 
     public void movePiece(int fromSquare, int toSquare) {
-        setPieceAt(toSquare, getPieceAt(fromSquare));
-        setPieceAt(fromSquare, null);
-        getPieceAt(toSquare).position = toSquare;
-        moves.add(new Move(fromSquare,toSquare));
+        movePiece(new Move(fromSquare,toSquare));
     }
 
     public void movePiece(Move move){
-        movePiece(move.from,move.to);
+        int fromSquare = move.from;
+        int toSquare = move.to;
+        setPieceAt(toSquare, getPieceAt(fromSquare));
+        setPieceAt(fromSquare, null);
+        getPieceAt(toSquare).position = toSquare;
+
+        if(move.isCastling()){
+            int rookPosition;
+            int rookCastlingTarget;
+            if(move.type == Move.Type.CASTLING_kING_SIDE){
+                rookPosition= LegalMovesChecker.getInitialRookKingSide(this,
+                        getPieceAt(move.to).color);
+                if(bottomPlayerColor == Piece.Color.BLACK){
+                    rookCastlingTarget = move.from - 1;
+
+                }
+                else {
+                    rookCastlingTarget = move.from + 1;
+                }
+
+            }
+            else {
+                rookPosition= LegalMovesChecker.getInitialRookQueenSide(this,
+                        getPieceAt(move.to).color);
+                if(bottomPlayerColor == Piece.Color.BLACK){
+                    rookCastlingTarget = move.from + 1;
+                }
+                else {
+                    rookCastlingTarget = move.from - 1;
+
+                }
+            }
+            setPieceAt(rookCastlingTarget, getPieceAt(rookPosition));
+            setPieceAt(rookPosition, null);
+            getPieceAt(rookCastlingTarget).position = rookCastlingTarget;
+        }
+
+        moves.add(move);
+
     }
 
     //get and set a square info
