@@ -19,7 +19,7 @@ public class LegalMovesChecker {
             legalMoves.addMovesFor(position, pieceLegalMoves);
 
         }
-        checkCastling(chessBoard,legalMoves, Piece.Color.BLACK,kingInCheck);
+        checkCastling(chessBoard, legalMoves, Piece.Color.BLACK, kingInCheck);
 
         return legalMoves;
     }
@@ -35,7 +35,7 @@ public class LegalMovesChecker {
 
             legalMoves.addMovesFor(position, pieceLegalMoves);
         }
-        checkCastling(chessBoard,legalMoves, Piece.Color.WHITE,kingInCheck);
+        checkCastling(chessBoard, legalMoves, Piece.Color.WHITE, kingInCheck);
         return legalMoves;
     }
 
@@ -45,26 +45,16 @@ public class LegalMovesChecker {
 
         int initialKingPosition = getInitialKingPosition(chessBoard, color);
         int initialRookKingSidePosition = getInitialRookKingSide(chessBoard, color);
-        int initialRookQueenSidePosition = getInitialRookQueenSide(chessBoard,color);
+        int initialRookQueenSidePosition = getInitialRookQueenSide(chessBoard, color);
         int kingTarget = 0;
         if (canCastleKingSide(chessBoard, color, kingInCheck) == true) {
-            if(chessBoard.bottomPlayerColor == Piece.Color.WHITE){
-                kingTarget = initialKingPosition + 2;
-            }
-            else {
-                kingTarget = initialKingPosition -2;
-            }
-            legalMoves.addMoveFor(initialKingPosition,new Move( initialKingPosition,
+            kingTarget = initialKingPosition + 2;
+            legalMoves.addMoveFor(initialKingPosition, new Move(initialKingPosition,
                     kingTarget, Move.Type.CASTLING_kING_SIDE));
         }
         if (canCastleQueenSide(chessBoard, color, kingInCheck) == true) {
-            if(chessBoard.bottomPlayerColor == Piece.Color.BLACK){
-                kingTarget = initialKingPosition + 2;
-            }
-            else {
-                kingTarget = initialKingPosition - 2;
-            }
-            legalMoves.addMoveFor(initialKingPosition,new Move( initialKingPosition,
+            kingTarget = initialKingPosition - 2;
+            legalMoves.addMoveFor(initialKingPosition, new Move(initialKingPosition,
                     kingTarget, Move.Type.CASTLING_QUEEN_SIDE));
 
         }
@@ -72,73 +62,28 @@ public class LegalMovesChecker {
     }
 
     public static int getInitialRookKingSide(ChessBoard chessBoard, Piece.Color rookColor) {
-        int rookPosition = ChessBoard.OUT_OF_BOARD;
-        if (rookColor == chessBoard.bottomPlayerColor) {
-            if (rookColor == Piece.Color.WHITE) {
-                rookPosition = 7;
-            } else {
-                rookPosition = 0;
-            }
+        if (rookColor == Piece.Color.WHITE) {
+            return 7;
+        } else {
+            return 63;
         }
-        // for player at top of board
-        else {
-            if (rookColor == Piece.Color.WHITE) {
-                rookPosition = 56;
-
-            } else {
-                rookPosition = 63;
-
-            }
-
-        }
-        return rookPosition;
 
     }
 
     public static int getInitialRookQueenSide(ChessBoard chessBoard, Piece.Color rookColor) {
-        int rookPosition = ChessBoard.OUT_OF_BOARD;
-        if (rookColor == chessBoard.bottomPlayerColor) {
-            if (rookColor == Piece.Color.WHITE) {
-                rookPosition = 0;
-            } else {
-                rookPosition = 7;
-            }
+        if (rookColor == Piece.Color.WHITE) {
+            return 0;
+        } else {
+            return 56;
         }
-        // for player at top of board
-        else {
-            if (rookColor == Piece.Color.WHITE) {
-                rookPosition = 63;
-
-            } else {
-                rookPosition = 56;
-
-            }
-
-        }
-        return rookPosition;
     }
 
     public static int getInitialKingPosition(ChessBoard chessBoard, Piece.Color kingColor) {
-        int kingPosition = ChessBoard.OUT_OF_BOARD;
-        if (kingColor == chessBoard.bottomPlayerColor) {
-            if (kingColor == Piece.Color.WHITE) {
-                kingPosition = 4;
-            } else {
-                kingPosition = 3;
-            }
+        if (kingColor == Piece.Color.WHITE) {
+            return 4;
+        } else {
+            return 60;
         }
-        // for player at top of board
-        else {
-            if (kingColor == Piece.Color.WHITE) {
-                kingPosition = 59;
-
-            } else {
-                kingPosition = 60;
-
-            }
-
-        }
-        return kingPosition;
     }
 
 
@@ -206,61 +151,42 @@ public class LegalMovesChecker {
     }
 
 
-
-
     private static boolean canCastleKingSide(ChessBoard chessBoard, Piece.Color color, boolean kingInCheck) {
         if (kingInCheck) {
             return false;
         }
 
         int initialKingPosition = getInitialKingPosition(chessBoard, color);
-        if(chessBoard.isSquareEmpty(initialKingPosition)){
+        if (chessBoard.isSquareEmpty(initialKingPosition)) {
             return false;
         }
 
-        if(chessBoard.moves.hasPieceMoved(initialKingPosition)){
+        if (chessBoard.moves.hasPieceMoved(initialKingPosition)) {
             return false;
         }
 
 
         int initialRookKingSidePosition = getInitialRookKingSide(chessBoard, color);
 
-        if(chessBoard.isSquareEmpty(initialRookKingSidePosition)){
+        if (chessBoard.isSquareEmpty(initialRookKingSidePosition)) {
             return false;
         }
 
         if (chessBoard.moves.hasPieceMoved(initialRookKingSidePosition)) {
             return false;
         }
-        if(chessBoard.bottomPlayerColor == Piece.Color.WHITE){
-            if(!chessBoard.isSquareEmpty(initialKingPosition + 1) ||
-            !chessBoard.isSquareEmpty(initialKingPosition + 2)){
-                return false;
-            }
 
-            LegalMoves opponentLegalMoves = chessBoard.getLegalMovesFor(color.getOpposite());
-
-            if(opponentLegalMoves.contains(initialKingPosition + 1) ||
-                    opponentLegalMoves.contains(initialKingPosition + 2)){
-                return false;
-            }
-        }
-        else {
-            if(!chessBoard.isSquareEmpty(initialKingPosition - 1) ||
-                    !chessBoard.isSquareEmpty(initialKingPosition - 2)){
-                return false;
-            }
-
-            LegalMoves opponentLegalMoves = chessBoard.getLegalMovesFor(color.getOpposite());
-
-            if(opponentLegalMoves.contains(initialKingPosition - 1) ||
-                    opponentLegalMoves.contains(initialKingPosition - 2)){
-                return false;
-            }
-
+        if (!chessBoard.isSquareEmpty(initialKingPosition + 1) ||
+                !chessBoard.isSquareEmpty(initialKingPosition + 2)) {
+            return false;
         }
 
+        LegalMoves opponentLegalMoves = chessBoard.getLegalMovesFor(color.getOpposite());
 
+        if (opponentLegalMoves.contains(initialKingPosition + 1) ||
+                opponentLegalMoves.contains(initialKingPosition + 2)) {
+            return false;
+        }
 
         return true;
     }
@@ -270,7 +196,7 @@ public class LegalMovesChecker {
             return false;
         }
         int initialKingPosition = getInitialKingPosition(chessBoard, color);
-        if(chessBoard.isSquareEmpty(initialKingPosition)){
+        if (chessBoard.isSquareEmpty(initialKingPosition)) {
             return false;
         }
         if (chessBoard.moves.hasPieceMoved(initialKingPosition)) {
@@ -278,41 +204,25 @@ public class LegalMovesChecker {
         }
 
         int initialRookQueenSidePosition = getInitialRookQueenSide(chessBoard, color);
-        if(chessBoard.isSquareEmpty(initialRookQueenSidePosition)){
+        if (chessBoard.isSquareEmpty(initialRookQueenSidePosition)) {
             return false;
         }
-        if (chessBoard.moves.hasPieceMoved( initialRookQueenSidePosition)) {
+        if (chessBoard.moves.hasPieceMoved(initialRookQueenSidePosition)) {
             return false;
         }
 
-        if(chessBoard.bottomPlayerColor == Piece.Color.WHITE){
-            if(!chessBoard.isSquareEmpty(initialKingPosition - 1) ||
-                    !chessBoard.isSquareEmpty(initialKingPosition - 2) ||
-                    !chessBoard.isSquareEmpty(initialKingPosition - 3)){
-                return false;
-            }
 
-            LegalMoves opponentLegalMoves = chessBoard.getLegalMovesFor(color.getOpposite());
-
-            if(opponentLegalMoves.contains(initialKingPosition - 1) ||
-                    opponentLegalMoves.contains(initialKingPosition - 2)){
-                return false;
-            }
+        if (!chessBoard.isSquareEmpty(initialKingPosition - 1) ||
+                !chessBoard.isSquareEmpty(initialKingPosition - 2) ||
+                !chessBoard.isSquareEmpty(initialKingPosition - 3)) {
+            return false;
         }
-        else {
-            if(!chessBoard.isSquareEmpty(initialKingPosition + 1) ||
-                    !chessBoard.isSquareEmpty(initialKingPosition + 2) ||
-                    !chessBoard.isSquareEmpty(initialKingPosition + 3)){
-                return false;
-            }
 
-            LegalMoves opponentLegalMoves = chessBoard.getLegalMovesFor(color.getOpposite());
+        LegalMoves opponentLegalMoves = chessBoard.getLegalMovesFor(color.getOpposite());
 
-            if(opponentLegalMoves.contains(initialKingPosition + 1) ||
-                    opponentLegalMoves.contains(initialKingPosition + 2)){
-                return false;
-            }
-
+        if (opponentLegalMoves.contains(initialKingPosition - 1) ||
+                opponentLegalMoves.contains(initialKingPosition - 2)) {
+            return false;
         }
 
         return true;
@@ -331,11 +241,11 @@ public class LegalMovesChecker {
                     continue;
                 }
                 if (chessBoard.isSquareEmpty(targetSquare)) {
-                    knightLegalMoves.add(new Move(piece.position,targetSquare));
+                    knightLegalMoves.add(new Move(piece.position, targetSquare));
                 } else {
                     //check take
                     if (piece.color != chessBoard.getPieceAt(targetSquare).color) {
-                        knightLegalMoves.add(new Move(piece.position,targetSquare,true));
+                        knightLegalMoves.add(new Move(piece.position, targetSquare, true));
                     }
                 }
             }
@@ -348,11 +258,11 @@ public class LegalMovesChecker {
                     continue;
                 }
                 if (chessBoard.isSquareEmpty(targetSquare)) {
-                    knightLegalMoves.add(new Move(piece.position,targetSquare));
+                    knightLegalMoves.add(new Move(piece.position, targetSquare));
                 } else {
                     //check take
                     if (piece.color != chessBoard.getPieceAt(targetSquare).color) {
-                        knightLegalMoves.add(new Move(piece.position,targetSquare,true));
+                        knightLegalMoves.add(new Move(piece.position, targetSquare, true));
                     }
                 }
             }
@@ -375,11 +285,11 @@ public class LegalMovesChecker {
                     continue;
                 }
                 if (chessBoard.isSquareEmpty(adjacentSquare)) {
-                    kingLegalMoves.add(new Move(piece.position,adjacentSquare));
+                    kingLegalMoves.add(new Move(piece.position, adjacentSquare));
                 } else {
                     //check take
                     if (piece.color != chessBoard.getPieceAt(adjacentSquare).color) {
-                        kingLegalMoves.add(new Move(piece.position,adjacentSquare,true));
+                        kingLegalMoves.add(new Move(piece.position, adjacentSquare, true));
                     }
                 }
             }
@@ -390,7 +300,7 @@ public class LegalMovesChecker {
     }
 
     private static ArrayList<Move> getQueenMoves(ChessBoard chessBoard, Piece piece,
-                                                    boolean kingInCheck) {
+                                                 boolean kingInCheck) {
         ArrayList<Move> queenLegalMoves = new ArrayList<Move>();
 
         int fileOffset = 0;
@@ -404,11 +314,11 @@ public class LegalMovesChecker {
             int upperRightSquare = piece.offset(fileOffset, rankOffset);
             if (upperRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(upperRightSquare)) {
-                queenLegalMoves.add(new Move(piece.position,upperRightSquare));
+                queenLegalMoves.add(new Move(piece.position, upperRightSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(upperRightSquare).color) {
-                    queenLegalMoves.add(new Move(piece.position,upperRightSquare,true));
+                    queenLegalMoves.add(new Move(piece.position, upperRightSquare, true));
                 }
                 break;
 
@@ -425,11 +335,11 @@ public class LegalMovesChecker {
             int upperLeftSquare = piece.offset(fileOffset, rankOffset);
             if (upperLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(upperLeftSquare)) {
-                queenLegalMoves.add(new Move(piece.position,upperLeftSquare));
+                queenLegalMoves.add(new Move(piece.position, upperLeftSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(upperLeftSquare).color) {
-                    queenLegalMoves.add(new Move(piece.position,upperLeftSquare,true));
+                    queenLegalMoves.add(new Move(piece.position, upperLeftSquare, true));
                 }
                 break;
 
@@ -447,11 +357,11 @@ public class LegalMovesChecker {
             int lowerRightSquare = piece.offset(fileOffset, rankOffset);
             if (lowerRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(lowerRightSquare)) {
-                queenLegalMoves.add(new Move(piece.position,lowerRightSquare));
+                queenLegalMoves.add(new Move(piece.position, lowerRightSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(lowerRightSquare).color) {
-                    queenLegalMoves.add(new Move(piece.position,lowerRightSquare,true));
+                    queenLegalMoves.add(new Move(piece.position, lowerRightSquare, true));
                 }
                 break;
 
@@ -468,11 +378,11 @@ public class LegalMovesChecker {
             int lowerLeftSquare = piece.offset(fileOffset, rankOffset);
             if (lowerLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(lowerLeftSquare)) {
-                queenLegalMoves.add(new Move(piece.position,lowerLeftSquare));
+                queenLegalMoves.add(new Move(piece.position, lowerLeftSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
-                    queenLegalMoves.add(new Move(piece.position,lowerLeftSquare,true));
+                    queenLegalMoves.add(new Move(piece.position, lowerLeftSquare, true));
                 }
                 break;
 
@@ -490,11 +400,11 @@ public class LegalMovesChecker {
             int toRightSquare = piece.offsetFile(offset);
             if (toRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toRightSquare)) {
-                queenLegalMoves.add(new Move(piece.position,toRightSquare));
+                queenLegalMoves.add(new Move(piece.position, toRightSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(toRightSquare).color) {
-                    queenLegalMoves.add(new Move(piece.position,toRightSquare,true));
+                    queenLegalMoves.add(new Move(piece.position, toRightSquare, true));
                 }
                 break;
 
@@ -507,11 +417,11 @@ public class LegalMovesChecker {
             int toLeftSquare = piece.offsetFile(offset);
             if (toLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toLeftSquare)) {
-                queenLegalMoves.add(new Move(piece.position,toLeftSquare));
+                queenLegalMoves.add(new Move(piece.position, toLeftSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(toLeftSquare).color) {
-                    queenLegalMoves.add(new Move(piece.position,toLeftSquare,true));
+                    queenLegalMoves.add(new Move(piece.position, toLeftSquare, true));
 
                 }
                 break;
@@ -529,11 +439,11 @@ public class LegalMovesChecker {
             int toTopSquare = piece.offsetRank(offset);
             if (toTopSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toTopSquare)) {
-                queenLegalMoves.add(new Move(piece.position,toTopSquare));
+                queenLegalMoves.add(new Move(piece.position, toTopSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(toTopSquare).color) {
-                    queenLegalMoves.add(new Move(piece.position,toTopSquare,true));
+                    queenLegalMoves.add(new Move(piece.position, toTopSquare, true));
                 }
                 break;
 
@@ -546,11 +456,11 @@ public class LegalMovesChecker {
             int toBottomSquare = piece.offsetRank(offset);
             if (toBottomSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(toBottomSquare)) {
-                queenLegalMoves.add(new Move(piece.position,toBottomSquare));
+                queenLegalMoves.add(new Move(piece.position, toBottomSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(toBottomSquare).color) {
-                    queenLegalMoves.add(new Move(piece.position,toBottomSquare,true));
+                    queenLegalMoves.add(new Move(piece.position, toBottomSquare, true));
                 }
 
                 break;
@@ -565,22 +475,22 @@ public class LegalMovesChecker {
 
 
     private static ArrayList<Move> getPawnMoves(ChessBoard chessBoard, Piece piece,
-                                                   boolean kingInCheck) {
+                                                boolean kingInCheck) {
         ArrayList<Move> pawnLegalMoves = new ArrayList<Move>();
 
         //the player at the bottom of chess board
-        if (piece.color == chessBoard.bottomPlayerColor) {
+        if (piece.color == Piece.Color.WHITE) {
             if (piece.getRank() == ChessBoard.RANK_8) return pawnLegalMoves;
 
             //check if the upper square is empty
             int oneSquareUp = piece.offsetRank(1);
             if (chessBoard.isSquareEmpty(oneSquareUp)) {
-                pawnLegalMoves.add(new Move(piece.position,oneSquareUp));
+                pawnLegalMoves.add(new Move(piece.position, oneSquareUp));
                 //first move for the pawn can be tow squares up
                 if (piece.getRank() == ChessBoard.RANK_2) {
                     int twoSquaresUp = piece.offsetRank(2);
                     if (chessBoard.isSquareEmpty(twoSquaresUp)) {
-                        pawnLegalMoves.add(new Move(piece.position,twoSquaresUp));
+                        pawnLegalMoves.add(new Move(piece.position, twoSquaresUp));
                     }
                 }
             }
@@ -590,13 +500,13 @@ public class LegalMovesChecker {
             int upperRightSquare = piece.offset(1, 1);
             if (upperRightSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(upperRightSquare)) {
                 if (chessBoard.getPieceAt(upperRightSquare).color != piece.color) {
-                    pawnLegalMoves.add(new Move(piece.position,upperRightSquare));
+                    pawnLegalMoves.add(new Move(piece.position, upperRightSquare));
                 }
             }
             int upperLeftSquare = piece.offset(-1, 1);
             if (upperLeftSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(upperLeftSquare)) {
                 if (chessBoard.getPieceAt(upperLeftSquare).color != piece.color) {
-                    pawnLegalMoves.add(new Move(piece.position,upperLeftSquare));
+                    pawnLegalMoves.add(new Move(piece.position, upperLeftSquare));
                 }
             }
         }
@@ -604,13 +514,13 @@ public class LegalMovesChecker {
 
 
         //the player at the top of chess board
-        if (piece.color == chessBoard.topPlayerColor) {
+        if (piece.color == Piece.Color.BLACK) {
             if (piece.getRank() == ChessBoard.RANK_1) return pawnLegalMoves;
 
             //check if the lower square is empty
             int oneSquareDown = piece.offsetRank(-1);
             if (chessBoard.isSquareEmpty(oneSquareDown)) {
-                pawnLegalMoves.add(new Move(piece.position,oneSquareDown));
+                pawnLegalMoves.add(new Move(piece.position, oneSquareDown));
                 //first move for the pawn can be tow squares up
                 if (piece.getRank() == ChessBoard.RANK_7) {
                     int twoSquaresDown = piece.offsetRank(-2);
@@ -625,13 +535,13 @@ public class LegalMovesChecker {
             int lowerRightSquare = piece.offset(1, -1);
             if (lowerRightSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(lowerRightSquare)) {
                 if (chessBoard.getPieceAt(lowerRightSquare).color != piece.color) {
-                    pawnLegalMoves.add(new Move(piece.position, lowerRightSquare,true));
+                    pawnLegalMoves.add(new Move(piece.position, lowerRightSquare, true));
                 }
             }
             int lowerLeftSquare = piece.offset(-1, -1);
             if (lowerLeftSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(lowerLeftSquare)) {
                 if (chessBoard.getPieceAt(lowerLeftSquare).color != piece.color) {
-                    pawnLegalMoves.add(new Move(piece.position, lowerLeftSquare,true));
+                    pawnLegalMoves.add(new Move(piece.position, lowerLeftSquare, true));
                 }
             }
         }
@@ -642,7 +552,7 @@ public class LegalMovesChecker {
     }
 
     private static ArrayList<Move> getRookMoves(ChessBoard chessBoard, Piece piece,
-                                                   boolean kingInCheck) {
+                                                boolean kingInCheck) {
         ArrayList<Move> rookLegalMoves = new ArrayList<Move>();
         int offset = 0;
 
@@ -657,7 +567,7 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(toRightSquare).color) {
-                    rookLegalMoves.add(new Move(piece.position, toRightSquare,true));
+                    rookLegalMoves.add(new Move(piece.position, toRightSquare, true));
                 }
                 break;
 
@@ -674,7 +584,7 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(toLeftSquare).color) {
-                    rookLegalMoves.add(new Move(piece.position, toLeftSquare,true));
+                    rookLegalMoves.add(new Move(piece.position, toLeftSquare, true));
 
                 }
                 break;
@@ -696,7 +606,7 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(toTopSquare).color) {
-                    rookLegalMoves.add(new Move(piece.position, toTopSquare,true));
+                    rookLegalMoves.add(new Move(piece.position, toTopSquare, true));
                 }
                 break;
 
@@ -713,7 +623,7 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(toBottomSquare).color) {
-                    rookLegalMoves.add(new Move(piece.position, toBottomSquare,true));
+                    rookLegalMoves.add(new Move(piece.position, toBottomSquare, true));
                 }
 
                 break;
@@ -729,7 +639,7 @@ public class LegalMovesChecker {
     }
 
     private static ArrayList<Move> getBishopMoves(ChessBoard chessBoard, Piece piece,
-                                                     boolean kingInCheck) {
+                                                  boolean kingInCheck) {
         ArrayList<Move> bishopLegalMoves = new ArrayList<Move>();
 
         int fileOffset = 0;
@@ -747,7 +657,7 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(upperRightSquare).color) {
-                    bishopLegalMoves.add(new Move(piece.position, upperRightSquare,true));
+                    bishopLegalMoves.add(new Move(piece.position, upperRightSquare, true));
                 }
                 break;
 
@@ -768,7 +678,7 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(upperLeftSquare).color) {
-                    bishopLegalMoves.add(new Move(piece.position, upperLeftSquare,true));
+                    bishopLegalMoves.add(new Move(piece.position, upperLeftSquare, true));
                 }
                 break;
 
@@ -786,11 +696,11 @@ public class LegalMovesChecker {
             int lowerRightSquare = piece.offset(fileOffset, rankOffset);
             if (lowerRightSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(lowerRightSquare)) {
-                bishopLegalMoves.add(new Move(piece.position,lowerRightSquare));
+                bishopLegalMoves.add(new Move(piece.position, lowerRightSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(lowerRightSquare).color) {
-                    bishopLegalMoves.add(new Move(piece.position,lowerRightSquare,true));
+                    bishopLegalMoves.add(new Move(piece.position, lowerRightSquare, true));
                 }
                 break;
 
@@ -807,11 +717,11 @@ public class LegalMovesChecker {
             int lowerLeftSquare = piece.offset(fileOffset, rankOffset);
             if (lowerLeftSquare == ChessBoard.OUT_OF_BOARD) break;
             if (chessBoard.isSquareEmpty(lowerLeftSquare)) {
-                bishopLegalMoves.add(new Move(piece.position,lowerLeftSquare));
+                bishopLegalMoves.add(new Move(piece.position, lowerLeftSquare));
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
-                    bishopLegalMoves.add(new Move(piece.position,lowerLeftSquare,true));
+                    bishopLegalMoves.add(new Move(piece.position, lowerLeftSquare, true));
                 }
                 break;
 

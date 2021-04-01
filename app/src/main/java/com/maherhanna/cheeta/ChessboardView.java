@@ -94,7 +94,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
-        if(drawing.isGameFinished()) return true;
+        if (drawing.isGameFinished()) return true;
 
         int action = event.getAction();
         float x = event.getX();
@@ -107,7 +107,10 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         x = Math.max(0, Math.min(getWidth() - 1, x));
         y = Math.max(0, Math.min(getHeight() - 1, y));
 
-        int targetPosition = getTouchSquare(x, y);
+        int touchSquare = getTouchSquare(x, y);
+        int targetPosition = touchSquare;
+        if (drawing.isChessBoardFlipped()) targetPosition = drawing.flip(touchSquare);
+
         Piece targetPiece = drawing.chessBoard.getPieceAt(targetPosition);
 
         switch (action) {
@@ -119,19 +122,21 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
                     break;
                 }
+
                 draggedSquare = targetPosition;
                 selectedSquare = targetPosition;
+
                 xTouchStart = x;
                 yTouchStart = y;
-                drawing.drawAllPieces(targetPosition);
+                drawing.drawAllPieces(touchSquare);
                 break;
 
 
             case MotionEvent.ACTION_MOVE:
 
                 if (draggedSquare != -1) {
-                    drawing.dragPiece(draggedSquare,targetPosition, x - xTouchStart, y - yTouchStart);
 
+                    drawing.dragPiece(draggedSquare, touchSquare, x - xTouchStart, y - yTouchStart);
                 }
                 break;
 
@@ -153,7 +158,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
                     if (drawing.canMove(draggedSquare, targetPosition)) {
                         humanPlayed = true;
-                        humanMove = new Move(draggedSquare,targetPosition);
+                        humanMove = new Move(draggedSquare, targetPosition);
                         drawing.drawAllPieces(humanMove);
                         draggedSquare = -1;
                         selectedSquare = -1;
@@ -172,14 +177,14 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                     //check for selecting other piece
                     if (drawing.chessBoard.canMove(selectedSquare, targetPosition)) {
                         humanPlayed = true;
-                        humanMove = new Move(selectedSquare,targetPosition);
+                        humanMove = new Move(selectedSquare, targetPosition);
                         drawing.drawAllPieces(humanMove);
                         selectedSquare = -1;
                         break;
 
                     } else {
                         if (targetPiece == null) break;
-                        if (targetPiece.color == drawing.chessBoard.bottomPlayerColor) {
+                        if (targetPiece.color == drawing.getBottomScreenPlayerColor()) {
                             selectedSquare = targetPosition;
                             drawing.drawAllPieces(selectedSquare);
                             break;
@@ -199,15 +204,16 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
         }
 
-        if(selectedSquare != ChessBoard.OUT_OF_BOARD || draggedSquare != ChessBoard.OUT_OF_BOARD){
-            int sourceSquare = Math.max(selectedSquare,draggedSquare);
+        if (selectedSquare != ChessBoard.OUT_OF_BOARD || draggedSquare != ChessBoard.OUT_OF_BOARD) {
+            int sourceSquare = Math.max(selectedSquare, draggedSquare);
             ArrayList<Integer> squareLegalMoves = drawing.getLegalMoves(sourceSquare);
-            for(int square: squareLegalMoves){
+
+            for (int square : squareLegalMoves) {
                 drawing.drawLegalSquare(square);
             }
 
         }
-        if(humanPlayed){
+        if (humanPlayed) {
             drawing.humanPlayed(humanMove);
 
         }
@@ -232,16 +238,16 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         }
     }
 
-    public void finishGame(Piece.Color color,int gameType,boolean humanWon) {
+    public void finishGame(Piece.Color color, int gameType, boolean humanWon) {
         AlertDialog gameFinishedDialog = new AlertDialog.Builder(getContext()).create();
         gameFinishedDialog.setTitle(getContext().getString(R.string.game_finished));
         String message = "";
-        if(gameType == Game.COMPUTER_COMPUTER){
-            if(color == Piece.Color.WHITE) message = getContext().getString(R.string.message_white_won);
+        if (gameType == Game.COMPUTER_COMPUTER) {
+            if (color == Piece.Color.WHITE)
+                message = getContext().getString(R.string.message_white_won);
             else message = getContext().getString(R.string.message_black_won);
-        }
-        else {
-            if(humanWon) message = getContext().getString(R.string.message_you_won);
+        } else {
+            if (humanWon) message = getContext().getString(R.string.message_you_won);
             else message = getContext().getString(R.string.message_computer_won);
         }
         gameFinishedDialog.setMessage(message);
@@ -258,13 +264,13 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     public void drawLegalSquare(RectF squareRect, boolean hasPiece) {
         if (piecesCanvas != null) {
 
-            if(hasPiece){
+            if (hasPiece) {
 
-                piecesCanvas.drawCircle(squareRect.centerX(),squareRect.centerY(),
-                        squareRect.width() / 2.3f,legalSquarePaintHasPiece);
-            } else{
-                piecesCanvas.drawCircle(squareRect.centerX(),squareRect.centerY(),
-                        squareRect.width() /4,legalSquarePaint);
+                piecesCanvas.drawCircle(squareRect.centerX(), squareRect.centerY(),
+                        squareRect.width() / 2.3f, legalSquarePaintHasPiece);
+            } else {
+                piecesCanvas.drawCircle(squareRect.centerX(), squareRect.centerY(),
+                        squareRect.width() / 4, legalSquarePaint);
 
             }
         }

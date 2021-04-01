@@ -30,32 +30,24 @@ public class ChessBoard {
 
     private Piece[] pieces;
     public ChessboardMoves moves;
-    Piece.Color bottomPlayerColor;
-    Piece.Color topPlayerColor;
 
     LegalMoves blackLegalMoves;
     LegalMoves whiteLegalMoves;
     private boolean gameFinished = false;
 
-    public ChessBoard(ChessBoard copy){
+    public ChessBoard(ChessBoard copy) {
         this.pieces = copy.pieces.clone();
-        this.bottomPlayerColor = copy.bottomPlayerColor;
-        this.topPlayerColor = copy.topPlayerColor;
         this.gameFinished = copy.gameFinished;
         this.moves = new ChessboardMoves(copy.moves);
     }
 
 
-
-
-    public ChessBoard(Drawing drawing, Piece.Color bottomPlayerColor) {
+    public ChessBoard(Drawing drawing) {
         pieces = new Piece[64];
 
         for (int i = 0; i < 64; ++i) {
             pieces[i] = null;
         }
-        this.bottomPlayerColor = bottomPlayerColor;
-        this.topPlayerColor = bottomPlayerColor.getOpposite();
 
         moves = new ChessboardMoves();
         blackLegalMoves = new LegalMoves();
@@ -64,189 +56,142 @@ public class ChessBoard {
 
     }
 
-    public boolean isPieceForPlayerAtTop(int position){
-        if(getPieceAt(position).color == topPlayerColor){
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-
-
     public void setUpBoard() {
-        setUpBottomPlayerPieces(bottomPlayerColor);
-
-        setUpTopPlayerPieces(bottomPlayerColor.getOpposite());
+        setupWhitePieces();
+        setupBlackPieces();
 
         updateWhiteLegalMoves(false);
         updateBlackLegalMoves(false);
 
     }
 
-    public boolean isGameFinished(){
-       return gameFinished;
+    private void setupWhitePieces() {
+
+        Piece square;
+        Piece piece;
+        for (int i = 0; i < 8; ++i) {
+            int position = GetPosition(i, 1);
+            setPieceAt(position, Piece.Type.PAWN, Piece.Color.WHITE);
+        }
+
+        setPieceAt(0, Piece.Type.ROOK, Piece.Color.WHITE);
+        setPieceAt(1, Piece.Type.KNIGHT, Piece.Color.WHITE);
+        setPieceAt(2, Piece.Type.BISHOP, Piece.Color.WHITE);
+        setPieceAt(3, Piece.Type.QUEEN, Piece.Color.WHITE);
+        setPieceAt(4, Piece.Type.KING, Piece.Color.WHITE);
+        setPieceAt(5, Piece.Type.BISHOP, Piece.Color.WHITE);
+        setPieceAt(6, Piece.Type.KNIGHT, Piece.Color.WHITE);
+        setPieceAt(7, Piece.Type.ROOK, Piece.Color.WHITE);
+
+
     }
 
-    public void setGameFinished(){
+    private void setupBlackPieces() {
+        for (int i = 0; i < 8; ++i) {
+            setPieceAt(GetPosition(i, 6), Piece.Type.PAWN, Piece.Color.BLACK);
+
+        }
+
+        setPieceAt(GetPosition(0, 7), Piece.Type.ROOK, Piece.Color.BLACK);
+        setPieceAt(GetPosition(1, 7), Piece.Type.KNIGHT, Piece.Color.BLACK);
+        setPieceAt(GetPosition(2, 7), Piece.Type.BISHOP, Piece.Color.BLACK);
+        setPieceAt(GetPosition(3, 7), Piece.Type.QUEEN, Piece.Color.BLACK);
+        setPieceAt(GetPosition(4, 7), Piece.Type.KING, Piece.Color.BLACK );
+        setPieceAt(GetPosition(5, 7), Piece.Type.BISHOP, Piece.Color.BLACK );
+        setPieceAt(GetPosition(6, 7), Piece.Type.KNIGHT, Piece.Color.BLACK );
+        setPieceAt(GetPosition(7, 7), Piece.Type.ROOK, Piece.Color.BLACK );
+
+    }
+
+
+
+    public boolean isGameFinished() {
+        return gameFinished;
+    }
+
+    public void setGameFinished() {
         gameFinished = true;
     }
 
     public void updateBlackLegalMoves(boolean kingInCheck) {
-           blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this,kingInCheck);
+        blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this, kingInCheck);
     }
 
 
     public void updateWhiteLegalMoves(boolean kingInCheck) {
-        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this,kingInCheck);
+        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this, kingInCheck);
 
     }
 
-    public void updateLegalMovesFor(Piece.Color playerColor,boolean kingInCheck){
-        if(playerColor == Piece.Color.WHITE){
+    public void updateLegalMovesFor(Piece.Color playerColor, boolean kingInCheck) {
+        if (playerColor == Piece.Color.WHITE) {
             updateWhiteLegalMoves(kingInCheck);
-        }
-        else{
+        } else {
             updateBlackLegalMoves(kingInCheck);
         }
     }
 
     public ArrayList<Integer> getBlackPositions() {
         ArrayList<Integer> blackPositions = new ArrayList<>();
-        for(int i = MIN_POSITION; i <= MAX_POSITION;i++) {
-            if(isSquareEmpty(i)) continue;
-            if(isPieceBlackAt(i)) blackPositions.add(i);
+        for (int i = MIN_POSITION; i <= MAX_POSITION; i++) {
+            if (isSquareEmpty(i)) continue;
+            if (isPieceBlackAt(i)) blackPositions.add(i);
         }
         return blackPositions;
     }
 
     public ArrayList<Integer> getWhitePositions() {
         ArrayList<Integer> whitePositions = new ArrayList<>();
-        for (int i = MIN_POSITION; i <= MAX_POSITION;i++) {
+        for (int i = MIN_POSITION; i <= MAX_POSITION; i++) {
             if (isSquareEmpty(i)) continue;
             if (isPieceWhiteAt(i)) whitePositions.add(i);
         }
         return whitePositions;
     }
 
-    public ArrayList<Integer> getPositionsFor(Piece.Color color){
-        if(color == Piece.Color.WHITE){
+    public ArrayList<Integer> getPositionsFor(Piece.Color color) {
+        if (color == Piece.Color.WHITE) {
             return getWhitePositions();
-        }
-        else{
+        } else {
             return getBlackPositions();
         }
     }
 
-    public LegalMoves getLegalMovesFor(Piece.Color color){
-        if(color == Piece.Color.WHITE){
+    public LegalMoves getLegalMovesFor(Piece.Color color) {
+        if (color == Piece.Color.WHITE) {
             return whiteLegalMoves;
-        }
-        else{
+        } else {
             return blackLegalMoves;
         }
     }
 
 
-
-
-    public ArrayList<Integer> getLegalMovesFor(int position){
-        if(getPieceAt(position).color == Piece.Color.WHITE){
+    public ArrayList<Integer> getLegalMovesFor(int position) {
+        if (getPieceAt(position).color == Piece.Color.WHITE) {
             return whiteLegalMoves.getLegalTargetsFor(position);
-        }
-        else{
+        } else {
             return blackLegalMoves.getLegalTargetsFor(position);
         }
     }
 
 
-    private void setUpBottomPlayerPieces(Piece.Color color) {
-
-        Piece square;
-        Piece piece;
-        for (int i = 0; i < 8; ++i) {
-            int position = GetPosition(i, 1);
-            setPieceAt(position, new Piece(Piece.Type.PAWN,color,position));
 
 
-        }
-
-        setPieceAt(0, new Piece(Piece.Type.ROOK,color,0));
-        setPieceAt(1, new Piece(Piece.Type.KNIGHT,color,1));
-        setPieceAt(2, new Piece(Piece.Type.BISHOP,color,2));
-
-
-        if (color == Piece.Color.WHITE) {
-
-            setPieceAt(3, new Piece(Piece.Type.QUEEN,color,3));
-            setPieceAt(4, new Piece(Piece.Type.KING,color,4));
-
-
-        } else {
-            setPieceAt(3, new Piece(Piece.Type.KING,color,3));
-            setPieceAt(4, new Piece(Piece.Type.QUEEN,color,4));        }
-
-        setPieceAt(5, new Piece(Piece.Type.BISHOP,color,5));
-
-        setPieceAt(6, new Piece(Piece.Type.KNIGHT,color,6));
-
-        setPieceAt(7, new Piece(Piece.Type.ROOK,color,7));
-
-
-
-}
-
-    private void setUpTopPlayerPieces(Piece.Color color) {
-        for (int i = 0; i < 8; ++i) {
-            setPieceAt(GetPosition(i, 6), new Piece(Piece.Type.PAWN,color,GetPosition(i, 6)));
-
-    }
-
-        setPieceAt(GetPosition(0, 7), new Piece(Piece.Type.ROOK,color,GetPosition(0, 7)));
-
-        setPieceAt(GetPosition(1, 7), new Piece(Piece.Type.KNIGHT,color,GetPosition(1, 7)));
-
-        setPieceAt(GetPosition(2, 7), new Piece(Piece.Type.BISHOP,color,GetPosition(2, 7)));
-
-
-        if (color == Piece.Color.WHITE) {
-            setPieceAt(GetPosition(3, 7), new Piece(Piece.Type.KING,color,GetPosition(3, 7)));
-            setPieceAt(GetPosition(4, 7), new Piece(Piece.Type.QUEEN,color,GetPosition(4, 7)));
-
-
-        } else {
-            setPieceAt(GetPosition(3, 7), new Piece(Piece.Type.QUEEN,color,GetPosition(3, 7)));
-            setPieceAt(GetPosition(4, 7), new Piece(Piece.Type.KING,color,GetPosition(4, 7)));
-        }
-
-        setPieceAt(GetPosition(5, 7), new Piece(Piece.Type.BISHOP,color,GetPosition(5, 7)));
-
-        setPieceAt(GetPosition(6, 7), new Piece(Piece.Type.KNIGHT,color,GetPosition(6, 7)));
-
-        setPieceAt(GetPosition(7, 7), new Piece(Piece.Type.ROOK,color,GetPosition(7, 7)));
-
-
-    }
-
-
-
-    public boolean isKingInCheck(Piece.Color kingColor){
-        if(kingColor == Piece.Color.WHITE){
+    public boolean isKingInCheck(Piece.Color kingColor) {
+        if (kingColor == Piece.Color.WHITE) {
             return blackLegalMoves.contains(getKingPosition(kingColor));
 
-        }
-        else {
+        } else {
             return whiteLegalMoves.contains(getKingPosition(kingColor));
         }
     }
 
-    public int getKingPosition(Piece.Color kingColor){
+    public int getKingPosition(Piece.Color kingColor) {
         int kingPosition = OUT_OF_BOARD;
-        for(int i = MIN_POSITION; i <= MAX_POSITION; i++){
+        for (int i = MIN_POSITION; i <= MAX_POSITION; i++) {
             Piece piece = getPieceAt(i);
-            if(piece != null && piece.type == Piece.Type.KING && piece.color == kingColor){
-                kingPosition =  i;
+            if (piece != null && piece.type == Piece.Type.KING && piece.color == kingColor) {
+                kingPosition = i;
                 break;
             }
         }
@@ -255,20 +200,17 @@ public class ChessBoard {
 
     public boolean canMove(int fromSquare, int toSquare) {
         boolean isLegal = false;
-        if(isPieceBlackAt(fromSquare)) {
-            if(blackLegalMoves.canMove(fromSquare,toSquare)) {
+        if (isPieceBlackAt(fromSquare)) {
+            if (blackLegalMoves.canMove(fromSquare, toSquare)) {
                 isLegal = true;
-            }
-            else {
+            } else {
                 isLegal = false;
             }
 
-        }
-        else {
-            if(whiteLegalMoves.canMove(fromSquare,toSquare)) {
+        } else {
+            if (whiteLegalMoves.canMove(fromSquare, toSquare)) {
                 isLegal = true;
-            }
-            else {
+            } else {
                 isLegal = false;
             }
         }
@@ -278,43 +220,33 @@ public class ChessBoard {
 
 
     public void movePiece(int fromSquare, int toSquare) {
-        movePiece(new Move(fromSquare,toSquare));
+        movePiece(new Move(fromSquare, toSquare));
     }
 
-    public void movePiece(Move move){
+    public void movePiece(Move move) {
         int fromSquare = move.from;
         int toSquare = move.to;
         setPieceAt(toSquare, getPieceAt(fromSquare));
         setPieceAt(fromSquare, null);
         getPieceAt(toSquare).position = toSquare;
 
-        if(move.isCastling()){
+
+        if (move.isCastling()) {
             int rookPosition;
             int rookCastlingTarget;
-            if(move.type == Move.Type.CASTLING_kING_SIDE){
-                rookPosition= LegalMovesChecker.getInitialRookKingSide(this,
-                        getPieceAt(move.to).color);
-                if(bottomPlayerColor == Piece.Color.BLACK){
-                    rookCastlingTarget = move.from - 1;
+            Piece.Color moveColor = getPieceColor(move.to);
 
-                }
-                else {
-                    rookCastlingTarget = move.from + 1;
-                }
+            if (move.type == Move.Type.CASTLING_kING_SIDE) {
+                rookPosition = LegalMovesChecker.getInitialRookKingSide(this,
+                        moveColor);
+                rookCastlingTarget = move.from + 1;
 
+            } else {
+                rookPosition = LegalMovesChecker.getInitialRookQueenSide(this,
+                        moveColor);
+                rookCastlingTarget = move.from -1;
             }
-            else {
-                rookPosition= LegalMovesChecker.getInitialRookQueenSide(this,
-                        getPieceAt(move.to).color);
-                if(bottomPlayerColor == Piece.Color.BLACK){
-                    rookCastlingTarget = move.from + 1;
-                }
-                else {
-                    rookCastlingTarget = move.from - 1;
-
-                }
-            }
-            setPieceAt(rookCastlingTarget, getPieceAt(rookPosition));
+            setPieceAt(rookCastlingTarget, getPieceAt(rookPosition) );
             setPieceAt(rookPosition, null);
             getPieceAt(rookCastlingTarget).position = rookCastlingTarget;
         }
@@ -324,47 +256,73 @@ public class ChessBoard {
     }
 
     //get and set a square info
-    public Piece getPieceAt(int position){
+    public Piece getPieceAt(int position) {
 
         return pieces[position];
     }
-    public Piece getPieceAt(int file, int rank){
-        return pieces[GetPosition(file,rank)];
+
+    public Piece getPieceAt(int file, int rank) {
+        return pieces[GetPosition(file, rank)];
     }
-    public void setPieceAt(int position, Piece piece){
-        if(piece == null)
-        {
+
+    public void setPieceAt(int position, Piece.Type pieceType, Piece.Color pieceColor) {
+        pieces[position] = new Piece(pieceType, pieceColor, position);
+    }
+
+    public void setPieceAt(int position, Piece piece) {
+        if(piece == null){
             pieces[position] = null;
             return;
         }
         pieces[position] = new Piece(piece);
     }
-    public boolean isSquareEmpty(int position){return getPieceAt(position) == null;}
-    public boolean isPieceBlackAt(int position){return pieces[position].color == Piece.Color.BLACK;}
-    public boolean isPieceWhiteAt(int position){return pieces[position].color == Piece.Color.WHITE;}
-    public static int GetPosition(int file, int rank) {
-        if(file < FILE_A || file > FILE_H) return OUT_OF_BOARD;
-        if(rank < RANK_1 || rank > RANK_8) return OUT_OF_BOARD;
 
-        return (rank * 8 )+ file;
+    public boolean isSquareEmpty(int position) {
+        return getPieceAt(position) == null;
     }
-    public static int GetFile(int position){return position % 8; }
-    public static int GetRank(int position){return position / 8;}
+
+    public boolean isPieceBlackAt(int position) {
+        return pieces[position].color == Piece.Color.BLACK;
+    }
+
+    public boolean isPieceWhiteAt(int position) {
+        return pieces[position].color == Piece.Color.WHITE;
+    }
+
+    public Piece.Color getPieceColor(int position){
+        if(isPieceBlackAt(position)) return Piece.Color.BLACK;
+        else return Piece.Color.WHITE;
+    }
+
+    public static int GetPosition(int file, int rank) {
+        if (file < FILE_A || file > FILE_H) return OUT_OF_BOARD;
+        if (rank < RANK_1 || rank > RANK_8) return OUT_OF_BOARD;
+
+        return (rank * 8) + file;
+    }
+
+    public static int GetFile(int position) {
+        return position % 8;
+    }
+
+    public static int GetRank(int position) {
+        return position / 8;
+    }
 
     //------------------------
 
 
     //this function is for debugging
-    public void print(){
+    public void print() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(" 0,");
-        for(int row = 7;row >= 0;row--){
-            for(int column = 0; column < 8; column++){
-                if(getPieceAt(column,row) == null) {
+        for (int row = 7; row >= 0; row--) {
+            for (int column = 0; column < 8; column++) {
+                if (getPieceAt(column, row) == null) {
                     stringBuilder.append(" 0,");
                     continue;
                 }
-                stringBuilder.append(String.format("%2d,",getPieceAt(column,row).position));
+                stringBuilder.append(String.format("%2d,", getPieceAt(column, row).position));
             }
             stringBuilder.append('\n');
 
@@ -372,7 +330,6 @@ public class ChessBoard {
         }
         Log.d(Game.DEBUG, stringBuilder.toString());
     }
-
 
 
 }

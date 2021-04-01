@@ -13,8 +13,7 @@ class Game {
     private int computerPlayDelayMilli;
     public boolean paused ;
     Piece.Color currentPlayer;
-
-
+    public Piece.Color bottomScreenPlayerColor;
 
     //game between
     public static final int COMPUTER_HUMAN = 0;
@@ -32,12 +31,13 @@ class Game {
         Random random = new Random();
         int i = random.nextInt(2);
         if (i == 0) {
-            this.chessBoard = new ChessBoard(drawing, Piece.Color.BLACK);
+            bottomScreenPlayerColor = Piece.Color.WHITE;
         } else {
-            this.chessBoard = new ChessBoard(drawing, Piece.Color.WHITE);
-
+            this.bottomScreenPlayerColor = Piece.Color.BLACK;
         }
         //--------------------------------
+
+        this.chessBoard = new ChessBoard(drawing);
 
         chessBoard.setUpBoard();
 
@@ -48,26 +48,22 @@ class Game {
 
     public void start() {
         if (gameType == COMPUTER_HUMAN) {
-            if (chessBoard.topPlayerColor == Piece.Color.WHITE) {
-                playComputer(Piece.Color.WHITE);
-            } else {
-                currentPlayer = chessBoard.bottomPlayerColor;
+            if (bottomScreenPlayerColor == Piece.Color.WHITE) {
+                currentPlayer = bottomScreenPlayerColor;
                 drawing.waitHumanToPlay();
-                
+            } else {
+                playComputer(Piece.Color.WHITE);
+
             }
         } else {
-
-
             playComputer(Piece.Color.WHITE);
-
-
         }
 
     }
 
     public void resume(){
         if (gameType == COMPUTER_HUMAN) {
-            if(currentPlayer == chessBoard.bottomPlayerColor){
+            if(currentPlayer == bottomScreenPlayerColor){
                 drawing.waitHumanToPlay();
                 return;
             }
@@ -93,21 +89,21 @@ class Game {
 
 
     public void humanPlayed(Move humanMove) {
-        humanMove = chessBoard.getLegalMovesFor(chessBoard.bottomPlayerColor).getMoveForHuman(humanMove);
+        humanMove = chessBoard.getLegalMovesFor(bottomScreenPlayerColor).getMoveForHuman(humanMove);
         chessBoard.movePiece(humanMove);
         drawing.drawAllPieces(humanMove);
-        currentPlayer = chessBoard.bottomPlayerColor.getOpposite();
-        chessBoard.updateLegalMovesFor(chessBoard.bottomPlayerColor,false);
-        Piece.Color opponentColor = chessBoard.topPlayerColor;
+        currentPlayer = bottomScreenPlayerColor.getOpposite();
+        chessBoard.updateLegalMovesFor(bottomScreenPlayerColor,false);
+        Piece.Color opponentColor = currentPlayer;
         chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
 
-        if(isGameFinished(chessBoard.bottomPlayerColor))
+        if(isGameFinished(bottomScreenPlayerColor))
         {
             chessBoard.setGameFinished();
-            drawing.finishGame(chessBoard.bottomPlayerColor,gameType,true);
+            drawing.finishGame(bottomScreenPlayerColor,gameType,true);
             return;
         } else{
-            playComputer(chessBoard.topPlayerColor);
+            playComputer(opponentColor);
 
         }
 
