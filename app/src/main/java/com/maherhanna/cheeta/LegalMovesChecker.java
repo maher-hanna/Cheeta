@@ -87,23 +87,273 @@ public class LegalMovesChecker {
     }
 
 
-    private static boolean isKingExposedToCheck(ChessBoard chessBoard, Piece.Color kingColor) {
-        LegalMoves legalMoves = new LegalMoves();
-        ArrayList<Integer> opponentPositions;
-        opponentPositions = chessBoard.getPositionsFor(kingColor.getOpposite());
+    private static boolean isSquareAttacked(ChessBoard chessBoard, int square, Piece.Color opponentColor) {
+        Piece.Color color = opponentColor.getOpposite();
 
-        for (int i = 0; i < opponentPositions.size(); i++) {
-            int position = opponentPositions.get(i);
-            Piece piece = chessBoard.getPieceAt(position);
-            ArrayList<Move> pieceLegalMoves = getPieceMoves(chessBoard, piece, false);
-            legalMoves.addMovesFor(position,
-                    getPieceMoves(chessBoard, piece, false));
-        }
-        if (legalMoves.contains(chessBoard.getKingPosition(kingColor))) {
-            return true;
+        // attacked by a pawn
+        int opposingToRightPawnSquare = 0;
+        int opposingToLeftPawnSquare = 0;
+        if (color == Piece.Color.WHITE) {
+            opposingToRightPawnSquare = ChessBoard.offset(square, 1, 1);
+            opposingToLeftPawnSquare = ChessBoard.offset(square, -1, 1);
+
         } else {
-            return false;
+            opposingToRightPawnSquare = ChessBoard.offset(square, -1, -1);
+            opposingToLeftPawnSquare = ChessBoard.offset(square, 1, -1);
+
         }
+        if (chessBoard.isPieceAt(opposingToLeftPawnSquare, Piece.Type.PAWN, opponentColor)) {
+            return true;
+        }
+        if (chessBoard.isPieceAt(opposingToRightPawnSquare, Piece.Type.PAWN, opponentColor)) {
+            return true;
+        }
+        //--------------------------
+
+
+        int attackingSquare = ChessBoard.OUT_OF_BOARD;
+
+
+        // attacked by a bishop or diagonal queen
+        int fileOffset = 0;
+        int rankOffset = 0;
+
+        //check the diagonal line along the upper right direction
+        fileOffset = 1;
+        rankOffset = 1;
+
+        while (true) {
+            attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
+            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(attackingSquare)){
+                fileOffset++;
+                rankOffset++;
+                continue;
+            }
+            if (chessBoard.getPieceColor(attackingSquare) == color) break;
+            if (chessBoard.getPieceType(attackingSquare) == Piece.Type.BISHOP ||
+                    chessBoard.getPieceType(attackingSquare) == Piece.Type.QUEEN) {
+                return true;
+            } else {
+                break;
+            }
+
+
+
+        }
+
+
+        //check the diagonal line along the upper left direction
+        fileOffset = -1;
+        rankOffset = 1;
+        while (true) {
+            attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
+            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(attackingSquare)){
+                fileOffset--;
+                rankOffset++;
+                continue;
+            }
+            if (chessBoard.getPieceColor(attackingSquare) == color) break;
+            if (chessBoard.getPieceType(attackingSquare) == Piece.Type.BISHOP ||
+                    chessBoard.getPieceType(attackingSquare) == Piece.Type.QUEEN) {
+                return true;
+            } else {
+                break;
+            }
+        }
+
+
+        //check the diagonal line along the lower right direction
+        fileOffset = 1;
+        rankOffset = -1;
+        while (true) {
+            attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
+            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(attackingSquare)){
+                fileOffset++;
+                rankOffset--;
+                continue;
+            }
+            if (chessBoard.getPieceColor(attackingSquare) == color) break;
+            if (chessBoard.getPieceType(attackingSquare) == Piece.Type.BISHOP ||
+                    chessBoard.getPieceType(attackingSquare) == Piece.Type.QUEEN) {
+                return true;
+            } else {
+                break;
+            }
+        }
+
+
+        //check the diagonal line along the lower left direction
+        fileOffset = -1;
+        rankOffset = -1;
+        while (true) {
+            attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
+            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(attackingSquare)){
+                fileOffset--;
+                rankOffset--;
+                continue;
+            }
+            if (chessBoard.getPieceColor(attackingSquare) == color) break;
+            if (chessBoard.getPieceType(attackingSquare) == Piece.Type.BISHOP ||
+                    chessBoard.getPieceType(attackingSquare) == Piece.Type.QUEEN) {
+                return true;
+            } else {
+                break;
+            }
+        }
+        //--------------------------
+
+
+        //attacked by a rook or queen
+        //check the rank
+        //to the right of the rook
+        int offset = 1;
+        while (true) {
+            attackingSquare = ChessBoard.offsetFile(square, offset);
+            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(attackingSquare)){
+                offset++;
+                continue;
+            }
+            if (chessBoard.getPieceColor(attackingSquare) == color) break;
+            if (chessBoard.getPieceType(attackingSquare) == Piece.Type.ROOK ||
+                    chessBoard.getPieceType(attackingSquare) == Piece.Type.QUEEN) {
+                return true;
+            } else {
+                break;
+            }
+        }
+
+
+        //check the rank
+        //to the left of the rook
+        offset = -1;
+        while (true) {
+            attackingSquare = ChessBoard.offsetFile(square, offset);
+            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(attackingSquare)){
+                offset--;
+
+                continue;
+            }
+            if (chessBoard.getPieceColor(attackingSquare) == color) break;
+            if (chessBoard.getPieceType(attackingSquare) == Piece.Type.ROOK ||
+                    chessBoard.getPieceType(attackingSquare) == Piece.Type.QUEEN) {
+                return true;
+            } else {
+                break;
+            }
+        }
+
+
+        //check the file
+        //to the top of the rook
+        offset = 1;
+        while (true) {
+            attackingSquare = ChessBoard.offsetRank(square, offset);
+            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(attackingSquare)){
+                offset++;
+
+                continue;
+            }
+            if (chessBoard.getPieceColor(attackingSquare) == color) break;
+            if (chessBoard.getPieceType(attackingSquare) == Piece.Type.ROOK ||
+                    chessBoard.getPieceType(attackingSquare) == Piece.Type.QUEEN) {
+                return true;
+            } else {
+                break;
+            }
+        }
+
+
+        //check the file
+        //to the bottom of the rook
+        offset = -1;
+        while (true) {
+            attackingSquare = ChessBoard.offsetRank(square, offset);
+            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (chessBoard.isSquareEmpty(attackingSquare)){
+                offset--;
+
+                continue;
+            }
+            if (chessBoard.getPieceColor(attackingSquare) == color) break;
+            if (chessBoard.getPieceType(attackingSquare) == Piece.Type.ROOK ||
+                    chessBoard.getPieceType(attackingSquare) == Piece.Type.QUEEN) {
+                return true;
+            } else {
+                break;
+            }
+        }
+
+        //------------------------------
+
+        //attacked by king
+        fileOffset = 0;
+        rankOffset = 0;
+
+        for (fileOffset = -1; fileOffset <= 1; fileOffset++) {
+            for (rankOffset = -1; rankOffset <= 1; rankOffset++) {
+                attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
+                if (attackingSquare == ChessBoard.OUT_OF_BOARD) continue;
+                if (chessBoard.isSquareEmpty(attackingSquare)) continue;
+
+                if (chessBoard.getPieceColor(attackingSquare) == opponentColor) {
+                    if (chessBoard.getPieceType(attackingSquare) == Piece.Type.KING) {
+                        return true;
+                    } else {
+                        continue;
+                    }
+                }
+
+            }
+        }
+        //--------------------------
+
+        //attacked by knight
+        fileOffset = 0;
+        rankOffset = 0;
+
+        for (fileOffset = -2; fileOffset <= 2; fileOffset += 4) {
+            for (rankOffset = -1; rankOffset <= 1; rankOffset += 2) {
+                attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
+                if (attackingSquare == ChessBoard.OUT_OF_BOARD) continue;
+                if (chessBoard.isSquareEmpty(attackingSquare)) continue;
+
+                if (chessBoard.getPieceColor(attackingSquare) == opponentColor) {
+                    if (chessBoard.getPieceType(attackingSquare) == Piece.Type.KNIGHT) {
+                        return true;
+                    } else {
+                        continue;
+                    }
+                }
+
+            }
+        }
+
+        for (rankOffset = -2; rankOffset <= 2; rankOffset += 4) {
+            for (fileOffset = -1; fileOffset <= 1; fileOffset += 2) {
+                attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
+                if (attackingSquare == ChessBoard.OUT_OF_BOARD) continue;
+                if (chessBoard.isSquareEmpty(attackingSquare)) continue;
+
+                if (chessBoard.getPieceColor(attackingSquare) == opponentColor) {
+                    if (chessBoard.getPieceType(attackingSquare) == Piece.Type.KNIGHT) {
+                        return true;
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+        //--------------------------
+
+
+        return false;
     }
 
 
@@ -112,9 +362,11 @@ public class LegalMovesChecker {
         Iterator<Move> itr = pieceLegalMoves.iterator();
         while (itr.hasNext()) {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-            int position = itr.next().to;
-            chessBoardAfterMove.movePiece(piece.getPosition(), position);
-            if (isKingExposedToCheck(chessBoardAfterMove, piece.color)) {
+
+            Move move = itr.next();
+            chessBoardAfterMove.movePiece(move);
+            if (isSquareAttacked(chessBoardAfterMove,
+                    chessBoardAfterMove.getKingPosition(piece.color),piece.color.getOpposite() )) {
                 itr.remove();
             }
         }
@@ -181,10 +433,9 @@ public class LegalMovesChecker {
             return false;
         }
 
-        LegalMoves opponentLegalMoves = chessBoard.getLegalMovesFor(color.getOpposite());
 
-        if (opponentLegalMoves.contains(initialKingPosition + 1) ||
-                opponentLegalMoves.contains(initialKingPosition + 2)) {
+        if (isSquareAttacked(chessBoard, initialKingPosition + 1, color.getOpposite()) ||
+                isSquareAttacked(chessBoard, initialKingPosition + 2,color.getOpposite() )) {
             return false;
         }
 
@@ -218,12 +469,11 @@ public class LegalMovesChecker {
             return false;
         }
 
-        LegalMoves opponentLegalMoves = chessBoard.getLegalMovesFor(color.getOpposite());
-
-        if (opponentLegalMoves.contains(initialKingPosition - 1) ||
-                opponentLegalMoves.contains(initialKingPosition - 2)) {
+        if (isSquareAttacked(chessBoard, initialKingPosition - 1,color.getOpposite() ) ||
+                isSquareAttacked(chessBoard, initialKingPosition - 2,color.getOpposite() )) {
             return false;
         }
+
 
         return true;
     }

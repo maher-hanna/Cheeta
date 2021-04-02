@@ -290,8 +290,17 @@ public class ChessBoard {
     }
 
     public Piece.Color getPieceColor(int position){
-        if(isPieceBlackAt(position)) return Piece.Color.BLACK;
-        else return Piece.Color.WHITE;
+        return pieces[position].color;
+    }
+    public Piece.Type getPieceType(int position){
+        return pieces[position].type;
+    }
+
+    public boolean isPieceAt(int square, Piece.Type type, Piece.Color color){
+        if(square == OUT_OF_BOARD) return false;
+        if(isSquareEmpty(square)) return false;
+        if(getPieceColor(square) == color && getPieceType(square) == type) return true;
+        else return false;
     }
 
     public static int GetPosition(int file, int rank) {
@@ -307,6 +316,21 @@ public class ChessBoard {
 
     public static int GetRank(int position) {
         return position / 8;
+    }
+
+    public static int offset(int square, int file, int rank){
+        int newFile = GetFile(square) + file;
+        int newRank = GetRank(square) + rank;
+        if(newFile < ChessBoard.FILE_A || newFile > ChessBoard.FILE_H) return ChessBoard.OUT_OF_BOARD;
+        if(newRank < ChessBoard.RANK_1 || newRank > ChessBoard.RANK_8) return ChessBoard.OUT_OF_BOARD;
+
+        return (newRank * 8 )  + newFile;
+    }
+    public static int offsetFile(int square,int file){
+        return offset(square,file,0);
+    }
+    public static int offsetRank(int square,int rank){
+        return offset(square,0,rank);
     }
 
     //------------------------
