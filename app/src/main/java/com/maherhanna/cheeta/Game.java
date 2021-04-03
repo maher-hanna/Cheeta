@@ -11,9 +11,11 @@ class Game {
     private ComputerAi computerAi;
     public int gameType;
     private int computerPlayDelayMilli;
-    public boolean paused ;
+    public boolean paused;
     Piece.Color currentPlayer;
     public Piece.Color bottomScreenPlayerColor;
+    private boolean gameFinished = false;
+
 
     //game between
     public static final int COMPUTER_HUMAN = 0;
@@ -61,9 +63,9 @@ class Game {
 
     }
 
-    public void resume(){
+    public void resume() {
         if (gameType == COMPUTER_HUMAN) {
-            if(currentPlayer == bottomScreenPlayerColor){
+            if (currentPlayer == bottomScreenPlayerColor) {
                 drawing.waitHumanToPlay();
                 return;
             }
@@ -74,16 +76,26 @@ class Game {
     }
 
 
-    public boolean isGameFinished(Piece.Color lastPlayed){
-        boolean isFinished = false;
+    public GameStatus checkGameFinished(Piece.Color lastPlayed) {
+        GameStatus gameStatus = GameStatus.NOT_FINISHED;
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
         LegalMoves currentToPlayLegalMoves = chessBoard.getLegalMovesFor(currentToPlayColor);
-        if(currentToPlayLegalMoves.getNumberOfMoves() == 0){
-            if(chessBoard.isKingInCheck(currentToPlayColor)){
-                isFinished = true;
+        if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
+            if (chessBoard.isKingInCheck(currentToPlayColor)) {
+                //win
+                if (lastPlayed == Piece.Color.WHITE) {
+                    gameStatus = GameStatus.FINISHED_WIN_WHITE;
+                } else {
+                    gameStatus = GameStatus.FINISHED_WIN_BLACK;
+
+                }
+            } else {
+                //draw
+                gameStatus = GameStatus.FINISHED_DRAW;
+
             }
         }
-        return isFinished;
+        return gameStatus;
 
     }
 
@@ -93,17 +105,19 @@ class Game {
         chessBoard.movePiece(humanMove);
         drawing.drawAllPieces(humanMove);
         currentPlayer = bottomScreenPlayerColor.getOpposite();
-        chessBoard.updateLegalMovesFor(bottomScreenPlayerColor,false);
+        chessBoard.updateLegalMovesFor(bottomScreenPlayerColor, false);
         Piece.Color opponentColor = currentPlayer;
-        chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
+        chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));
 
-        if(isGameFinished(bottomScreenPlayerColor))
-        {
-            chessBoard.setGameFinished();
-            drawing.finishGame(bottomScreenPlayerColor,gameType,true);
-            return;
-        } else{
+        GameStatus gameStatus = checkGameFinished(bottomScreenPlayerColor);
+        if (gameStatus == GameStatus.NOT_FINISHED) {
             playComputer(opponentColor);
+
+
+        } else {
+            setGameFinished();
+            drawing.finishGame(gameStatus,gameType);
+            return;
 
         }
 
@@ -112,37 +126,52 @@ class Game {
     public void computerPlayed(Move computerMove, Piece.Color color) {
         drawing.drawAllPieces(computerMove);
         currentPlayer = color.getOpposite();
-        if(isGameFinished(color)){
-            chessBoard.setGameFinished();
-            drawing.finishGame(color,gameType,false);
+        GameStatus gameStatus = checkGameFinished(color);
+        if (gameStatus == GameStatus.NOT_FINISHED) {
+            Piece.Color opponentColor = color.getOpposite();
+            if (gameType == COMPUTER_COMPUTER) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        playComputer(opponentColor);
+                    }
+                }, computerPlayDelayMilli);
+
+            } else {
+                drawing.waitHumanToPlay();
+            }
+        } else {
+            //game finished
+            setGameFinished();
+            drawing.finishGame(gameStatus, gameType);
 
             return;
         }
 
-        Piece.Color opponentColor = color.getOpposite();
-        if (gameType == COMPUTER_COMPUTER) {
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    playComputer(opponentColor);
-                }
-            }, computerPlayDelayMilli);
 
-        } else {
-            drawing.waitHumanToPlay();
-        }
     }
 
     public void playComputer(Piece.Color color) {
-        if(paused) return;
+        if (paused) return;
         Move computerMove = computerAi.getMove(chessBoard, color);
         chessBoard.movePiece(computerMove);
-        chessBoard.updateLegalMovesFor(color,false);
+        chessBoard.updateLegalMovesFor(color, false);
         Piece.Color opponentColor = color.getOpposite();
-        chessBoard.updateLegalMovesFor(opponentColor,chessBoard.isKingInCheck(opponentColor));
+        chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));
         computerPlayed(computerMove, color);
     }
 
+    public boolean isGameFinished() {
+        return gameFinished;
+    }
+
+    public void setGameFinished() {
+        gameFinished = true;
+    }
+
+    public enum GameStatus {NOT_FINISHED, FINISHED_DRAW, FINISHED_WIN_WHITE, FINISHED_WIN_BLACK}
+
+    ;
 
 
 }

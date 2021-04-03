@@ -33,11 +33,9 @@ public class ChessBoard {
 
     LegalMoves blackLegalMoves;
     LegalMoves whiteLegalMoves;
-    private boolean gameFinished = false;
 
     public ChessBoard(ChessBoard copy) {
         this.pieces = copy.pieces.clone();
-        this.gameFinished = copy.gameFinished;
         this.moves = new ChessboardMoves(copy.moves);
     }
 
@@ -105,13 +103,7 @@ public class ChessBoard {
 
 
 
-    public boolean isGameFinished() {
-        return gameFinished;
-    }
 
-    public void setGameFinished() {
-        gameFinished = true;
-    }
 
     public void updateBlackLegalMoves(boolean kingInCheck) {
         blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this, kingInCheck);

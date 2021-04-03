@@ -127,7 +127,7 @@ public class Drawing {
 
     public void drawAllPieces() {
         int flip = 0;
-        if(isChessBoardFlipped()){
+        if (isChessBoardFlipped()) {
             flip = 1;
         }
         int index = 0;
@@ -147,16 +147,15 @@ public class Drawing {
     public void dragPiece(int source, int target, float xOffset, float yOffset) {
         clearBoard();
         int flip = 0;
-        if(isChessBoardFlipped()) {
+        if (isChessBoardFlipped()) {
             flip = 1;
 
         }
-        if(flip == 1){
+        if (flip == 1) {
 
             drawHighlight(flip(source));
 
-        }
-        else {
+        } else {
             drawHighlight(source);
         }
         drawHighlight(target);
@@ -175,13 +174,12 @@ public class Drawing {
                 drawPiece(piece, index, 0f, 0f);
             }
         }
-        if(flip == 1){
+        if (flip == 1) {
 
             drawPiece(chessBoard.getPieceAt(source), flip(source), xOffset, yOffset);
 
 
-        }
-        else {
+        } else {
             drawPiece(chessBoard.getPieceAt(source), source, xOffset, yOffset);
         }
         show();
@@ -196,7 +194,7 @@ public class Drawing {
         clearBoard();
         int from = move.from;
         int to = move.to;
-        if(isChessBoardFlipped()){
+        if (isChessBoardFlipped()) {
             from = flip(from);
             to = flip(to);
         }
@@ -208,7 +206,7 @@ public class Drawing {
 
     public void drawAllPieces(int highlight) {
         clearBoard();
-        if(isChessBoardFlipped()){
+        if (isChessBoardFlipped()) {
             highlight = flip(highlight);
         }
         drawHighlight(highlight);
@@ -220,8 +218,6 @@ public class Drawing {
     public void show() {
         chessboardView.invalidate();
     }
-
-
 
 
     public boolean canMove(int from, int to) {
@@ -331,8 +327,34 @@ public class Drawing {
     }
 
 
-    public void finishGame(Piece.Color winnerColor, int gameType, boolean humanWon) {
-        chessboardView.finishGame(winnerColor, gameType, humanWon);
+    public void finishGame(Game.GameStatus gameStatus, int gameType) {
+        int message_id;
+        if (gameStatus == Game.GameStatus.FINISHED_DRAW) {
+            message_id = R.string.message_draw;
+        } else {
+            if (gameType == Game.COMPUTER_COMPUTER) {
+                if (gameStatus == Game.GameStatus.FINISHED_WIN_WHITE)
+                    message_id = R.string.message_white_won;
+                else message_id = R.string.message_black_won;
+            } else {
+                if (game.bottomScreenPlayerColor == Piece.Color.WHITE) {
+                    if (gameStatus == Game.GameStatus.FINISHED_WIN_WHITE) {
+                        message_id = R.string.message_you_won;
+                    } else {
+                        message_id = R.string.message_computer_won;
+                    }
+                } else {
+                    if (gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
+                        message_id = R.string.message_you_won;
+                    } else {
+                        message_id = R.string.message_computer_won;
+                    }
+                }
+            }
+
+
+        }
+        chessboardView.finishGame(message_id);
     }
 
     public void waitHumanToPlay() {
@@ -353,7 +375,7 @@ public class Drawing {
     }
 
     public boolean isGameFinished() {
-        return chessBoard.isGameFinished();
+        return game.isGameFinished();
     }
 
     public Piece getPieceAt(int position) {
@@ -378,10 +400,9 @@ public class Drawing {
 
     public void drawLegalSquare(int square) {
         RectF squareRect;
-        if(isChessBoardFlipped()){
-            squareRect =  getSquareRect(flip(square));
-        } else
-        {
+        if (isChessBoardFlipped()) {
+            squareRect = getSquareRect(flip(square));
+        } else {
             squareRect = getSquareRect(square);
         }
 
