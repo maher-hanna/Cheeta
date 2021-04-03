@@ -212,12 +212,12 @@ public class ChessBoard {
 
 
     public void movePiece(int fromSquare, int toSquare) {
-        movePiece(new Move(fromSquare, toSquare));
+        movePiece(new Move(getPieceAt(fromSquare), fromSquare, toSquare));
     }
 
     public void movePiece(Move move) {
-        int fromSquare = move.from;
-        int toSquare = move.to;
+        int fromSquare = move.getFrom();
+        int toSquare = move.getTo();
         setPieceAt(toSquare, getPieceAt(fromSquare));
         setPieceAt(fromSquare, null);
         getPieceAt(toSquare).position = toSquare;
@@ -226,21 +226,24 @@ public class ChessBoard {
         if (move.isCastling()) {
             int rookPosition;
             int rookCastlingTarget;
-            Piece.Color moveColor = getPieceColor(move.to);
+            Piece.Color moveColor = move.getColor();
 
-            if (move.type == Move.Type.CASTLING_kING_SIDE) {
+            if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
                 rookPosition = LegalMovesChecker.getInitialRookKingSide(this,
                         moveColor);
-                rookCastlingTarget = move.from + 1;
+                rookCastlingTarget = move.getFrom() + 1;
 
             } else {
                 rookPosition = LegalMovesChecker.getInitialRookQueenSide(this,
                         moveColor);
-                rookCastlingTarget = move.from -1;
+                rookCastlingTarget = move.getFrom() -1;
             }
             setPieceAt(rookCastlingTarget, getPieceAt(rookPosition) );
             setPieceAt(rookPosition, null);
             getPieceAt(rookCastlingTarget).position = rookCastlingTarget;
+        }
+        if(move.isPromote()){
+            getPieceAt(toSquare).type = move.getPromotionPieceType();
         }
 
         moves.add(move);

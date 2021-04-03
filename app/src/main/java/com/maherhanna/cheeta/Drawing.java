@@ -192,8 +192,8 @@ public class Drawing {
 
     public void drawAllPieces(Move move) {
         clearBoard();
-        int from = move.from;
-        int to = move.to;
+        int from = move.getFrom();
+        int to = move.getTo();
         if (isChessBoardFlipped()) {
             from = flip(from);
             to = flip(to);

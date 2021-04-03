@@ -25,7 +25,7 @@ public class LegalMoves {
     {
         ArrayList<Integer> targetSquares = new ArrayList<>();
         for(Move move: legalMoves.get(position)){
-            targetSquares.add(move.to);
+            targetSquares.add(move.getTo());
         }
         return targetSquares;
     }
@@ -37,7 +37,7 @@ public class LegalMoves {
     public boolean contains(int position){
         for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
             for(Move move: pieceLegalMoves){
-                if(move.to == position){
+                if(move.getTo() == position){
                     return true;
 
                 }
@@ -49,7 +49,7 @@ public class LegalMoves {
 
     public boolean canMove(int from, int to){
         for(Move move: legalMoves.get(from)){
-            if(move.to == to){
+            if(move.getTo() == to){
                 return true;
             }
         }
@@ -69,8 +69,8 @@ public class LegalMoves {
         Move legalMove = new Move(humanMove);
         for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
             for(Move move: pieceLegalMoves){
-                if(move.from == humanMove.from &&
-                move.to == humanMove.to){
+                if(move.getFrom() == humanMove.getFrom() &&
+                move.getTo() == humanMove.getTo()){
                     legalMove = move;
 
                 }

@@ -158,7 +158,8 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
                     if (drawing.canMove(draggedSquare, targetPosition)) {
                         humanPlayed = true;
-                        humanMove = new Move(draggedSquare, targetPosition);
+                        humanMove = new Move(drawing.chessBoard.getPieceAt(draggedSquare),
+                                draggedSquare, targetPosition);
                         drawing.drawAllPieces(humanMove);
                         draggedSquare = -1;
                         selectedSquare = -1;
@@ -177,7 +178,8 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                     //check for selecting other piece
                     if (drawing.chessBoard.canMove(selectedSquare, targetPosition)) {
                         humanPlayed = true;
-                        humanMove = new Move(selectedSquare, targetPosition);
+                        humanMove = new Move(drawing.chessBoard.getPieceAt(selectedSquare),
+                                selectedSquare, targetPosition);
                         drawing.drawAllPieces(humanMove);
                         selectedSquare = -1;
                         break;

@@ -20,7 +20,7 @@ public class ChessboardMoves {
     public boolean hasPieceMoved(int initialPosition){
         boolean hasMoved = false;
         for(Move move : moves){
-            if(move.from == initialPosition){
+            if(move.getFrom() == initialPosition){
                 hasMoved = true;
                 break;
             }

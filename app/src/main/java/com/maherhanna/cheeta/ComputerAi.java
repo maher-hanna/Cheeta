@@ -20,6 +20,6 @@ public class ComputerAi {
 
         int randomLegalMove = random.nextInt(numOfLegalMoves);
         int randomMove = chessBoard.getLegalMovesFor(randomPiecePosition).get(randomLegalMove);
-        return new Move(randomPiecePosition,randomMove);
+        return new Move(chessBoard.getPieceAt(randomPiecePosition), randomPiecePosition, randomMove);
     }
 }

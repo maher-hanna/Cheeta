@@ -1,62 +1,131 @@
 package com.maherhanna.cheeta;
 
-import java.util.Objects;
-
 public class Move {
-    public int from;
-    public int to;
-    public Type type;
-    public boolean takes ;
+    private Piece.Type pieceType;
+    private Piece.Color pieceColor;
+    private int from;
+    private int to;
+    private boolean castling;
+    private CastlingType castlingType;
+    private boolean takes ;
+    private Piece.Type takenPieceType;
+    private boolean promotes;
+    private PromoteToPieceType promotionPieceType;
+    private boolean enPasant;
 
 
-    public Move(int from, int to){
+    public Move(Piece piece, int from, int to){
+        this.pieceType = piece.type;
+        pieceColor = piece.color;
         this.from = from;
         this.to = to;
-        type = Type.NORMAL;
+        castling = false;
+        castlingType = CastlingType.CASTLING_kING_SIDE;
         takes = false;
+        takenPieceType = Piece.Type.PAWN;
+        promotes = false;
+        promotionPieceType = PromoteToPieceType.QUEEN;
     }
 
-    public Move(int from,int to ,boolean takes){
-        this(from,to);
-        this.takes = takes;
-    }
-
-    public Move(int from, int to, Type type){
-        this(from,to);
-        this.type = type;
-    }
-
-    public boolean isCastling(){
-        if(type == Type.CASTLING_kING_SIDE || type == Type.CASTLING_QUEEN_SIDE) {
-            return true;
-        }
-        else {
-            return false;
-        }
+    public Move(Piece piece, int from, int to,boolean takes, Piece.Type takenPieceType){
+        this(piece,from,to);
+        this.takes = true;
+        this.takenPieceType = takenPieceType;
     }
 
     public Move(Move copy){
-        this.from = copy.from;
-        this.to = copy.to;
-        this.type = copy.type;
-        this.takes = copy.takes;
+        pieceType = copy.pieceType;
+        pieceColor = copy.pieceColor;
+        from = copy.from;
+        to = copy.to;
+        castling = copy.castling;
+        castlingType = copy.castlingType;
+        takes = copy.takes;
+        takenPieceType = copy.takenPieceType;
+        promotes = copy.promotes;
+        promotionPieceType = copy.promotionPieceType;
+        enPasant = copy.enPasant;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Move move = (Move) o;
-        return from == move.from &&
-                to == move.to &&
-                takes == move.takes &&
-                type == move.type;
+
+    public boolean isCastling(){
+        return castling;
+    }
+    public CastlingType getCastlingType(){return this.castlingType;}
+
+    public boolean isTake(){return takes;}
+    public Piece.Type getTakenPieceType(){return this.takenPieceType;}
+
+    public boolean isPromote() { return promotes;}
+    public Piece.Type getPromotionPieceType(){
+        Piece.Type type = Piece.Type.QUEEN;
+        switch (promotionPieceType){
+            case ROOK:
+                type = Piece.Type.ROOK;
+                break;
+            case QUEEN:
+                type = Piece.Type.QUEEN;
+                break;
+            case BISHOP:
+                type = Piece.Type.BISHOP;
+                break;
+            case KNIGHT:
+                type = Piece.Type.KNIGHT;
+                break;
+        }
+        return type;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(from, to, type, takes);
+    public boolean isEnPasant(){return enPasant;}
+
+    public int getFrom(){return from;}
+    public int getTo(){return to;}
+    public Piece.Color getColor(){return pieceColor;}
+    public Piece.Type getPieceType(){return pieceType;}
+
+    public void setCastling(boolean castling) {
+        this.castling = castling;
+    }
+    public void setCastlingType(CastlingType castlingType){
+        this.castlingType = castlingType;
     }
 
-    public enum Type{NORMAL,CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE};
+    public void setCastling(boolean castling,CastlingType castlingType){
+        this.castling = castling;
+        this.castlingType = castlingType;
+    }
+    public void setTakes(boolean takes){
+        this.takes = takes;
+    }
+
+    public void setTakenPieceType(Piece.Type pieceType){
+        this.takenPieceType = pieceType;
+    }
+
+    public void setTakes(boolean takes, Piece.Type pieceType){
+        this.takes = takes;
+        this.takenPieceType = pieceType;
+    }
+
+    public void setPromotes(boolean promotes){
+        this.promotes = promotes;
+    }
+
+    public void setPromotionPieceType(PromoteToPieceType promotionPieceType){
+        this.promotionPieceType = promotionPieceType;
+    }
+
+    public void setPromotes(boolean promotes,PromoteToPieceType promotionPieceType){
+        this.promotes = promotes;
+        this.promotionPieceType = promotionPieceType;
+    }
+
+    public void setEnPasant(boolean enPasant){
+        this.enPasant = enPasant;
+        setTakes(true, Piece.Type.PAWN);
+    }
+
+
+    public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE};
+    public enum PromoteToPieceType{QUEEN,KNIGHT,ROOK,BISHOP};
 }
