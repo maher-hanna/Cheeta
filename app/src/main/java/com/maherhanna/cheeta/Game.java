@@ -101,7 +101,7 @@ class Game {
 
 
     public void humanPlayed(Move humanMove) {
-        humanMove = chessBoard.getLegalMovesFor(bottomScreenPlayerColor).getMoveForHuman(humanMove);
+        humanMove = chessBoard.getLegalMovesFor(bottomScreenPlayerColor).getMove(humanMove);
         chessBoard.movePiece(humanMove);
         drawing.drawAllPieces(humanMove);
         currentPlayer = bottomScreenPlayerColor.getOpposite();

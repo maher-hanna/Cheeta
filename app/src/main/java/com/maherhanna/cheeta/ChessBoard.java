@@ -158,7 +158,7 @@ public class ChessBoard {
     }
 
 
-    public ArrayList<Integer> getLegalMovesFor(int position) {
+    public ArrayList<Integer> getLegalTargetsFor(int position) {
         if (getPieceAt(position).color == Piece.Color.WHITE) {
             return whiteLegalMoves.getLegalTargetsFor(position);
         } else {

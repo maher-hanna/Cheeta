@@ -383,7 +383,7 @@ public class Drawing {
     }
 
     public ArrayList<Integer> getLegalMoves(int square) {
-        return chessBoard.getLegalMovesFor(square);
+        return chessBoard.getLegalTargetsFor(square);
     }
 
     public boolean canSelect(int position) {

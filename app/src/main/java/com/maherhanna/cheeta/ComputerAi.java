@@ -14,12 +14,16 @@ public class ComputerAi {
         do {
             randomPieceIndex = random.nextInt(numPieces);
             randomPiecePosition = piecesPositions.get(randomPieceIndex);
-            numOfLegalMoves = chessBoard.getLegalMovesFor(randomPiecePosition).size();
+            numOfLegalMoves = chessBoard.getLegalTargetsFor(randomPiecePosition).size();
 
         } while (numOfLegalMoves == 0);
 
         int randomLegalMove = random.nextInt(numOfLegalMoves);
-        int randomMove = chessBoard.getLegalMovesFor(randomPiecePosition).get(randomLegalMove);
-        return new Move(chessBoard.getPieceAt(randomPiecePosition), randomPiecePosition, randomMove);
+        int randomMove = chessBoard.getLegalTargetsFor(randomPiecePosition).get(randomLegalMove);
+
+        Move move = new Move(chessBoard.getPieceAt(randomPiecePosition), randomPiecePosition, randomMove);
+        move = chessBoard.getLegalMovesFor(move.getColor()).getMove(move);
+        return move;
+
     }
 }

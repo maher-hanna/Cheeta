@@ -65,12 +65,13 @@ public class LegalMoves {
         return numberOfMoves;
     }
 
-    public Move getMoveForHuman(Move humanMove) {
-        Move legalMove = new Move(humanMove);
+
+    public Move getMove(Move basicMove) {
+        Move legalMove = new Move(basicMove);
         for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
             for(Move move: pieceLegalMoves){
-                if(move.getFrom() == humanMove.getFrom() &&
-                move.getTo() == humanMove.getTo()){
+                if(move.getFrom() == basicMove.getFrom() &&
+                move.getTo() == basicMove.getTo()){
                     legalMove = move;
 
                 }

@@ -816,7 +816,7 @@ public class LegalMovesChecker {
             //check if the lower square is empty
             int oneSquareDown = piece.offsetRank(-1);
             if (chessBoard.isSquareEmpty(oneSquareDown)) {
-                if (piece.getRank() == ChessBoard.RANK_1) {
+                if (ChessBoard.GetRank(oneSquareDown) == ChessBoard.RANK_1) {
                     Move move = new Move(piece, piece.position, oneSquareDown);
                     move.setPromotes(true, Move.PromoteToPieceType.QUEEN);
                     pawnLegalMoves.add(move);
