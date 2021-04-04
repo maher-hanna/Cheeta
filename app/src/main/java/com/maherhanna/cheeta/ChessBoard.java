@@ -327,6 +327,13 @@ public class ChessBoard {
     public static int offsetRank(int square,int rank){
         return offset(square,0,rank);
     }
+    public static Piece.Color GetSquareColor(int square){
+        if((square % 2) == 0){
+            return Piece.Color.BLACK;
+        } else {
+            return Piece.Color.WHITE;
+        }
+    }
 
     //------------------------
 

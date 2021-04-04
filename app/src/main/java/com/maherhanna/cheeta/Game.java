@@ -2,6 +2,7 @@ package com.maherhanna.cheeta;
 
 import android.os.Handler;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 class Game {
@@ -80,8 +81,9 @@ class Game {
         GameStatus gameStatus = GameStatus.NOT_FINISHED;
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
         LegalMoves currentToPlayLegalMoves = chessBoard.getLegalMovesFor(currentToPlayColor);
-        if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
-            if (chessBoard.isKingInCheck(currentToPlayColor)) {
+
+        if (chessBoard.isKingInCheck(currentToPlayColor)) {
+            if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
                 //win
                 if (lastPlayed == Piece.Color.WHITE) {
                     gameStatus = GameStatus.FINISHED_WIN_WHITE;
@@ -89,14 +91,78 @@ class Game {
                     gameStatus = GameStatus.FINISHED_WIN_BLACK;
 
                 }
-            } else {
-                //draw
-                gameStatus = GameStatus.FINISHED_DRAW;
-
             }
+        } else {
+            if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
+
+                //draw stalemate
+                gameStatus = GameStatus.FINISHED_DRAW;
+            }
+            if (insufficientMaterial()) {
+                gameStatus = GameStatus.FINISHED_DRAW;
+            }
+
         }
+
         return gameStatus;
 
+    }
+
+    private boolean insufficientMaterial() {
+        ArrayList<Integer> whitePieces = chessBoard.getWhitePositions();
+        ArrayList<Integer> blackPieces = chessBoard.getBlackPositions();
+        int whitePiecesNumber = whitePieces.size();
+        int blackPiecesNumber = blackPieces.size();
+
+        // tow kings remaining
+        if (whitePiecesNumber + blackPiecesNumber == 2) {
+            return true;
+        }
+
+        if (whitePiecesNumber + blackPiecesNumber == 3) {
+
+            Piece.Type remainingPieceType = Piece.Type.PAWN;
+            for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
+                if (chessBoard.getPieceAt(i) != null && chessBoard.getPieceAt(i).type != Piece.Type.KING) {
+                    remainingPieceType = chessBoard.getPieceType(i);
+                }
+            }
+
+            // tow kings and a bishop or knight
+            if(remainingPieceType == Piece.Type.BISHOP || remainingPieceType == Piece.Type.KNIGHT){
+                return true;
+            }
+
+        }
+
+        if (whitePiecesNumber + blackPiecesNumber == 4) {
+
+            ArrayList<Piece> remainingPieces = new ArrayList<>();
+            for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
+                if (chessBoard.getPieceAt(i) != null && chessBoard.getPieceAt(i).type != Piece.Type.KING) {
+                    remainingPieces.add(chessBoard.getPieceAt(i));
+                }
+            }
+            Piece firstPiece = remainingPieces.get(0);
+            Piece secondPiece = remainingPieces.get(1);
+
+            // tow king and tow bishops of the same square color
+            if(firstPiece.type == Piece.Type.BISHOP && secondPiece.type == Piece.Type.BISHOP){
+                if(firstPiece.color != secondPiece.color){
+                    if(ChessBoard.GetSquareColor(firstPiece.position) ==
+                            ChessBoard.GetSquareColor(secondPiece.position)){
+                        return true;
+                    }
+                }
+            }
+
+
+
+        }
+
+
+
+        return false;
     }
 
 
@@ -116,7 +182,7 @@ class Game {
 
         } else {
             setGameFinished();
-            drawing.finishGame(gameStatus,gameType);
+            drawing.finishGame(gameStatus, gameType);
             return;
 
         }
