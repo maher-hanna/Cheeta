@@ -78,6 +78,15 @@ public class Move {
 
     public boolean isEnPasant(){return enPasant;}
 
+    public boolean isPawnDoubleMove(){
+        boolean pawnDoubleMove = false;
+        if(pieceType == Piece.Type.PAWN &&
+                Math.abs(ChessBoard.GetRank(to) - ChessBoard.GetRank(from)) == 2){
+            pawnDoubleMove = true;
+        }
+        return pawnDoubleMove;
+    }
+
     public int getFrom(){return from;}
     public int getTo(){return to;}
     public Piece.Color getColor(){return pieceColor;}
@@ -124,6 +133,8 @@ public class Move {
         this.enPasant = enPasant;
         setTakes(true, Piece.Type.PAWN);
     }
+
+
 
 
     public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE};

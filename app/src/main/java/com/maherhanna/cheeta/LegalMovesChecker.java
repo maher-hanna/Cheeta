@@ -775,6 +775,36 @@ public class LegalMovesChecker {
                 }
             }
 
+            //check for en passant
+            if (piece.getRank() == ChessBoard.RANK_5) {
+                if (chessBoard.moves.getToPlayNow() == piece.color) {
+                    Move lastMove = chessBoard.moves.getLastMove();
+
+                    if (chessBoard.isPieceAt(piece.offsetFile(-1), Piece.Type.PAWN, Piece.Color.BLACK)) {
+                        if (lastMove.getTo() == piece.offsetFile(-1) && lastMove.isPawnDoubleMove()) {
+                            int enPassantTarget = piece.offset(-1, 1);
+                            Move enPassant = new Move(piece, piece.position, enPassantTarget);
+                            enPassant.setEnPasant(true);
+                            pawnLegalMoves.add(enPassant);
+                        }
+
+                    }
+                    if (chessBoard.isPieceAt(piece.offsetFile(1), Piece.Type.PAWN, Piece.Color.BLACK)) {
+                        if (lastMove.getTo() == piece.offsetFile(1) && lastMove.isPawnDoubleMove()) {
+                            int enPassantTarget = piece.offset(1, 1);
+                            Move enPassant = new Move(piece, piece.position, enPassantTarget);
+                            enPassant.setEnPasant(true);
+                            pawnLegalMoves.add(enPassant);
+                        }
+
+                    }
+
+                }
+
+
+            }
+            //----------------------------
+
 
             //check for takes
             int upperRightSquare = piece.offset(1, 1);
@@ -834,6 +864,36 @@ public class LegalMovesChecker {
                     }
                 }
             }
+
+
+            //check for en passant
+            if (piece.getRank() == ChessBoard.RANK_4) {
+                if (chessBoard.moves.getToPlayNow() == piece.color) {
+                    Move lastMove = chessBoard.moves.getLastMove();
+                    if (chessBoard.isPieceAt(piece.offsetFile(-1), Piece.Type.PAWN, Piece.Color.WHITE)) {
+                        if (lastMove.getTo() == piece.offsetFile(-1) && lastMove.isPawnDoubleMove()) {
+                            int enPassantTarget = piece.offset(-1, -1);
+                            Move enPassant = new Move(piece, piece.position, enPassantTarget);
+                            enPassant.setEnPasant(true);
+                            pawnLegalMoves.add(enPassant);
+                        }
+
+                    }
+                    if (chessBoard.isPieceAt(piece.offsetFile(1), Piece.Type.PAWN, Piece.Color.WHITE)) {
+                        if (lastMove.getTo() == piece.offsetFile(1) && lastMove.isPawnDoubleMove()) {
+                            int enPassantTarget = piece.offset(1, -1);
+                            Move enPassant = new Move(piece, piece.position, enPassantTarget);
+                            enPassant.setEnPasant(true);
+                            pawnLegalMoves.add(enPassant);
+                        }
+
+                    }
+
+                }
+
+
+            }
+            //----------------------------
 
 
             //check for takes
@@ -984,7 +1044,7 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(upperRightSquare).color) {
-                    bishopLegalMoves.add(new Move(piece,piece.position, upperRightSquare, true,
+                    bishopLegalMoves.add(new Move(piece, piece.position, upperRightSquare, true,
                             chessBoard.getPieceType(upperRightSquare)));
                 }
                 break;
@@ -1006,8 +1066,9 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(upperLeftSquare).color) {
-                    bishopLegalMoves.add(new Move(piece,piece.position, upperLeftSquare, true,
-                            chessBoard.getPieceType(upperLeftSquare)));                }
+                    bishopLegalMoves.add(new Move(piece, piece.position, upperLeftSquare, true,
+                            chessBoard.getPieceType(upperLeftSquare)));
+                }
                 break;
 
             }
@@ -1028,8 +1089,9 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(lowerRightSquare).color) {
-                    bishopLegalMoves.add(new Move(piece,piece.position, lowerRightSquare, true,
-                            chessBoard.getPieceType(lowerRightSquare)));                }
+                    bishopLegalMoves.add(new Move(piece, piece.position, lowerRightSquare, true,
+                            chessBoard.getPieceType(lowerRightSquare)));
+                }
                 break;
 
             }
@@ -1049,8 +1111,9 @@ public class LegalMovesChecker {
             } else {
                 //check take
                 if (piece.color != chessBoard.getPieceAt(lowerLeftSquare).color) {
-                    bishopLegalMoves.add(new Move(piece,piece.position, lowerLeftSquare, true,
-                            chessBoard.getPieceType(lowerLeftSquare)));                }
+                    bishopLegalMoves.add(new Move(piece, piece.position, lowerLeftSquare, true,
+                            chessBoard.getPieceType(lowerLeftSquare)));
+                }
                 break;
 
             }

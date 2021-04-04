@@ -28,5 +28,24 @@ public class ChessboardMoves {
         return hasMoved;
     }
 
+    public Move getLastMove(){
+        return moves.get(moves.size() -1);
+    }
+    public Move getLastMoveFor(Piece.Color color){
+        Move lastMove;
+        lastMove = getLastMove();
+        if(lastMove.getColor() == color){
+            return lastMove;
+        } else {
+            return moves.get(moves.size() - 2);
+        }
+    }
+    public Piece.Color getToPlayNow(){
+        return getLastMove().getColor().getOpposite();
+    }
+    public Piece.Color getLastPlayed(){
+        return getLastMove().getColor();
+    }
+
 
 }

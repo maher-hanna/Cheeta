@@ -211,9 +211,6 @@ public class ChessBoard {
     }
 
 
-    public void movePiece(int fromSquare, int toSquare) {
-        movePiece(new Move(getPieceAt(fromSquare), fromSquare, toSquare));
-    }
 
     public void movePiece(Move move) {
         int fromSquare = move.getFrom();
@@ -244,6 +241,9 @@ public class ChessBoard {
         }
         if(move.isPromote()){
             getPieceAt(toSquare).type = move.getPromotionPieceType();
+        }
+        if(move.isEnPasant()){
+            setPieceAt(ChessBoard.offsetRank(move.getTo(),-1),null);
         }
 
         moves.add(move);
