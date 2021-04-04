@@ -58,7 +58,9 @@ public class LegalMovesChecker {
             kingTarget = initialKingPosition - 2;
             Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
             Move move = new Move(king, initialKingPosition, kingTarget);
-            move.setCastling(true, Move.CastlingType.CASTLING_kING_SIDE);
+            move.setCastling(true, Move.CastlingType.CASTLING_QUEEN_SIDE);
+            legalMoves.addMoveFor(initialKingPosition, move);
+
         }
 
     }
