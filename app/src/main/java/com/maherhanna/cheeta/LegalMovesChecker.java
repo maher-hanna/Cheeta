@@ -752,7 +752,7 @@ public class LegalMovesChecker {
                                                 boolean kingInCheck) {
         ArrayList<Move> pawnLegalMoves = new ArrayList<Move>();
 
-        //the player at the bottom of chess board
+        //white pawn
         if (piece.color == Piece.Color.WHITE) {
 
             //check if the upper square is empty
@@ -842,7 +842,7 @@ public class LegalMovesChecker {
         //--------------------------
 
 
-        //the player at the top of chess board
+        //black pawn
         if (piece.color == Piece.Color.BLACK) {
 
             //check if the lower square is empty

@@ -243,7 +243,12 @@ public class ChessBoard {
             getPieceAt(toSquare).type = move.getPromotionPieceType();
         }
         if(move.isEnPasant()){
-            setPieceAt(ChessBoard.offsetRank(move.getTo(),-1),null);
+            if(move.getColor() == Piece.Color.WHITE){
+                setPieceAt(ChessBoard.offsetRank(move.getTo(),-1),null);
+            }
+            else {
+                setPieceAt(ChessBoard.offsetRank(move.getTo(),1),null);
+            }
         }
 
         moves.add(move);
