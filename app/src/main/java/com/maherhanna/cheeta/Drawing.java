@@ -390,7 +390,6 @@ public class Drawing {
         Piece targetPiece = chessBoard.getPieceAt(position);
 
         if (targetPiece == null ||
-                getGameType() == Game.COMPUTER_COMPUTER ||
                 chessBoard.getPieceColor(position) != game.bottomScreenPlayerColor) {
             return false;
         }
@@ -415,5 +414,12 @@ public class Drawing {
 
     public Piece.Color getBottomScreenPlayerColor() {
         return game.bottomScreenPlayerColor;
+    }
+    public boolean canHumanPlay(){
+        if(game.currentPlayer == game.bottomScreenPlayerColor){
+            return true;
+        } else {
+            return false;
+        }
     }
 }

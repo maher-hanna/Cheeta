@@ -95,6 +95,8 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     public boolean onTouchEvent(MotionEvent event) {
 
         if (drawing.isGameFinished()) return true;
+        if(drawing.canHumanPlay() == false) return true;
+        if(drawing.getGameType() == Game.COMPUTER_COMPUTER) return true;
 
         int action = event.getAction();
         float x = event.getX();
