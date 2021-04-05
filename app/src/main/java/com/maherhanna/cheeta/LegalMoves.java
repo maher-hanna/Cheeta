@@ -46,6 +46,15 @@ public class LegalMoves {
         }
         return false;
     }
+    public ArrayList<Move> getAllLegalMoves(){
+        ArrayList<Move> allLegalMoves = new ArrayList<>();
+        for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
+            for(Move move: pieceLegalMoves){
+                allLegalMoves.add(move);
+            }
+        }
+        return allLegalMoves;
+    }
 
     public boolean canMove(int from, int to){
         for(Move move: legalMoves.get(from)){

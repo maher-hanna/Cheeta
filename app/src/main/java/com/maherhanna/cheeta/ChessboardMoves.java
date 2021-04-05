@@ -41,10 +41,15 @@ public class ChessboardMoves {
         }
     }
     public Piece.Color getToPlayNow(){
-        return getLastMove().getColor().getOpposite();
+        return getLastPlayed().getOpposite();
     }
     public Piece.Color getLastPlayed(){
-        return getLastMove().getColor();
+        if(moves.size() == 0){
+            return Piece.Color.BLACK;
+        } else{
+            return getLastMove().getColor();
+
+        }
     }
 
 

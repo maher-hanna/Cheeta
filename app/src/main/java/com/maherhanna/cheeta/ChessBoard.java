@@ -170,12 +170,44 @@ public class ChessBoard {
 
 
     public boolean isKingInCheck(Piece.Color kingColor) {
-        if (kingColor == Piece.Color.WHITE) {
-            return blackLegalMoves.contains(getKingPosition(kingColor));
-
-        } else {
-            return whiteLegalMoves.contains(getKingPosition(kingColor));
+        if(LegalMovesChecker.isSquareAttacked(this,getKingPosition(kingColor),kingColor.getOpposite())){
+            return true;
+        } else{
+            return false;
         }
+    }
+
+    public int getPiecesValueFor(Piece.Color color){
+        int value = 0;
+        ArrayList<Integer> squares;
+        if(color == Piece.Color.WHITE){
+            squares = getWhitePositions();
+        }
+        else {
+            squares = getBlackPositions();
+        }
+
+        for(int square: squares){
+            switch (getPieceAt(square).type){
+                case QUEEN:
+                    value += 9;
+                    break;
+                case ROOK:
+                    value += 5;
+                    break;
+                case BISHOP:
+                    value += 3;
+                    break;
+                case KNIGHT:
+                    value += 3;
+                    break;
+                case PAWN:
+                    value +=1;
+                    break;
+            }
+        }
+        return value;
+
     }
 
     public int getKingPosition(Piece.Color kingColor) {
@@ -268,6 +300,109 @@ public class ChessBoard {
     public void setPieceAt(int position, Piece.Type pieceType, Piece.Color pieceColor) {
         pieces[position] = new Piece(pieceType, pieceColor, position);
     }
+
+
+    public Game.GameStatus checkStatus(){
+        Piece.Color lastPlayed = moves.getLastPlayed();
+        Game.GameStatus gameStatus = Game.GameStatus.NOT_FINISHED;
+        Piece.Color currentToPlayColor = lastPlayed.getOpposite();
+        boolean isKingInCheck = isKingInCheck(currentToPlayColor);
+
+        LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this,
+                isKingInCheck,currentToPlayColor);
+
+        if (isKingInCheck) {
+            if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
+                //win
+                if (lastPlayed == Piece.Color.WHITE) {
+                    gameStatus = Game.GameStatus.FINISHED_WIN_WHITE;
+                } else {
+                    gameStatus = Game.GameStatus.FINISHED_WIN_BLACK;
+
+                }
+            }
+        } else {
+            if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
+
+                //draw stalemate
+                gameStatus = Game.GameStatus.FINISHED_DRAW;
+            }
+            if (insufficientMaterial()) {
+                gameStatus = Game.GameStatus.FINISHED_DRAW;
+            }
+
+        }
+
+        return gameStatus;
+    }
+
+    public boolean checkGameFinished(){
+        boolean finished = false;
+        Game.GameStatus gameStatus = checkStatus();
+        if(gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
+        || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK){
+            finished = true;
+        }
+        return finished;
+    }
+
+    private boolean insufficientMaterial() {
+        ArrayList<Integer> whitePieces = getWhitePositions();
+        ArrayList<Integer> blackPieces = getBlackPositions();
+        int whitePiecesNumber = whitePieces.size();
+        int blackPiecesNumber = blackPieces.size();
+
+        // tow kings remaining
+        if (whitePiecesNumber + blackPiecesNumber == 2) {
+            return true;
+        }
+
+        if (whitePiecesNumber + blackPiecesNumber == 3) {
+
+            Piece.Type remainingPieceType = Piece.Type.PAWN;
+            for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
+                if (getPieceAt(i) != null && getPieceAt(i).type != Piece.Type.KING) {
+                    remainingPieceType = getPieceType(i);
+                }
+            }
+
+            // tow kings and a bishop or knight
+            if(remainingPieceType == Piece.Type.BISHOP || remainingPieceType == Piece.Type.KNIGHT){
+                return true;
+            }
+
+        }
+
+        if (whitePiecesNumber + blackPiecesNumber == 4) {
+
+            ArrayList<Piece> remainingPieces = new ArrayList<>();
+            for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
+                if (getPieceAt(i) != null && getPieceAt(i).type != Piece.Type.KING) {
+                    remainingPieces.add(getPieceAt(i));
+                }
+            }
+            Piece firstPiece = remainingPieces.get(0);
+            Piece secondPiece = remainingPieces.get(1);
+
+            // tow king and tow bishops of the same square color
+            if(firstPiece.type == Piece.Type.BISHOP && secondPiece.type == Piece.Type.BISHOP){
+                if(firstPiece.color != secondPiece.color){
+                    if(ChessBoard.GetSquareColor(firstPiece.position) ==
+                            ChessBoard.GetSquareColor(secondPiece.position)){
+                        return true;
+                    }
+                }
+            }
+
+
+
+        }
+
+
+
+        return false;
+    }
+
 
     public void setPieceAt(int position, Piece piece) {
         if(piece == null){

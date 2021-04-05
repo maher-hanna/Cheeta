@@ -1,11 +1,10 @@
 package com.maherhanna.cheeta;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 public class ComputerAi {
-    public Move getMove(ChessBoard chessBoard, Piece.Color toPlayNow){
-        MyRunnable myRunnable = new MyRunnable(chessBoard,toPlayNow);
+    public Move getMove(ChessBoard chessBoard, Piece.Color toPlayNow,int depth) {
+        MyRunnable myRunnable = new MyRunnable(chessBoard, toPlayNow,depth);
         Thread thread = new Thread(myRunnable);
         thread.start();
 
@@ -21,42 +20,156 @@ public class ComputerAi {
 }
 
 
-class MyRunnable implements Runnable{
+class MyRunnable implements Runnable {
     ChessBoard chessBoard;
-    Piece.Color toPlayNow;
+    Piece.Color maxingPlayer;
     private Move move;
+    private int maxDepth;
 
-    public MyRunnable(ChessBoard chessBoard, Piece.Color toPlayNow){
+    public MyRunnable(ChessBoard chessBoard, Piece.Color maxingPlayer,int maxDepth) {
         this.chessBoard = chessBoard;
-        this.toPlayNow = toPlayNow;
+        this.maxingPlayer = maxingPlayer;
+        this.maxDepth = maxDepth;
     }
 
-    public Move getMove(){
+    public Move getMove() {
         return this.move;
     }
 
 
     @Override
     public void run() {
-        Random random = new Random();
-        ArrayList<Integer> piecesPositions = chessBoard.getPositionsFor(toPlayNow);
-        int numPieces = piecesPositions.size();
-        int numOfLegalMoves = 0;
-        int randomPieceIndex = 0;
-        int randomPiecePosition = 0;
-        do {
-            randomPieceIndex = random.nextInt(numPieces);
-            randomPiecePosition = piecesPositions.get(randomPieceIndex);
-            numOfLegalMoves = chessBoard.getLegalTargetsFor(randomPiecePosition).size();
-
-        } while (numOfLegalMoves == 0);
-
-        int randomLegalMove = random.nextInt(numOfLegalMoves);
-        int randomMove = chessBoard.getLegalTargetsFor(randomPiecePosition).get(randomLegalMove);
-
-        Move resultMove = new Move(chessBoard.getPieceAt(randomPiecePosition), randomPiecePosition, randomMove);
-        resultMove = chessBoard.getLegalMovesFor(resultMove.getColor()).getMove(resultMove);
-        this.move = resultMove;
+        LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+                chessBoard.isKingInCheck(maxingPlayer), maxingPlayer);
+        ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
+        int maxIndex = -1;
+        int maxScore = Integer.MIN_VALUE;
+        for (int i = 0; i < toPlayMoves.size(); i++) {
+            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
+            if (score >= maxScore) {
+                maxScore = score;
+                maxIndex = i;
+            }
+        }
+        this.move = toPlayMoves.get(maxIndex);
 
     }
+
+    public int miniMax(ChessBoard chessBoard, Move move, int depth, final int maxDepth) {
+        boolean maxing;
+
+        if((depth % 2) == 0){
+            maxing = true;
+
+        }
+        else {
+            maxing = false;
+        }
+
+        ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+        chessBoardAfterMove.movePiece(move);
+
+
+        if (depth == maxDepth || chessBoardAfterMove.checkGameFinished() == true) {
+            return getScoreFor(chessBoardAfterMove, maxingPlayer);
+        } else {
+            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoardAfterMove,
+                    chessBoardAfterMove.isKingInCheck(move.getColor().getOpposite()),
+                    move.getColor().getOpposite());
+            ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
+            int maxIndex = -1;
+            int maxScore = Integer.MIN_VALUE;
+            ArrayList<Integer> movesScores = new ArrayList<>();
+            for (int i = 0; i < toPlayMoves.size(); i++) {
+                int score = miniMax(chessBoardAfterMove, toPlayMoves.get(i), depth + 1, maxDepth);
+                movesScores.add(score);
+            }
+            int bestScoreForMaxing = 0;
+            if(maxing){
+                bestScoreForMaxing = getMaxScore(movesScores);
+            } else {
+                bestScoreForMaxing = getMinScore(movesScores);
+            }
+            return bestScoreForMaxing;
+
+        }
+
+
+    }
+
+    private int getMinScore(ArrayList<Integer> moveScores) {
+        int minScore = Integer.MAX_VALUE;
+        int minScoreIndex = -1;
+        for (int i = 0; i < moveScores.size(); i++) {
+            if (moveScores.get(i) <= minScore) {
+                minScore = moveScores.get(i);
+                minScoreIndex = i;
+            }
+        }
+        return minScore;
+    }
+
+    private int getMaxScore(ArrayList<Integer> moveScores) {
+        int maxScore = Integer.MIN_VALUE;
+        int maxScoreIndex = -1;
+        for (int i = 0; i < moveScores.size(); i++) {
+            if (moveScores.get(i) >= maxScore) {
+                maxScore = moveScores.get(i);
+                maxScoreIndex = i;
+            }
+        }
+        return maxScore;
+
+    }
+
+    int getWhiteScore(ChessBoard chessBoard) {
+        int value = chessBoard.getPiecesValueFor(Piece.Color.WHITE);
+        boolean gameFinished = false;
+        switch (chessBoard.checkStatus()) {
+            case FINISHED_WIN_WHITE:
+                value = Integer.MAX_VALUE;
+                gameFinished = true;
+                break;
+            case FINISHED_WIN_BLACK:
+                value = Integer.MIN_VALUE;
+                gameFinished = true;
+                break;
+            case FINISHED_DRAW:
+                value = 0;
+                gameFinished = true;
+                break;
+        }
+        return value;
+    }
+
+    int getBlackScore(ChessBoard chessBoard) {
+        int value = chessBoard.getPiecesValueFor(Piece.Color.BLACK);
+        boolean gameFinished = false;
+        switch (chessBoard.checkStatus()) {
+            case FINISHED_WIN_WHITE:
+                value = Integer.MIN_VALUE;
+                gameFinished = true;
+                break;
+            case FINISHED_WIN_BLACK:
+                value = Integer.MAX_VALUE;
+                gameFinished = true;
+                break;
+            case FINISHED_DRAW:
+                value = 0;
+                gameFinished = true;
+                break;
+        }
+        return value;
+    }
+
+    int getScoreFor(ChessBoard chessBoard, Piece.Color color) {
+        if (color == Piece.Color.WHITE) {
+            return getWhiteScore(chessBoard) - getBlackScore(chessBoard);
+        } else {
+            return getBlackScore(chessBoard) - getWhiteScore(chessBoard);
+        }
+    }
+
+
 }
+

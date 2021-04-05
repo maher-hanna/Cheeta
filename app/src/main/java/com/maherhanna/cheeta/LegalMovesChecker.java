@@ -38,6 +38,14 @@ public class LegalMovesChecker {
         return legalMoves;
     }
 
+    public static LegalMoves getLegalMovesFor(ChessBoard chessBoard,boolean kingInCheck, Piece.Color color){
+        if(color == Piece.Color.WHITE){
+            return getWhiteLegalMoves(chessBoard,kingInCheck);
+        } else{
+            return getBlackLegalMoves(chessBoard,kingInCheck);
+        }
+    }
+
 
     private static void checkCastling(ChessBoard chessBoard, LegalMoves legalMoves,
                                       Piece.Color color, boolean kingInCheck) {
@@ -91,7 +99,7 @@ public class LegalMovesChecker {
     }
 
 
-    private static boolean isSquareAttacked(ChessBoard chessBoard, int square, Piece.Color opponentColor) {
+    public static boolean isSquareAttacked(ChessBoard chessBoard, int square, Piece.Color opponentColor) {
         Piece.Color color = opponentColor.getOpposite();
 
         // attacked by a pawn
@@ -231,8 +239,8 @@ public class LegalMovesChecker {
         }
 
 
-        //check the rank
-        //to the left of the rook
+        //check the rank to the left
+
         offset = -1;
         while (true) {
             attackingSquare = ChessBoard.offsetFile(square, offset);
