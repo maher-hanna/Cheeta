@@ -125,6 +125,7 @@ class MyRunnable implements Runnable {
     int getWhiteScore(ChessBoard chessBoard) {
         int value = chessBoard.getPiecesValueFor(Piece.Color.WHITE);
         boolean gameFinished = false;
+
         switch (chessBoard.checkStatus()) {
             case FINISHED_WIN_WHITE:
                 value = Integer.MAX_VALUE;
@@ -137,6 +138,9 @@ class MyRunnable implements Runnable {
             case FINISHED_DRAW:
                 value = 0;
                 gameFinished = true;
+                break;
+            case NOT_FINISHED:
+                value = value - chessBoard.getPiecesValueFor(Piece.Color.BLACK);
                 break;
         }
         return value;
@@ -158,15 +162,18 @@ class MyRunnable implements Runnable {
                 value = 0;
                 gameFinished = true;
                 break;
+            case NOT_FINISHED:
+                value = value - chessBoard.getPiecesValueFor(Piece.Color.WHITE);
+                break;
         }
         return value;
     }
 
     int getScoreFor(ChessBoard chessBoard, Piece.Color color) {
         if (color == Piece.Color.WHITE) {
-            return getWhiteScore(chessBoard) - getBlackScore(chessBoard);
+            return getWhiteScore(chessBoard);
         } else {
-            return getBlackScore(chessBoard) - getWhiteScore(chessBoard);
+            return getBlackScore(chessBoard);
         }
     }
 
