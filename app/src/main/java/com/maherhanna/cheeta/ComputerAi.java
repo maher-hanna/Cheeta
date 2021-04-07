@@ -123,7 +123,7 @@ class MyRunnable implements Runnable {
     }
 
     int getWhiteScore(ChessBoard chessBoard) {
-        int value = chessBoard.getPiecesValueFor(chessboard,Piece.Color.WHITE);
+        int value = getPiecesValueFor(chessBoard,Piece.Color.WHITE);
         boolean gameFinished = false;
 
         switch (chessBoard.checkStatus()) {
@@ -136,14 +136,32 @@ class MyRunnable implements Runnable {
                 gameFinished = true;
                 break;
             case FINISHED_DRAW:
-                value = 0;
+                value = evaluateDrawFor(chessBoard,Piece.Color.WHITE);
                 gameFinished = true;
                 break;
             case NOT_FINISHED:
-                value = value - chessBoard.getPiecesValueFor(Piece.Color.BLACK);
+                value = value - getPiecesValueFor(chessBoard,Piece.Color.BLACK);
                 break;
         }
         return value;
+    }
+
+    private int evaluateDrawForWhite(ChessBoard chessBoard){
+        int piecesAdvantage = getPiecesValueFor(chessBoard,Piece.Color.WHITE) -
+                getPiecesValueFor(chessBoard,Piece.Color.BLACK);
+        return getInitialPiecesValue() - piecesAdvantage;
+    }
+    private int evaluateDrawForBlack(ChessBoard chessBoard){
+        int piecesAdvantage = getPiecesValueFor(chessBoard,Piece.Color.BLACK) -
+                getPiecesValueFor(chessBoard,Piece.Color.WHITE);
+        return getInitialPiecesValue() - piecesAdvantage;
+    }
+    private int evaluateDrawFor(ChessBoard chessBoard, Piece.Color color) {
+        if(color == Piece.Color.WHITE){
+            return evaluateDrawForWhite(chessBoard);
+        } else {
+            return evaluateDrawForBlack(chessBoard);
+        }
     }
 
     int getBlackScore(ChessBoard chessBoard) {
@@ -176,10 +194,6 @@ class MyRunnable implements Runnable {
             return getBlackScore(chessBoard);
         }
     }
-
-
-}
-
     public int getPiecesValueFor(ChessBoard chessboard, Piece.Color color){
         int value = 0;
         ArrayList<Integer> squares;
@@ -193,22 +207,30 @@ class MyRunnable implements Runnable {
         for(int square: squares){
             switch (chessboard.getPieceAt(square).type){
                 case QUEEN:
-                    value += 90;
+                    value += Piece.QUEEN_VALUE;
                     break;
                 case ROOK:
-                    value += 50;
+                    value += Piece.ROOK_VALUE;
                     break;
                 case BISHOP:
-                    value += 30;
+                    value += Piece.BISHOP_VALUE;
                     break;
                 case KNIGHT:
-                    value += 30;
+                    value += Piece.KNIGHT_VALUE;
                     break;
                 case PAWN:
-                    value +=10;
+                    value += Piece.PAWN_VALUE;
                     break;
             }
         }
         return value;
 
     }
+
+    private int getInitialPiecesValue(){
+        return Piece.QUEEN_VALUE + Piece.ROOK_VALUE + Piece.BISHOP_VALUE + Piece.KNIGHT_VALUE +
+                Piece.PAWN_VALUE;
+    }
+
+}
+

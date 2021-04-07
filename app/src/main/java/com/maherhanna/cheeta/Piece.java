@@ -99,11 +99,11 @@ public class Piece {
         return new Piece(Type.KING,color);
     }
 
-    public static int QUEEN_VALUE = 9;
-    public static int ROOK_VALUE = 5;
-    public static int BISHOP_VALUE = 3;
-    public static int KNIGHT_VALUE = 3;
-    public static int PAWN_VALUE = 1;
+    public static int QUEEN_VALUE = 90;
+    public static int ROOK_VALUE = 50;
+    public static int BISHOP_VALUE = 30;
+    public static int KNIGHT_VALUE = 30;
+    public static int PAWN_VALUE = 10;
 
 
 
