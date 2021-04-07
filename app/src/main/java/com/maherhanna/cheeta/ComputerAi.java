@@ -123,7 +123,7 @@ class MyRunnable implements Runnable {
     }
 
     int getWhiteScore(ChessBoard chessBoard) {
-        int value = chessBoard.getPiecesValueFor(Piece.Color.WHITE);
+        int value = chessBoard.getPiecesValueFor(chessboard,Piece.Color.WHITE);
         boolean gameFinished = false;
 
         switch (chessBoard.checkStatus()) {
@@ -147,7 +147,7 @@ class MyRunnable implements Runnable {
     }
 
     int getBlackScore(ChessBoard chessBoard) {
-        int value = chessBoard.getPiecesValueFor(Piece.Color.BLACK);
+        int value = getPiecesValueFor(chessBoard,Piece.Color.BLACK);
         boolean gameFinished = false;
         switch (chessBoard.checkStatus()) {
             case FINISHED_WIN_WHITE:
@@ -163,7 +163,7 @@ class MyRunnable implements Runnable {
                 gameFinished = true;
                 break;
             case NOT_FINISHED:
-                value = value - chessBoard.getPiecesValueFor(Piece.Color.WHITE);
+                value = value - getPiecesValueFor(chessBoard,Piece.Color.WHITE);
                 break;
         }
         return value;
@@ -180,3 +180,35 @@ class MyRunnable implements Runnable {
 
 }
 
+    public int getPiecesValueFor(ChessBoard chessboard, Piece.Color color){
+        int value = 0;
+        ArrayList<Integer> squares;
+        if(color == Piece.Color.WHITE){
+            squares = chessboard.getWhitePositions();
+        }
+        else {
+            squares = chessboard.getBlackPositions();
+        }
+
+        for(int square: squares){
+            switch (chessboard.getPieceAt(square).type){
+                case QUEEN:
+                    value += 90;
+                    break;
+                case ROOK:
+                    value += 50;
+                    break;
+                case BISHOP:
+                    value += 30;
+                    break;
+                case KNIGHT:
+                    value += 30;
+                    break;
+                case PAWN:
+                    value +=10;
+                    break;
+            }
+        }
+        return value;
+
+    }

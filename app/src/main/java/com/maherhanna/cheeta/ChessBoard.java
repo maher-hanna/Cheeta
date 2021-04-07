@@ -177,38 +177,7 @@ public class ChessBoard {
         }
     }
 
-    public int getPiecesValueFor(Piece.Color color){
-        int value = 0;
-        ArrayList<Integer> squares;
-        if(color == Piece.Color.WHITE){
-            squares = getWhitePositions();
-        }
-        else {
-            squares = getBlackPositions();
-        }
 
-        for(int square: squares){
-            switch (getPieceAt(square).type){
-                case QUEEN:
-                    value += 9;
-                    break;
-                case ROOK:
-                    value += 5;
-                    break;
-                case BISHOP:
-                    value += 3;
-                    break;
-                case KNIGHT:
-                    value += 3;
-                    break;
-                case PAWN:
-                    value +=1;
-                    break;
-            }
-        }
-        return value;
-
-    }
 
     public int getKingPosition(Piece.Color kingColor) {
         int kingPosition = OUT_OF_BOARD;
