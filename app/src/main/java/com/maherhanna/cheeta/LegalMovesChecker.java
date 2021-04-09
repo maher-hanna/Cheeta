@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 public class LegalMovesChecker {
 
-    public static LegalMoves getBlackLegalMoves(ChessBoard chessBoard, boolean kingInCheck) {
+    public static LegalMoves getBlackLegalMoves(ChessBoard chessBoard) {
         LegalMoves legalMoves = new LegalMoves();
         ArrayList<Integer> blackPositions = chessBoard.getBlackPositions();
 
@@ -13,48 +13,48 @@ public class LegalMovesChecker {
             int square = blackPositions.get(i);
             Piece piece = chessBoard.getPieceAt(square);
 
-            ArrayList<Move> pieceLegalMoves = getPieceMoves(chessBoard, piece, kingInCheck);
+            ArrayList<Move> pieceLegalMoves = getPieceMoves(chessBoard, piece);
             removeMovesThatExposeKing(chessBoard, pieceLegalMoves, piece);
             legalMoves.addMovesFor(square, pieceLegalMoves);
 
         }
-        checkCastling(chessBoard, legalMoves, Piece.Color.BLACK, kingInCheck);
+        checkCastling(chessBoard, legalMoves, Piece.Color.BLACK);
 
         return legalMoves;
     }
 
-    public static LegalMoves getWhiteLegalMoves(ChessBoard chessBoard, boolean kingInCheck) {
+    public static LegalMoves getWhiteLegalMoves(ChessBoard chessBoard) {
         LegalMoves legalMoves = new LegalMoves();
         ArrayList<Integer> whitePositions = chessBoard.getWhitePositions();
         for (int i = 0; i < whitePositions.size(); i++) {
             int position = whitePositions.get(i);
             Piece piece = chessBoard.getPieceAt(position);
-            ArrayList<Move> pieceLegalMoves = getPieceMoves(chessBoard, piece, kingInCheck);
+            ArrayList<Move> pieceLegalMoves = getPieceMoves(chessBoard, piece);
             removeMovesThatExposeKing(chessBoard, pieceLegalMoves, piece);
 
             legalMoves.addMovesFor(position, pieceLegalMoves);
         }
-        checkCastling(chessBoard, legalMoves, Piece.Color.WHITE, kingInCheck);
+        checkCastling(chessBoard, legalMoves, Piece.Color.WHITE);
         return legalMoves;
     }
 
     public static LegalMoves getLegalMovesFor(ChessBoard chessBoard,boolean kingInCheck, Piece.Color color){
         if(color == Piece.Color.WHITE){
-            return getWhiteLegalMoves(chessBoard,kingInCheck);
+            return getWhiteLegalMoves(chessBoard);
         } else{
-            return getBlackLegalMoves(chessBoard,kingInCheck);
+            return getBlackLegalMoves(chessBoard);
         }
     }
 
 
     private static void checkCastling(ChessBoard chessBoard, LegalMoves legalMoves,
-                                      Piece.Color color, boolean kingInCheck) {
+                                      Piece.Color color) {
 
         int initialKingPosition = getInitialKingPosition(chessBoard, color);
         int initialRookKingSidePosition = getInitialRookKingSide(chessBoard, color);
         int initialRookQueenSidePosition = getInitialRookQueenSide(chessBoard, color);
         int kingTarget = 0;
-        if (canCastleKingSide(chessBoard, color, kingInCheck) == true) {
+        if (canCastleKingSide(chessBoard, color, chessBoard.isKingInCheck(color)) == true) {
             kingTarget = initialKingPosition + 2;
             Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
             Move move = new Move(king, initialKingPosition, kingTarget);
@@ -62,7 +62,7 @@ public class LegalMovesChecker {
 
             legalMoves.addMoveFor(initialKingPosition, move);
         }
-        if (canCastleQueenSide(chessBoard, color, kingInCheck) == true) {
+        if (canCastleQueenSide(chessBoard, color, chessBoard.isKingInCheck(color)) == true) {
             kingTarget = initialKingPosition - 2;
             Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
             Move move = new Move(king, initialKingPosition, kingTarget);
@@ -385,29 +385,29 @@ public class LegalMovesChecker {
     }
 
 
-    public static ArrayList<Move> getPieceMoves(ChessBoard chessBoard, Piece piece, boolean kingInCheck) {
+    public static ArrayList<Move> getPieceMoves(ChessBoard chessBoard, Piece piece) {
         ArrayList<Move> pieceLegalMoves = new ArrayList<Move>();
 
         switch (piece.type) {
             case PAWN:
-                pieceLegalMoves = getPawnMoves(chessBoard, piece, kingInCheck);
+                pieceLegalMoves = getPawnMoves(chessBoard, piece);
                 break;
             case ROOK:
-                pieceLegalMoves = getRookMoves(chessBoard, piece, kingInCheck);
+                pieceLegalMoves = getRookMoves(chessBoard, piece);
                 break;
             case KNIGHT:
-                pieceLegalMoves = getKnightMoves(chessBoard, piece, kingInCheck);
+                pieceLegalMoves = getKnightMoves(chessBoard, piece);
                 break;
             case BISHOP:
-                pieceLegalMoves = getBishopMoves(chessBoard, piece, kingInCheck);
+                pieceLegalMoves = getBishopMoves(chessBoard, piece);
 
                 break;
             case QUEEN:
-                pieceLegalMoves = getQueenMoves(chessBoard, piece, kingInCheck);
+                pieceLegalMoves = getQueenMoves(chessBoard, piece);
 
                 break;
             case KING:
-                pieceLegalMoves = getKingMoves(chessBoard, piece, kingInCheck);
+                pieceLegalMoves = getKingMoves(chessBoard, piece);
                 break;
         }
         return pieceLegalMoves;
@@ -480,7 +480,7 @@ public class LegalMovesChecker {
                 !isSquareAttacked(chessBoard, initialKingPosition - 2, color.getOpposite());
     }
 
-    private static ArrayList<Move> getKnightMoves(ChessBoard chessBoard, Piece piece, boolean kingInCheck) {
+    private static ArrayList<Move> getKnightMoves(ChessBoard chessBoard, Piece piece) {
         ArrayList<Move> knightLegalMoves = new ArrayList<Move>();
 
         int fileOffset = 0;
@@ -528,7 +528,7 @@ public class LegalMovesChecker {
 
     }
 
-    private static ArrayList<Move> getKingMoves(ChessBoard chessBoard, Piece piece, boolean kingInCheck) {
+    private static ArrayList<Move> getKingMoves(ChessBoard chessBoard, Piece piece) {
         ArrayList<Move> kingLegalMoves = new ArrayList<Move>();
 
         int fileOffset = 0;
@@ -557,8 +557,7 @@ public class LegalMovesChecker {
         return kingLegalMoves;
     }
 
-    private static ArrayList<Move> getQueenMoves(ChessBoard chessBoard, Piece piece,
-                                                 boolean kingInCheck) {
+    private static ArrayList<Move> getQueenMoves(ChessBoard chessBoard, Piece piece) {
         ArrayList<Move> queenLegalMoves = new ArrayList<Move>();
 
         int fileOffset = 0;
@@ -747,8 +746,7 @@ public class LegalMovesChecker {
     }
 
 
-    private static ArrayList<Move> getPawnMoves(ChessBoard chessBoard, Piece piece,
-                                                boolean kingInCheck) {
+    private static ArrayList<Move> getPawnMoves(ChessBoard chessBoard, Piece piece) {
         ArrayList<Move> pawnLegalMoves = new ArrayList<Move>();
 
         //white pawn
@@ -934,8 +932,7 @@ public class LegalMovesChecker {
 
     }
 
-    private static ArrayList<Move> getRookMoves(ChessBoard chessBoard, Piece piece,
-                                                boolean kingInCheck) {
+    private static ArrayList<Move> getRookMoves(ChessBoard chessBoard, Piece piece) {
         ArrayList<Move> rookLegalMoves = new ArrayList<Move>();
         int offset = 0;
 
@@ -1024,8 +1021,7 @@ public class LegalMovesChecker {
 
     }
 
-    private static ArrayList<Move> getBishopMoves(ChessBoard chessBoard, Piece piece,
-                                                  boolean kingInCheck) {
+    private static ArrayList<Move> getBishopMoves(ChessBoard chessBoard, Piece piece) {
         ArrayList<Move> bishopLegalMoves = new ArrayList<Move>();
 
         int fileOffset = 0;

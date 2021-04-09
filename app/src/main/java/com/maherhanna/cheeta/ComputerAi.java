@@ -66,6 +66,26 @@ class MyRunnable implements Runnable {
 
         this.move = toPlayMoves.get(maxIndex);
 
+        maxIndex = -1;
+        maxScore = Integer.MIN_VALUE;
+        startTime = System.nanoTime();
+        for (int i = 0; i < toPlayMoves.size(); i++) {
+            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
+            if (score > maxScore) {
+                maxScore = score;
+                maxIndex = i;
+            }
+        }
+        duration = System.nanoTime() - startTime;
+        duration = duration / 1000; // convert to milli second
+        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
+                maxIndex);
+        Log.d(Game.DEBUG,"Duration: " + duration);
+
+
+
+
+
 
     }
 
@@ -123,6 +143,49 @@ class MyRunnable implements Runnable {
 
 
     }
+
+    public int miniMax(ChessBoard chessBoard, Move move,int depth, final int maxDepth) {
+        boolean maxing;
+
+        maxing = (depth % 2) == 0;
+
+        ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+        chessBoardAfterMove.movePiece(move);
+
+
+        if (depth == maxDepth || chessBoardAfterMove.checkGameFinished() == true) {
+            evaluations++;
+            return getScoreFor(chessBoardAfterMove, maxingPlayer);
+        } else {
+            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoardAfterMove,
+                    chessBoardAfterMove.isKingInCheck(move.getColor().getOpposite()),
+                    move.getColor().getOpposite());
+            ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
+
+            ArrayList<Integer> movesScores = new ArrayList<>();
+            if (maxing) {
+                int maxScore = Integer.MIN_VALUE;
+                for (int i = 0; i < toPlayMoves.size(); i++) {
+                    int score = miniMax(chessBoardAfterMove, toPlayMoves.get(i),depth + 1, maxDepth);
+                    maxScore = Math.max(maxScore, score);
+
+                }
+                return maxScore;
+            } else {
+                int minScore = Integer.MAX_VALUE;
+                for (int i = 0; i < toPlayMoves.size(); i++) {
+                    int score = miniMax(chessBoardAfterMove, toPlayMoves.get(i),depth + 1, maxDepth);
+                    minScore = Math.min(minScore, score);
+                }
+                return minScore;
+            }
+
+
+        }
+
+
+    }
+
 
 
     private int getMinScore(ArrayList<Integer> moveScores) {

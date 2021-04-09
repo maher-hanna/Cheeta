@@ -106,12 +106,12 @@ public class ChessBoard {
 
 
     public void updateBlackLegalMoves(boolean kingInCheck) {
-        blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this, kingInCheck);
+        blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this);
     }
 
 
     public void updateWhiteLegalMoves(boolean kingInCheck) {
-        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this, kingInCheck);
+        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this);
 
     }
 
