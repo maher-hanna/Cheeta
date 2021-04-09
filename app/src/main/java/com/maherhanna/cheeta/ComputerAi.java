@@ -59,9 +59,10 @@ class MyRunnable implements Runnable {
         }
         long duration = System.nanoTime() - startTime;
         duration = duration / 1000; // convert to milli second
-        Log.d(Game.DEBUG, "evaluations: " + String.valueOf(evaluations) + " move " +
+        Log.d(Game.DEBUG, "alpha beta evaluations: " + String.valueOf(evaluations) + " move " +
                 maxIndex);
         Log.d(Game.DEBUG,"Duration: " + String.valueOf(duration));
+
 
         this.move = toPlayMoves.get(maxIndex);
 
@@ -128,6 +129,7 @@ class MyRunnable implements Runnable {
 
     }
 
+
     private int getMinScore(ArrayList<Integer> moveScores) {
         int minScore = Integer.MAX_VALUE;
         for (int i = 0; i < moveScores.size(); i++) {
@@ -151,20 +153,15 @@ class MyRunnable implements Runnable {
 
     int getWhiteScore(ChessBoard chessBoard) {
         int value = getPiecesValueFor(chessBoard, Piece.Color.WHITE);
-        boolean gameFinished = false;
-
         switch (chessBoard.checkStatus()) {
             case FINISHED_WIN_WHITE:
                 value = Integer.MAX_VALUE;
-                gameFinished = true;
                 break;
             case FINISHED_WIN_BLACK:
                 value = Integer.MIN_VALUE;
-                gameFinished = true;
                 break;
             case FINISHED_DRAW:
                 value = evaluateDrawFor(chessBoard, Piece.Color.WHITE);
-                gameFinished = true;
                 break;
             case NOT_FINISHED:
                 value = value - getPiecesValueFor(chessBoard, Piece.Color.BLACK);
@@ -176,13 +173,13 @@ class MyRunnable implements Runnable {
     private int evaluateDrawForWhite(ChessBoard chessBoard) {
         int piecesAdvantage = getPiecesValueFor(chessBoard, Piece.Color.WHITE) -
                 getPiecesValueFor(chessBoard, Piece.Color.BLACK);
-        return getInitialPiecesValue() - piecesAdvantage;
+        return getInitialPiecesValue() - Piece.KING_VALUE - piecesAdvantage;
     }
 
     private int evaluateDrawForBlack(ChessBoard chessBoard) {
         int piecesAdvantage = getPiecesValueFor(chessBoard, Piece.Color.BLACK) -
                 getPiecesValueFor(chessBoard, Piece.Color.WHITE);
-        return getInitialPiecesValue() - piecesAdvantage;
+        return getInitialPiecesValue() - Piece.KING_VALUE - piecesAdvantage;
     }
 
     private int evaluateDrawFor(ChessBoard chessBoard, Piece.Color color) {
@@ -234,32 +231,162 @@ class MyRunnable implements Runnable {
         }
 
         for (int square : squares) {
-            switch (chessboard.getPieceAt(square).type) {
-                case QUEEN:
-                    value += Piece.QUEEN_VALUE;
-                    break;
-                case ROOK:
-                    value += Piece.ROOK_VALUE;
-                    break;
-                case BISHOP:
-                    value += Piece.BISHOP_VALUE;
-                    break;
-                case KNIGHT:
-                    value += Piece.KNIGHT_VALUE;
-                    break;
-                case PAWN:
-                    value += Piece.PAWN_VALUE;
-                    break;
-            }
+            Piece piece = chessboard.getPieceAt(square);
+            value += getPositionalValue(piece);
+
         }
         return value;
+    }
+    public int getPiecesValueMinusKingFor(ChessBoard chessboard, Piece.Color color) {
+        int value = 0;
+        ArrayList<Integer> squares;
+        if (color == Piece.Color.WHITE) {
+            squares = chessboard.getWhitePositions();
+        } else {
+            squares = chessboard.getBlackPositions();
+        }
+
+        for (int square : squares) {
+            Piece piece = chessboard.getPieceAt(square);
+            if(piece.type == Piece.Type.KING) continue;
+            value += getPositionalValue(piece);
+
+        }
+        return value;
+    }
+
+    private int getPositionalValue(Piece piece) {
+        int value = 0;
+        int piecePositionOnTable = ChessBoard.OUT_OF_BOARD;
+        int file = ChessBoard.GetFile(piece.position);
+        int rank = ChessBoard.GetRank(piece.position);
+        if(piece.color == Piece.Color.WHITE){
+            rank = 7 - rank;
+        } else {
+            file = 7 - file;
+            rank = 7 - rank;
+        }
+        piecePositionOnTable = ChessBoard.GetPosition(file,rank);
+        switch (piece.type){
+            case PAWN:
+                value += Piece.PAWN_VALUE + PAWN_SQUARES_TABLE[piecePositionOnTable];
+                break;
+            case ROOK:
+                value += Piece.ROOK_VALUE + ROOK_SQUARES_TABLE[piecePositionOnTable];
+                break;
+            case KNIGHT:
+                value += Piece.KNIGHT_VALUE + KNIGHT_SQUARES_TABLE[piecePositionOnTable];
+                break;
+            case BISHOP:
+                value += Piece.BISHOP_VALUE + BISHOP_SQUARES_TABLE[piecePositionOnTable];
+                break;
+            case QUEEN:
+                value += Piece.QUEEN_VALUE + QUEEN_SQUARES_TABLE[piecePositionOnTable];
+                break;
+            case KING:
+                if(isEndGame(chessBoard)){
+                    value += Piece.KING_VALUE + KING_END_GAME_SQUARES_TABLE[piecePositionOnTable];
+
+                } else {
+                    value += Piece.KING_VALUE + KING_MIDDLE_GAME_SQUARES_TABLE[piecePositionOnTable];
+                }
+                break;
+        }
+        return value;
+    }
+
+    boolean isEndGame(ChessBoard chessBoard){
+        boolean endGame = false;
+        int whitePiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.Color.WHITE) ;
+        int blackPiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.Color.BLACK) ;
+        if(Math.abs(whitePiecesValue - blackPiecesValue) >= Piece.QUEEN_VALUE){
+            if(whitePiecesValue < Piece.QUEEN_VALUE) endGame = true;
+            if(blackPiecesValue < Piece.QUEEN_VALUE) endGame = true;
+        }
+
+        return endGame;
 
     }
 
     private int getInitialPiecesValue() {
-        return Piece.QUEEN_VALUE + Piece.ROOK_VALUE + Piece.BISHOP_VALUE + Piece.KNIGHT_VALUE +
-                Piece.PAWN_VALUE;
+        return Piece.KING_VALUE + Piece.QUEEN_VALUE + Piece.ROOK_VALUE + Piece.BISHOP_VALUE +
+                Piece.KNIGHT_VALUE + Piece.PAWN_VALUE;
     }
+
+    public static int[] PAWN_SQUARES_TABLE = {
+            0,  0,  0,  0,  0,  0,  0,  0,
+            50, 50, 50, 50, 50, 50, 50, 50,
+            10, 10, 20, 30, 30, 20, 10, 10,
+            5,  5, 10, 25, 25, 10,  5,  5,
+            0,  0,  0, 20, 20,  0,  0,  0,
+            5, -5,-10,  0,  0,-10, -5,  5,
+            5, 10, 10,-20,-20, 10, 10,  5,
+            0,  0,  0,  0,  0,  0,  0,  0
+    };
+    public static int[] KNIGHT_SQUARES_TABLE = {
+            -50,-40,-30,-30,-30,-30,-40,-50,
+            -40,-20,  0,  0,  0,  0,-20,-40,
+            -30,  0, 10, 15, 15, 10,  0,-30,
+            -30,  5, 15, 20, 20, 15,  5,-30,
+            -30,  0, 15, 20, 20, 15,  0,-30,
+            -30,  5, 10, 15, 15, 10,  5,-30,
+            -40,-20,  0,  5,  5,  0,-20,-40,
+            -50,-40,-30,-30,-30,-30,-40,-50
+    };
+    public static int[] BISHOP_SQUARES_TABLE = {
+            -20,-10,-10,-10,-10,-10,-10,-20,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -10,  0,  5, 10, 10,  5,  0,-10,
+            -10,  5,  5, 10, 10,  5,  5,-10,
+            -10,  0, 10, 10, 10, 10,  0,-10,
+            -10, 10, 10, 10, 10, 10, 10,-10,
+            -10,  5,  0,  0,  0,  0,  5,-10,
+            -20,-10,-10,-10,-10,-10,-10,-20
+    };
+    public static int[] ROOK_SQUARES_TABLE = {
+            0,  0,  0,  0,  0,  0,  0,  0,
+            5, 10, 10, 10, 10, 10, 10,  5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            0,  0,  0,  5,  5,  0,  0,  0
+    };
+
+    public static int[] QUEEN_SQUARES_TABLE = {
+            -20,-10,-10, -5, -5,-10,-10,-20,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -10,  0,  5,  5,  5,  5,  0,-10,
+            -5,  0,  5,  5,  5,  5,  0, -5,
+            0,  0,  5,  5,  5,  5,  0, -5,
+            -10,  5,  5,  5,  5,  5,  0,-10,
+            -10,  0,  5,  0,  0,  0,  0,-10,
+            -20,-10,-10, -5, -5,-10,-10,-20
+    };
+
+    public static int[] KING_MIDDLE_GAME_SQUARES_TABLE = {
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -20,-30,-30,-40,-40,-30,-30,-20,
+            -10,-20,-20,-20,-20,-20,-20,-10,
+            20, 20,  0,  0,  0,  0, 20, 20,
+            20, 30, 10,  0,  0, 10, 30, 20
+    };
+    public static int[] KING_END_GAME_SQUARES_TABLE = {
+            -50,-40,-30,-20,-20,-30,-40,-50,
+            -30,-20,-10,  0,  0,-10,-20,-30,
+            -30,-10, 20, 30, 30, 20,-10,-30,
+            -30,-10, 30, 40, 40, 30,-10,-30,
+            -30,-10, 30, 40, 40, 30,-10,-30,
+            -30,-10, 20, 30, 30, 20,-10,-30,
+            -30,-30,  0,  0,  0,  0,-30,-30,
+            -50,-30,-30,-30,-30,-30,-30,-50
+    };
+
+
 
 }
 

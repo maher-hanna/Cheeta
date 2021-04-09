@@ -5,6 +5,7 @@ public class Piece {
     public Type type;
     public Color color;
     public int position;
+    private int value;
 
     public Piece(Type type, Color color, int position) {
         this.type = type;
@@ -65,6 +66,9 @@ public class Piece {
         }
 
     }
+
+
+
     public static final Piece BLACK_PAWN = new Piece(Type.PAWN,Color.BLACK,-1);
     public static final Piece BLACK_ROOK = new Piece(Type.ROOK,Color.BLACK,-1);
     public static final Piece BLACK_KNIGHT = new Piece(Type.KNIGHT,Color.BLACK,-1);
@@ -99,11 +103,12 @@ public class Piece {
         return new Piece(Type.KING,color);
     }
 
-    public static int QUEEN_VALUE = 90;
-    public static int ROOK_VALUE = 50;
-    public static int BISHOP_VALUE = 30;
-    public static int KNIGHT_VALUE = 30;
-    public static int PAWN_VALUE = 10;
+    public static int QUEEN_VALUE = 900;
+    public static int ROOK_VALUE = 500;
+    public static int BISHOP_VALUE = 330;
+    public static int KNIGHT_VALUE = 320;
+    public static int PAWN_VALUE = 100;
+    public static int KING_VALUE = 20000;
 
 
 
