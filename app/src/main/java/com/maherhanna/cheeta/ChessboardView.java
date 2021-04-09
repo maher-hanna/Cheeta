@@ -13,9 +13,9 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     public Drawing drawing;
     private Canvas piecesCanvas;
     private Bitmap piecesBitmap;
-    private Paint highlightPaint;
-    private Paint legalSquarePaint;
-    private Paint legalSquarePaintHasPiece;
+    private final Paint highlightPaint;
+    private final Paint legalSquarePaint;
+    private final Paint legalSquarePaintHasPiece;
 
     //for dragging a piece
     int draggedSquare;

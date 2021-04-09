@@ -445,12 +445,8 @@ public class LegalMovesChecker {
         }
 
 
-        if (isSquareAttacked(chessBoard, initialKingPosition + 1, color.getOpposite()) ||
-                isSquareAttacked(chessBoard, initialKingPosition + 2, color.getOpposite())) {
-            return false;
-        }
-
-        return true;
+        return !isSquareAttacked(chessBoard, initialKingPosition + 1, color.getOpposite()) &&
+                !isSquareAttacked(chessBoard, initialKingPosition + 2, color.getOpposite());
     }
 
     private static boolean canCastleQueenSide(ChessBoard chessBoard, Piece.Color color, boolean kingInCheck) {
@@ -480,13 +476,8 @@ public class LegalMovesChecker {
             return false;
         }
 
-        if (isSquareAttacked(chessBoard, initialKingPosition - 1, color.getOpposite()) ||
-                isSquareAttacked(chessBoard, initialKingPosition - 2, color.getOpposite())) {
-            return false;
-        }
-
-
-        return true;
+        return !isSquareAttacked(chessBoard, initialKingPosition - 1, color.getOpposite()) &&
+                !isSquareAttacked(chessBoard, initialKingPosition - 2, color.getOpposite());
     }
 
     private static ArrayList<Move> getKnightMoves(ChessBoard chessBoard, Piece piece, boolean kingInCheck) {

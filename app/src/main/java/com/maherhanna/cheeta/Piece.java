@@ -55,7 +55,7 @@ public class Piece {
         WHITE(1);
 
         private final int color;
-        private Color(final int color){this.color = color;}
+        Color(final int color){this.color = color;}
         public Color getOpposite(){
             if(color == 0){
                 return WHITE;

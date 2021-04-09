@@ -26,7 +26,7 @@ class MyRunnable implements Runnable {
     ChessBoard chessBoard;
     Piece.Color maxingPlayer;
     private Move move;
-    private int maxDepth;
+    private final int maxDepth;
     private int evaluations;
 
     public MyRunnable(ChessBoard chessBoard, Piece.Color maxingPlayer, int maxDepth) {
@@ -59,9 +59,9 @@ class MyRunnable implements Runnable {
         }
         long duration = System.nanoTime() - startTime;
         duration = duration / 1000; // convert to milli second
-        Log.d(Game.DEBUG, "alpha beta evaluations: " + String.valueOf(evaluations) + " move " +
+        Log.d(Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
                 maxIndex);
-        Log.d(Game.DEBUG,"Duration: " + String.valueOf(duration));
+        Log.d(Game.DEBUG,"Duration: " + duration);
 
 
         this.move = toPlayMoves.get(maxIndex);
@@ -74,12 +74,7 @@ class MyRunnable implements Runnable {
                        int depth, final int maxDepth) {
         boolean maxing;
 
-        if ((depth % 2) == 0) {
-            maxing = true;
-
-        } else {
-            maxing = false;
-        }
+        maxing = (depth % 2) == 0;
 
         ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
         chessBoardAfterMove.movePiece(move);
@@ -161,7 +156,7 @@ class MyRunnable implements Runnable {
                 value = Integer.MIN_VALUE;
                 break;
             case FINISHED_DRAW:
-                value = evaluateDrawFor(chessBoard, Piece.Color.WHITE);
+                value = 0;
                 break;
             case NOT_FINISHED:
                 value = value - getPiecesValueFor(chessBoard, Piece.Color.BLACK);
@@ -192,19 +187,15 @@ class MyRunnable implements Runnable {
 
     int getBlackScore(ChessBoard chessBoard) {
         int value = getPiecesValueFor(chessBoard, Piece.Color.BLACK);
-        boolean gameFinished = false;
         switch (chessBoard.checkStatus()) {
             case FINISHED_WIN_WHITE:
                 value = Integer.MIN_VALUE;
-                gameFinished = true;
                 break;
             case FINISHED_WIN_BLACK:
                 value = Integer.MAX_VALUE;
-                gameFinished = true;
                 break;
             case FINISHED_DRAW:
                 value = 0;
-                gameFinished = true;
                 break;
             case NOT_FINISHED:
                 value = value - getPiecesValueFor(chessBoard, Piece.Color.WHITE);

@@ -7,11 +7,11 @@ import java.util.Random;
 
 class Game {
     public static final String DEBUG = "Cheeta_Debug";
-    private Drawing drawing;
-    private ChessBoard chessBoard;
-    private ComputerAi computerAi;
+    private final Drawing drawing;
+    private final ChessBoard chessBoard;
+    private final ComputerAi computerAi;
     public int gameType;
-    private int computerPlayDelayMilli;
+    private final int computerPlayDelayMilli;
     public boolean paused;
     Piece.Color currentPlayer;
     public Piece.Color bottomScreenPlayerColor;
@@ -162,8 +162,6 @@ class Game {
     }
 
     public enum GameStatus {NOT_FINISHED, FINISHED_DRAW, FINISHED_WIN_WHITE, FINISHED_WIN_BLACK}
-
-    ;
 
 
 }

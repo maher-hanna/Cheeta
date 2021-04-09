@@ -8,8 +8,8 @@ import java.util.ArrayList;
 
 public class Drawing {
     public Game game;
-    private GameActivity activity;
-    private ChessboardView chessboardView;
+    private final GameActivity activity;
+    private final ChessboardView chessboardView;
     public ChessBoard chessBoard;
 
 
@@ -36,7 +36,7 @@ public class Drawing {
     //chess board dimensions
     private RectF chessBoardViewRect;
     public float squareSize;
-    private static float SCALE_PIECES_DOWN = 0.8f;
+    private static final float SCALE_PIECES_DOWN = 0.8f;
     //----------------
 
     boolean waitingForHuman = false;
@@ -289,8 +289,8 @@ public class Drawing {
 
     private RectF getPieceDrawingRect(Piece piece, int position) {
         RectF result = new RectF();
-        float x = chessBoard.GetFile(position) * squareSize;
-        float y = chessBoard.GetRank(position) * squareSize;
+        float x = ChessBoard.GetFile(position) * squareSize;
+        float y = ChessBoard.GetRank(position) * squareSize;
 
         y = chessBoardViewRect.width() - y - squareSize;
 
@@ -389,11 +389,8 @@ public class Drawing {
     public boolean canSelect(int position) {
         Piece targetPiece = chessBoard.getPieceAt(position);
 
-        if (targetPiece == null ||
-                chessBoard.getPieceColor(position) != game.bottomScreenPlayerColor) {
-            return false;
-        }
-        return true;
+        return targetPiece != null &&
+                chessBoard.getPieceColor(position) == game.bottomScreenPlayerColor;
 
     }
 
@@ -416,10 +413,6 @@ public class Drawing {
         return game.bottomScreenPlayerColor;
     }
     public boolean canHumanPlay(){
-        if(game.currentPlayer == game.bottomScreenPlayerColor){
-            return true;
-        } else {
-            return false;
-        }
+        return game.currentPlayer == game.bottomScreenPlayerColor;
     }
 }

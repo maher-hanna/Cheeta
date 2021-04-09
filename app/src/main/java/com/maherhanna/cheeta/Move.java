@@ -1,10 +1,10 @@
 package com.maherhanna.cheeta;
 
 public class Move {
-    private Piece.Type pieceType;
-    private Piece.Color pieceColor;
-    private int from;
-    private int to;
+    private final Piece.Type pieceType;
+    private final Piece.Color pieceColor;
+    private final int from;
+    private final int to;
     private boolean castling;
     private CastlingType castlingType;
     private boolean takes ;
@@ -137,6 +137,7 @@ public class Move {
 
 
 
-    public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE};
-    public enum PromoteToPieceType{QUEEN,KNIGHT,ROOK,BISHOP};
+    public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE}
+
+    public enum PromoteToPieceType{QUEEN,KNIGHT,ROOK,BISHOP}
 }

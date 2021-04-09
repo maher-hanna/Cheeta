@@ -28,7 +28,7 @@ public class ChessBoard {
     public static final int FILE_H = 7;
 
 
-    private Piece[] pieces;
+    private final Piece[] pieces;
     public ChessboardMoves moves;
 
     LegalMoves blackLegalMoves;
@@ -170,11 +170,7 @@ public class ChessBoard {
 
 
     public boolean isKingInCheck(Piece.Color kingColor) {
-        if(LegalMovesChecker.isSquareAttacked(this,getKingPosition(kingColor),kingColor.getOpposite())){
-            return true;
-        } else{
-            return false;
-        }
+        return LegalMovesChecker.isSquareAttacked(this, getKingPosition(kingColor), kingColor.getOpposite());
     }
 
 
@@ -194,18 +190,10 @@ public class ChessBoard {
     public boolean canMove(int fromSquare, int toSquare) {
         boolean isLegal = false;
         if (isPieceBlackAt(fromSquare)) {
-            if (blackLegalMoves.canMove(fromSquare, toSquare)) {
-                isLegal = true;
-            } else {
-                isLegal = false;
-            }
+            isLegal = blackLegalMoves.canMove(fromSquare, toSquare);
 
         } else {
-            if (whiteLegalMoves.canMove(fromSquare, toSquare)) {
-                isLegal = true;
-            } else {
-                isLegal = false;
-            }
+            isLegal = whiteLegalMoves.canMove(fromSquare, toSquare);
         }
         return isLegal;
 
@@ -356,10 +344,8 @@ public class ChessBoard {
             // tow king and tow bishops of the same square color
             if(firstPiece.type == Piece.Type.BISHOP && secondPiece.type == Piece.Type.BISHOP){
                 if(firstPiece.color != secondPiece.color){
-                    if(ChessBoard.GetSquareColor(firstPiece.position) ==
-                            ChessBoard.GetSquareColor(secondPiece.position)){
-                        return true;
-                    }
+                    return ChessBoard.GetSquareColor(firstPiece.position) ==
+                            ChessBoard.GetSquareColor(secondPiece.position);
                 }
             }
 
@@ -403,8 +389,7 @@ public class ChessBoard {
     public boolean isPieceAt(int square, Piece.Type type, Piece.Color color){
         if(square == OUT_OF_BOARD) return false;
         if(isSquareEmpty(square)) return false;
-        if(getPieceColor(square) == color && getPieceType(square) == type) return true;
-        else return false;
+        return getPieceColor(square) == color && getPieceType(square) == type;
     }
 
     public static int GetPosition(int file, int rank) {

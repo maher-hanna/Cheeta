@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 public class LegalMoves {
-    private HashMap<Integer, ArrayList<Move>> legalMoves;
+    private final HashMap<Integer, ArrayList<Move>> legalMoves;
     public LegalMoves(){
         legalMoves = new HashMap<>();
     }

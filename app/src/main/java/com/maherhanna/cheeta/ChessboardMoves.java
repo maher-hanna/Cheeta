@@ -3,7 +3,7 @@ package com.maherhanna.cheeta;
 import java.util.ArrayList;
 
 public class ChessboardMoves {
-    private ArrayList<Move> moves;
+    private final ArrayList<Move> moves;
 
     public ChessboardMoves(){
         moves = new ArrayList<>();
