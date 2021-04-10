@@ -3,6 +3,7 @@ package com.maherhanna.cheeta;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class ComputerAi {
@@ -48,17 +49,37 @@ class MyRunnable implements Runnable {
         LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
                 maxingPlayer);
         ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
+
+
+        ArrayList<MoveScore> moveScores = new ArrayList<>();
         int maxIndex = -1;
         int maxScore = Integer.MIN_VALUE;
         for (int i = 0; i < toPlayMoves.size(); i++) {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
             chessBoardAfterMove.movePiece(toPlayMoves.get(i));
             int score = miniMax(chessBoardAfterMove, maxScore,
-                    Integer.MAX_VALUE, 1, maxDepth);
+                    Integer.MAX_VALUE, 1, 2);
             if (score > maxScore) {
                 maxScore = score;
                 maxIndex = i;
             }
+            moveScores.add(new MoveScore(score,i));
+        }
+        Collections.sort(moveScores);
+
+
+        maxIndex = -1;
+        maxScore = Integer.MIN_VALUE;
+        for (int i = 0; i < moveScores.size(); i++) {
+            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+            chessBoardAfterMove.movePiece(toPlayMoves.get(moveScores.get(i).moveIndex));
+            int score = miniMax(chessBoardAfterMove, maxScore,
+                    Integer.MAX_VALUE, 1, maxDepth);
+            if (score > maxScore) {
+                maxScore = score;
+                maxIndex = moveScores.get(i).moveIndex;
+            }
+            if(score == Integer.MAX_VALUE) break;
         }
         long duration = System.nanoTime() - startTime;
         duration = duration / 1000; // convert to milli second
@@ -68,6 +89,7 @@ class MyRunnable implements Runnable {
 
 
         this.move = toPlayMoves.get(maxIndex);
+
 
 //        maxIndex = -1;
 //        maxScore = Integer.MIN_VALUE;
@@ -434,6 +456,16 @@ class MyRunnable implements Runnable {
 
 }
 
-class MoveScore{
+class MoveScore implements Comparable<MoveScore>{
+    private int score;
+    public int moveIndex;
+    public MoveScore(int score,int moveIndex){
+        this.score = score;
+        this.moveIndex = moveIndex;
+    }
 
+    @Override
+    public int compareTo(MoveScore other) {
+        return other.score - this.score;
+    }
 }

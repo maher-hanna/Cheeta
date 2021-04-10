@@ -7,6 +7,7 @@ import java.util.Random;
 
 class Game {
     public static final String DEBUG = "Cheeta_Debug";
+    private static final int COMPUTER_MAX_SEARCH_DEPTH = 3;
     private final Drawing drawing;
     private final ChessBoard chessBoard;
     private final ComputerAi computerAi;
@@ -145,7 +146,7 @@ class Game {
 
     public void playComputer(Piece.Color color) {
         if (paused) return;
-        Move computerMove = computerAi.getMove(chessBoard, color,3);
+        Move computerMove = computerAi.getMove(chessBoard, color,COMPUTER_MAX_SEARCH_DEPTH);
         chessBoard.movePiece(computerMove);
         chessBoard.updateLegalMovesFor(color, false);
         Piece.Color opponentColor = color.getOpposite();
