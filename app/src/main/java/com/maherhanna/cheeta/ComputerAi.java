@@ -298,7 +298,6 @@ class MyRunnable implements Runnable {
             rank = 7 - rank;
         } else {
             file = 7 - file;
-            rank = 7 - rank;
         }
         piecePositionOnTable = ChessBoard.GetPosition(file,rank);
         switch (piece.getType()){
