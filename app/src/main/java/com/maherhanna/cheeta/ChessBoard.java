@@ -266,7 +266,7 @@ public class ChessBoard {
         boolean isKingInCheck = isKingInCheck(currentToPlayColor);
 
         LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this,
-                isKingInCheck,currentToPlayColor);
+                currentToPlayColor);
 
         if (isKingInCheck) {
             if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {

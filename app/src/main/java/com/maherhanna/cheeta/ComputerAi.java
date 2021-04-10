@@ -45,12 +45,14 @@ class MyRunnable implements Runnable {
     public void run() {
         long startTime = System.nanoTime();
         LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
-                chessBoard.isKingInCheck(maxingPlayer), maxingPlayer);
+                maxingPlayer);
         ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
         int maxIndex = -1;
         int maxScore = Integer.MIN_VALUE;
         for (int i = 0; i < toPlayMoves.size(); i++) {
-            int score = miniMax(chessBoard, toPlayMoves.get(i), maxScore,
+            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+            chessBoardAfterMove.movePiece(toPlayMoves.get(i));
+            int score = miniMax(chessBoardAfterMove, maxScore,
                     Integer.MAX_VALUE, 1, maxDepth);
             if (score > maxScore) {
                 maxScore = score;
@@ -66,51 +68,57 @@ class MyRunnable implements Runnable {
 
         this.move = toPlayMoves.get(maxIndex);
 
-//        maxIndex = -1;
-//        maxScore = Integer.MIN_VALUE;
-//        startTime = System.nanoTime();
-//        for (int i = 0; i < toPlayMoves.size(); i++) {
-//            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
-//            if (score > maxScore) {
-//                maxScore = score;
-//                maxIndex = i;
-//            }
-//        }
-//        duration = System.nanoTime() - startTime;
-//        duration = duration / 1000; // convert to milli second
-//        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
-//                maxIndex);
-//        Log.d(Game.DEBUG,"Duration: " + duration);
+        maxIndex = -1;
+        maxScore = Integer.MIN_VALUE;
+        startTime = System.nanoTime();
+        for (int i = 0; i < toPlayMoves.size(); i++) {
+            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
+            if (score > maxScore) {
+                maxScore = score;
+                maxIndex = i;
+            }
+        }
+        duration = System.nanoTime() - startTime;
+        duration = duration / 1000; // convert to milli second
+        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
+                maxIndex);
+        Log.d(Game.DEBUG,"Duration: " + duration);
 
 
 
     }
 
 
-    public int miniMax(ChessBoard chessBoard, Move move, int alpha, int beta,
+    public int miniMax(ChessBoard chessBoard, int alpha, int beta,
                        int depth, final int maxDepth) {
         boolean maxing;
+        Piece.Color toPlayColor = Piece.Color.BLACK;
 
         maxing = (depth % 2) == 0;
+        if(maxing) {
+            if(maxingPlayer == Piece.Color.WHITE) toPlayColor = Piece.Color.WHITE;
+        }else{
+            if(maxingPlayer == Piece.Color.BLACK) toPlayColor = Piece.Color.WHITE;
+        }
 
-        ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-        chessBoardAfterMove.movePiece(move);
 
 
-        if (depth == maxDepth || chessBoardAfterMove.checkGameFinished() == true) {
+
+        if (depth == maxDepth || chessBoard.checkGameFinished() == true) {
             evaluations++;
-            return getScoreFor(chessBoardAfterMove, maxingPlayer);
+            return getScoreFor(chessBoard, maxingPlayer);
         } else {
-            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoardAfterMove,
-                    chessBoardAfterMove.isKingInCheck(move.getColor().getOpposite()),
-                    move.getColor().getOpposite());
+
+            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+                    toPlayColor);
             ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
 
-            ArrayList<Integer> movesScores = new ArrayList<>();
             if (maxing) {
                 int maxScore = Integer.MIN_VALUE;
                 for (int i = 0; i < toPlayMoves.size(); i++) {
-                    int score = miniMax(chessBoardAfterMove, toPlayMoves.get(i), alpha, beta,
+                    ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+                    chessBoardAfterMove.movePiece(toPlayMoves.get(i));
+                    int score = miniMax(chessBoardAfterMove, alpha, beta,
                             depth + 1, maxDepth);
                     maxScore = Math.max(maxScore, score);
                     alpha = Math.max(alpha, score);
@@ -123,7 +131,9 @@ class MyRunnable implements Runnable {
             } else {
                 int minScore = Integer.MAX_VALUE;
                 for (int i = 0; i < toPlayMoves.size(); i++) {
-                    int score = miniMax(chessBoardAfterMove, toPlayMoves.get(i), alpha, beta,
+                    ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+                    chessBoardAfterMove.movePiece(toPlayMoves.get(i));
+                    int score = miniMax(chessBoardAfterMove, alpha, beta,
                             depth + 1, maxDepth);
                     minScore = Math.min(minScore, score);
                     beta = Math.min(beta, score);
@@ -155,7 +165,6 @@ class MyRunnable implements Runnable {
             return getScoreFor(chessBoardAfterMove, maxingPlayer);
         } else {
             LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoardAfterMove,
-                    chessBoardAfterMove.isKingInCheck(move.getColor().getOpposite()),
                     move.getColor().getOpposite());
             ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
 

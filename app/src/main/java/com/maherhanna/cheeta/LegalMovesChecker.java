@@ -38,7 +38,7 @@ public class LegalMovesChecker {
         return legalMoves;
     }
 
-    public static LegalMoves getLegalMovesFor(ChessBoard chessBoard,boolean kingInCheck, Piece.Color color){
+    public static LegalMoves getLegalMovesFor(ChessBoard chessBoard, Piece.Color color){
         if(color == Piece.Color.WHITE){
             return getWhiteLegalMoves(chessBoard);
         } else{
