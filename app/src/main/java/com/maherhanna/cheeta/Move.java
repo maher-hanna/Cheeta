@@ -15,8 +15,8 @@ public class Move {
 
 
     public Move(Piece piece, int from, int to){
-        this.pieceType = piece.type;
-        pieceColor = piece.color;
+        this.pieceType = piece.getType();
+        pieceColor = piece.getColor();
         this.from = from;
         this.to = to;
         castling = false;

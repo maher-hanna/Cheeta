@@ -159,7 +159,7 @@ public class ChessBoard {
 
 
     public ArrayList<Integer> getLegalTargetsFor(int position) {
-        if (getPieceAt(position).color == Piece.Color.WHITE) {
+        if (getPieceAt(position).getColor() == Piece.Color.WHITE) {
             return whiteLegalMoves.getLegalTargetsFor(position);
         } else {
             return blackLegalMoves.getLegalTargetsFor(position);
@@ -179,7 +179,7 @@ public class ChessBoard {
         int kingPosition = OUT_OF_BOARD;
         for (int i = MIN_POSITION; i <= MAX_POSITION; i++) {
             Piece piece = getPieceAt(i);
-            if (piece != null && piece.type == Piece.Type.KING && piece.color == kingColor) {
+            if (piece != null && piece.getType() == Piece.Type.KING && piece.getColor() == kingColor) {
                 kingPosition = i;
                 break;
             }
@@ -206,7 +206,7 @@ public class ChessBoard {
         int toSquare = move.getTo();
         setPieceAt(toSquare, getPieceAt(fromSquare));
         setPieceAt(fromSquare, null);
-        getPieceAt(toSquare).position = toSquare;
+        getPieceAt(toSquare).setPosition(toSquare);
 
 
         if (move.isCastling()) {
@@ -226,10 +226,10 @@ public class ChessBoard {
             }
             setPieceAt(rookCastlingTarget, getPieceAt(rookPosition) );
             setPieceAt(rookPosition, null);
-            getPieceAt(rookCastlingTarget).position = rookCastlingTarget;
+            getPieceAt(rookCastlingTarget).setPosition(rookCastlingTarget);
         }
         if(move.isPromote()){
-            getPieceAt(toSquare).type = move.getPromotionPieceType();
+            getPieceAt(toSquare).setType(move.getPromotionPieceType());
         }
         if(move.isEnPasant()){
             if(move.getColor() == Piece.Color.WHITE){
@@ -318,7 +318,7 @@ public class ChessBoard {
 
             Piece.Type remainingPieceType = Piece.Type.PAWN;
             for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-                if (getPieceAt(i) != null && getPieceAt(i).type != Piece.Type.KING) {
+                if (getPieceAt(i) != null && getPieceAt(i).getType() != Piece.Type.KING) {
                     remainingPieceType = getPieceType(i);
                 }
             }
@@ -334,7 +334,7 @@ public class ChessBoard {
 
             ArrayList<Piece> remainingPieces = new ArrayList<>();
             for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-                if (getPieceAt(i) != null && getPieceAt(i).type != Piece.Type.KING) {
+                if (getPieceAt(i) != null && getPieceAt(i).getType() != Piece.Type.KING) {
                     remainingPieces.add(getPieceAt(i));
                 }
             }
@@ -342,10 +342,10 @@ public class ChessBoard {
             Piece secondPiece = remainingPieces.get(1);
 
             // tow king and tow bishops of the same square color
-            if(firstPiece.type == Piece.Type.BISHOP && secondPiece.type == Piece.Type.BISHOP){
-                if(firstPiece.color != secondPiece.color){
-                    return ChessBoard.GetSquareColor(firstPiece.position) ==
-                            ChessBoard.GetSquareColor(secondPiece.position);
+            if(firstPiece.getType() == Piece.Type.BISHOP && secondPiece.getType() == Piece.Type.BISHOP){
+                if(firstPiece.getColor() != secondPiece.getColor()){
+                    return ChessBoard.GetSquareColor(firstPiece.getPosition()) ==
+                            ChessBoard.GetSquareColor(secondPiece.getPosition());
                 }
             }
 
@@ -372,18 +372,18 @@ public class ChessBoard {
     }
 
     public boolean isPieceBlackAt(int position) {
-        return pieces[position].color == Piece.Color.BLACK;
+        return pieces[position].getColor() == Piece.Color.BLACK;
     }
 
     public boolean isPieceWhiteAt(int position) {
-        return pieces[position].color == Piece.Color.WHITE;
+        return pieces[position].getColor() == Piece.Color.WHITE;
     }
 
     public Piece.Color getPieceColor(int position){
-        return pieces[position].color;
+        return pieces[position].getColor();
     }
     public Piece.Type getPieceType(int position){
-        return pieces[position].type;
+        return pieces[position].getType();
     }
 
     public boolean isPieceAt(int square, Piece.Type type, Piece.Color color){
@@ -442,7 +442,7 @@ public class ChessBoard {
                     stringBuilder.append(" 0,");
                     continue;
                 }
-                stringBuilder.append(String.format("%2d,", getPieceAt(column, row).position));
+                stringBuilder.append(String.format("%2d,", getPieceAt(column, row).getPosition()));
             }
             stringBuilder.append('\n');
 

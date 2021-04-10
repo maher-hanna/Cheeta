@@ -188,7 +188,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
                     } else {
                         if (targetPiece == null) break;
-                        if (targetPiece.color == drawing.getBottomScreenPlayerColor()) {
+                        if (targetPiece.getColor() == drawing.getBottomScreenPlayerColor()) {
                             selectedSquare = targetPosition;
                             drawing.drawAllPieces(selectedSquare);
                             break;

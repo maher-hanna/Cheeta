@@ -66,24 +66,21 @@ class MyRunnable implements Runnable {
 
         this.move = toPlayMoves.get(maxIndex);
 
-        maxIndex = -1;
-        maxScore = Integer.MIN_VALUE;
-        startTime = System.nanoTime();
-        for (int i = 0; i < toPlayMoves.size(); i++) {
-            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
-            if (score > maxScore) {
-                maxScore = score;
-                maxIndex = i;
-            }
-        }
-        duration = System.nanoTime() - startTime;
-        duration = duration / 1000; // convert to milli second
-        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
-                maxIndex);
-        Log.d(Game.DEBUG,"Duration: " + duration);
-
-
-
+//        maxIndex = -1;
+//        maxScore = Integer.MIN_VALUE;
+//        startTime = System.nanoTime();
+//        for (int i = 0; i < toPlayMoves.size(); i++) {
+//            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
+//            if (score > maxScore) {
+//                maxScore = score;
+//                maxIndex = i;
+//            }
+//        }
+//        duration = System.nanoTime() - startTime;
+//        duration = duration / 1000; // convert to milli second
+//        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
+//                maxIndex);
+//        Log.d(Game.DEBUG,"Duration: " + duration);
 
 
 
@@ -228,25 +225,8 @@ class MyRunnable implements Runnable {
         return value;
     }
 
-    private int evaluateDrawForWhite(ChessBoard chessBoard) {
-        int piecesAdvantage = getPiecesValueFor(chessBoard, Piece.Color.WHITE) -
-                getPiecesValueFor(chessBoard, Piece.Color.BLACK);
-        return getInitialPiecesValue() - Piece.KING_VALUE - piecesAdvantage;
-    }
 
-    private int evaluateDrawForBlack(ChessBoard chessBoard) {
-        int piecesAdvantage = getPiecesValueFor(chessBoard, Piece.Color.BLACK) -
-                getPiecesValueFor(chessBoard, Piece.Color.WHITE);
-        return getInitialPiecesValue() - Piece.KING_VALUE - piecesAdvantage;
-    }
 
-    private int evaluateDrawFor(ChessBoard chessBoard, Piece.Color color) {
-        if (color == Piece.Color.WHITE) {
-            return evaluateDrawForWhite(chessBoard);
-        } else {
-            return evaluateDrawForBlack(chessBoard);
-        }
-    }
 
     int getBlackScore(ChessBoard chessBoard) {
         int value = getPiecesValueFor(chessBoard, Piece.Color.BLACK);
@@ -302,7 +282,7 @@ class MyRunnable implements Runnable {
 
         for (int square : squares) {
             Piece piece = chessboard.getPieceAt(square);
-            if(piece.type == Piece.Type.KING) continue;
+            if(piece.getType() == Piece.Type.KING) continue;
             value += getPositionalValue(piece);
 
         }
@@ -312,16 +292,16 @@ class MyRunnable implements Runnable {
     private int getPositionalValue(Piece piece) {
         int value = 0;
         int piecePositionOnTable = ChessBoard.OUT_OF_BOARD;
-        int file = ChessBoard.GetFile(piece.position);
-        int rank = ChessBoard.GetRank(piece.position);
-        if(piece.color == Piece.Color.WHITE){
+        int file = ChessBoard.GetFile(piece.getPosition());
+        int rank = ChessBoard.GetRank(piece.getPosition());
+        if(piece.getColor() == Piece.Color.WHITE){
             rank = 7 - rank;
         } else {
             file = 7 - file;
             rank = 7 - rank;
         }
         piecePositionOnTable = ChessBoard.GetPosition(file,rank);
-        switch (piece.type){
+        switch (piece.getType()){
             case PAWN:
                 value += Piece.PAWN_VALUE + PAWN_SQUARES_TABLE[piecePositionOnTable];
                 break;

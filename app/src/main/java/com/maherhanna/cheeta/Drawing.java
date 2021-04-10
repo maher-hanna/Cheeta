@@ -245,40 +245,40 @@ public class Drawing {
             pieceRect.offset(0, -(pieceRect.bottom - chessBoardViewRect.height()));
         }
         //---------------------
-        switch (piece.type) {
+        switch (piece.getType()) {
 
             case PAWN:
-                if (piece.color == Piece.Color.WHITE)
+                if (piece.getColor() == Piece.Color.WHITE)
                     chessboardView.drawPiece(whitePawnBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackPawnBitmap, pieceRect);
                 break;
             case ROOK:
-                if (piece.color == Piece.Color.WHITE)
+                if (piece.getColor() == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteRookBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackRookBitmap, pieceRect);
                 break;
             case KNIGHT:
-                if (piece.color == Piece.Color.WHITE)
+                if (piece.getColor() == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteKnightBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackKnightBitmap, pieceRect);
                 break;
             case BISHOP:
-                if (piece.color == Piece.Color.WHITE)
+                if (piece.getColor() == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteBishopBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackBishopBitmap, pieceRect);
                 break;
             case QUEEN:
-                if (piece.color == Piece.Color.WHITE)
+                if (piece.getColor() == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteQueenBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackQueenBitmap, pieceRect);
                 break;
             case KING:
-                if (piece.color == Piece.Color.WHITE)
+                if (piece.getColor() == Piece.Color.WHITE)
                     chessboardView.drawPiece(whiteKingBitmap, pieceRect);
                 else
                     chessboardView.drawPiece(blackKingBitmap, pieceRect);
@@ -295,7 +295,7 @@ public class Drawing {
         y = chessBoardViewRect.width() - y - squareSize;
 
 
-        switch (piece.type) {
+        switch (piece.getType()) {
 
             case PAWN:
                 result = new RectF(pawnDrawingRect);
