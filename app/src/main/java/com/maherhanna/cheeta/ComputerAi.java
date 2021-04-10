@@ -3,6 +3,7 @@ package com.maherhanna.cheeta;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ComputerAi {
     public Move getMove(ChessBoard chessBoard, Piece.Color toPlayNow, int depth) {
@@ -68,25 +69,26 @@ class MyRunnable implements Runnable {
 
         this.move = toPlayMoves.get(maxIndex);
 
-        maxIndex = -1;
-        maxScore = Integer.MIN_VALUE;
-        startTime = System.nanoTime();
-        for (int i = 0; i < toPlayMoves.size(); i++) {
-            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
-            if (score > maxScore) {
-                maxScore = score;
-                maxIndex = i;
-            }
-        }
-        duration = System.nanoTime() - startTime;
-        duration = duration / 1000; // convert to milli second
-        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
-                maxIndex);
-        Log.d(Game.DEBUG,"Duration: " + duration);
+//        maxIndex = -1;
+//        maxScore = Integer.MIN_VALUE;
+//        startTime = System.nanoTime();
+//        for (int i = 0; i < toPlayMoves.size(); i++) {
+//            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
+//            if (score > maxScore) {
+//                maxScore = score;
+//                maxIndex = i;
+//            }
+//        }
+//        duration = System.nanoTime() - startTime;
+//        duration = duration / 1000; // convert to milli second
+//        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
+//                maxIndex);
+//        Log.d(Game.DEBUG,"Duration: " + duration);
 
 
 
     }
+
 
 
     public int miniMax(ChessBoard chessBoard, int alpha, int beta,
@@ -432,3 +434,6 @@ class MyRunnable implements Runnable {
 
 }
 
+class MoveScore{
+
+}
