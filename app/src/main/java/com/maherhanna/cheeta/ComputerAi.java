@@ -68,7 +68,7 @@ class MyRunnable implements Runnable {
         Collections.sort(moveScores);
 
 
-        maxIndex = -1;
+        maxIndex = 0;
         maxScore = Integer.MIN_VALUE;
         for (int i = 0; i < moveScores.size(); i++) {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
