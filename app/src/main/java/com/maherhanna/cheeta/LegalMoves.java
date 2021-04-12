@@ -49,9 +49,7 @@ public class LegalMoves {
     public ArrayList<Move> getAllLegalMoves(){
         ArrayList<Move> allLegalMoves = new ArrayList<>();
         for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
-            for(Move move: pieceLegalMoves){
-                allLegalMoves.add(move);
-            }
+            allLegalMoves.addAll(pieceLegalMoves);
         }
         return allLegalMoves;
     }

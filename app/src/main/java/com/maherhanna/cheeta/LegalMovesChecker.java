@@ -54,7 +54,7 @@ public class LegalMovesChecker {
         int initialRookKingSidePosition = getInitialRookKingSide(chessBoard, color);
         int initialRookQueenSidePosition = getInitialRookQueenSide(chessBoard, color);
         int kingTarget = 0;
-        if (canCastleKingSide(chessBoard, color, chessBoard.isKingInCheck(color)) == true) {
+        if (canCastleKingSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
             kingTarget = initialKingPosition + 2;
             Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
             Move move = new Move(king, initialKingPosition, kingTarget);
@@ -62,7 +62,7 @@ public class LegalMovesChecker {
 
             legalMoves.addMoveFor(initialKingPosition, move);
         }
-        if (canCastleQueenSide(chessBoard, color, chessBoard.isKingInCheck(color)) == true) {
+        if (canCastleQueenSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
             kingTarget = initialKingPosition - 2;
             Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
             Move move = new Move(king, initialKingPosition, kingTarget);

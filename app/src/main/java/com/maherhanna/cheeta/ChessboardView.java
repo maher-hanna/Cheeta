@@ -95,7 +95,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     public boolean onTouchEvent(MotionEvent event) {
 
         if (drawing.isGameFinished()) return true;
-        if(drawing.canHumanPlay() == false) return true;
+        if(!drawing.canHumanPlay()) return true;
         if(drawing.getGameType() == Game.COMPUTER_COMPUTER) return true;
 
         int action = event.getAction();
@@ -119,7 +119,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
             case MotionEvent.ACTION_DOWN:
 
-                if (drawing.canSelect(targetPosition) == false) {
+                if (!drawing.canSelect(targetPosition)) {
                     draggedSquare = -1;
 
                     break;

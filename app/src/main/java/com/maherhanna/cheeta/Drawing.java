@@ -119,8 +119,8 @@ public class Drawing {
         squareTop = (8 - ChessBoard.GetRank(square) - 1) * squareSize;
         float squareRight = squareLeft + squareSize;
         float squareBottom = squareTop + squareSize;
-        RectF squareRect = new RectF(squareLeft, squareTop, squareRight, squareBottom);
-        return squareRect;
+        return new RectF(squareLeft, squareTop, squareRight, squareBottom);
+
 
     }
 

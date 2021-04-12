@@ -52,7 +52,7 @@ class MyRunnable implements Runnable {
 
 
         ArrayList<MoveScore> moveScores = new ArrayList<>();
-        int maxIndex = -1;
+        int maxIndex = 0;
         int maxScore = Integer.MIN_VALUE;
         for (int i = 0; i < toPlayMoves.size(); i++) {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
@@ -128,7 +128,7 @@ class MyRunnable implements Runnable {
 
 
 
-        if (depth == maxDepth || chessBoard.checkGameFinished() == true) {
+        if (depth == maxDepth || chessBoard.checkGameFinished()) {
             evaluations++;
             return getScoreFor(chessBoard, maxingPlayer);
         } else {
@@ -184,7 +184,7 @@ class MyRunnable implements Runnable {
         chessBoardAfterMove.movePiece(move);
 
 
-        if (depth == maxDepth || chessBoardAfterMove.checkGameFinished() == true) {
+        if (depth == maxDepth || chessBoardAfterMove.checkGameFinished()) {
             evaluations++;
             return getScoreFor(chessBoardAfterMove, maxingPlayer);
         } else {

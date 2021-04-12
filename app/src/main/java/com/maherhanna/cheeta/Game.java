@@ -79,8 +79,7 @@ class Game {
 
 
     public GameStatus checkGameFinished(Piece.Color lastPlayed) {
-        GameStatus gameStatus = chessBoard.checkStatus();
-        return gameStatus;
+        return chessBoard.checkStatus();
 
     }
 
