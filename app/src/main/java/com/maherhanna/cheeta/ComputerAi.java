@@ -49,58 +49,47 @@ class MyRunnable implements Runnable {
         LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
                 maxingPlayer);
         ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
+        ArrayList<MoveScore> moveScores;
 
+        moveScores = getMovesScores(toPlayMoves);
+        Collections.sort(moveScores);
 
-        ArrayList<MoveScore> moveScores = new ArrayList<>();
         int maxIndex = 0;
         int maxScore = Integer.MIN_VALUE;
         for (int i = 0; i < toPlayMoves.size(); i++) {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-            chessBoardAfterMove.movePiece(toPlayMoves.get(i));
-            int score = miniMax(chessBoardAfterMove, maxScore,
-                    Integer.MAX_VALUE, 1, 2);
-            if (score > maxScore) {
-                maxScore = score;
-                maxIndex = i;
-            }
-            moveScores.add(new MoveScore(score,i));
-        }
-        Collections.sort(moveScores);
-
-
-        maxIndex = 0;
-        maxScore = Integer.MIN_VALUE;
-        for (int i = 0; i < moveScores.size(); i++) {
-            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
             chessBoardAfterMove.movePiece(toPlayMoves.get(moveScores.get(i).moveIndex));
             int score = miniMax(chessBoardAfterMove, maxScore,
-                    Integer.MAX_VALUE, 1, maxDepth);
+                    Integer.MAX_VALUE, maxDepth - 1);
             if (score > maxScore) {
                 maxScore = score;
                 maxIndex = moveScores.get(i).moveIndex;
             }
-            if(score == Integer.MAX_VALUE) break;
+            if(maxScore == Integer.MAX_VALUE) break;
         }
+
+
         long duration = System.nanoTime() - startTime;
         duration = duration / 1000; // convert to milli second
         Log.d(Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
                 maxIndex);
-        Log.d(Game.DEBUG,"Duration: " + duration);
+        Log.d(Game.DEBUG, "Duration: " + duration);
 
 
-
-
-//        maxIndex = -1;
+//        maxIndex = 0;
 //        maxScore = Integer.MIN_VALUE;
 //        startTime = System.nanoTime();
 //        for (int i = 0; i < toPlayMoves.size(); i++) {
-//            int score = miniMax(chessBoard, toPlayMoves.get(i), 1, maxDepth);
+//            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+//            chessBoardAfterMove.movePiece(toPlayMoves.get(i));
+//            int score = miniMax(chessBoardAfterMove, maxDepth - 1);
 //            if (score > maxScore) {
 //                maxScore = score;
 //                maxIndex = i;
 //            }
+//            if(maxScore == Integer.MAX_VALUE) break;
 //        }
-//        long duration = System.nanoTime() - startTime;
+//        duration = System.nanoTime() - startTime;
 //        duration = duration / 1000; // convert to milli second
 //        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
 //                maxIndex);
@@ -111,39 +100,61 @@ class MyRunnable implements Runnable {
 
     }
 
-
-
-    public int miniMax(ChessBoard chessBoard, int alpha, int beta,
-                       int depth, final int maxDepth) {
-        boolean maxing;
-        Piece.Color toPlayColor = Piece.Color.BLACK;
-
-        maxing = (depth % 2) == 0;
-        if(maxing) {
-            if(maxingPlayer == Piece.Color.WHITE) toPlayColor = Piece.Color.WHITE;
-        }else{
-            if(maxingPlayer == Piece.Color.BLACK) toPlayColor = Piece.Color.WHITE;
+    private ArrayList<MoveScore> getMovesScores(ArrayList<Move> toPlayMoves) {
+        ArrayList<MoveScore> moveScores = new ArrayList<>();
+        for (int i = 0; i < toPlayMoves.size(); i++) {
+             moveScores.add(new MoveScore(getMoveScore(toPlayMoves.get(i)),i));
         }
+        return moveScores;
+
+    }
+
+    private int getMoveScore(Move move) {
+        int score = 0;
+        if(move.isTake()){
+            score +=1;
+            if(Piece.GetValueOf(move.getPieceType()) < Piece.GetValueOf(move.getTakenPieceType())){
+                score +=1;
+            }
+        }
+        if(move.isCastling()){
+            score += 1;
+        }
+        if(move.isPromote()){
+            score += 3;
+        }
+        return score;
+    }
 
 
-
-
-        if (depth == maxDepth || chessBoard.checkGameFinished()) {
+    public int miniMax(ChessBoard chessBoard, int alpha, int beta, int depth) {
+        if (depth == 0 || chessBoard.checkGameFinished()) {
             evaluations++;
             return getScoreFor(chessBoard, maxingPlayer);
         } else {
+            boolean maxing;
+            maxing = ((depth % 2) == 1);
+
+            Piece.Color toPlayColor = Piece.Color.BLACK;
+
+            toPlayColor = chessBoard.moves.getToPlayNow();
 
             LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
                     toPlayColor);
             ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
+            ArrayList<MoveScore> moveScores;
+
+            moveScores = getMovesScores(toPlayMoves);
+            Collections.sort(moveScores);
+
 
             if (maxing) {
                 int maxScore = Integer.MIN_VALUE;
                 for (int i = 0; i < toPlayMoves.size(); i++) {
                     ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                    chessBoardAfterMove.movePiece(toPlayMoves.get(i));
+                    chessBoardAfterMove.movePiece(toPlayMoves.get(moveScores.get(i).moveIndex));
                     int score = miniMax(chessBoardAfterMove, alpha, beta,
-                            depth + 1, maxDepth);
+                            depth - 1);
                     maxScore = Math.max(maxScore, score);
                     alpha = Math.max(alpha, score);
 
@@ -156,9 +167,9 @@ class MyRunnable implements Runnable {
                 int minScore = Integer.MAX_VALUE;
                 for (int i = 0; i < toPlayMoves.size(); i++) {
                     ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                    chessBoardAfterMove.movePiece(toPlayMoves.get(i));
+                    chessBoardAfterMove.movePiece(toPlayMoves.get(moveScores.get(i).moveIndex));
                     int score = miniMax(chessBoardAfterMove, alpha, beta,
-                            depth + 1, maxDepth);
+                            depth - 1);
                     minScore = Math.min(minScore, score);
                     beta = Math.min(beta, score);
 
@@ -175,28 +186,31 @@ class MyRunnable implements Runnable {
 
     }
 
-    public int miniMax(ChessBoard chessBoard, Move move,int depth, final int maxDepth) {
+    public int miniMax(ChessBoard chessBoard, int depth) {
         boolean maxing;
+        Piece.Color toPlayColor = Piece.Color.BLACK;
 
-        maxing = (depth % 2) == 0;
+        maxing = ((depth % 2) == 1);
 
-        ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-        chessBoardAfterMove.movePiece(move);
+        toPlayColor = chessBoard.moves.getToPlayNow();
 
 
-        if (depth == maxDepth || chessBoardAfterMove.checkGameFinished()) {
+        if (depth == 0 || chessBoard.checkGameFinished()) {
             evaluations++;
-            return getScoreFor(chessBoardAfterMove, maxingPlayer);
+            return getScoreFor(chessBoard, maxingPlayer);
         } else {
-            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoardAfterMove,
-                    move.getColor().getOpposite());
+
+            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+                    toPlayColor);
             ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
 
-            ArrayList<Integer> movesScores = new ArrayList<>();
+
             if (maxing) {
                 int maxScore = Integer.MIN_VALUE;
                 for (int i = 0; i < toPlayMoves.size(); i++) {
-                    int score = miniMax(chessBoardAfterMove, toPlayMoves.get(i),depth + 1, maxDepth);
+                    ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+                    chessBoardAfterMove.movePiece(toPlayMoves.get(i));
+                    int score = miniMax(chessBoardAfterMove,depth - 1);
                     maxScore = Math.max(maxScore, score);
 
                 }
@@ -204,8 +218,11 @@ class MyRunnable implements Runnable {
             } else {
                 int minScore = Integer.MAX_VALUE;
                 for (int i = 0; i < toPlayMoves.size(); i++) {
-                    int score = miniMax(chessBoardAfterMove, toPlayMoves.get(i),depth + 1, maxDepth);
+                    ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+                    chessBoardAfterMove.movePiece(toPlayMoves.get(i));
+                    int score = miniMax(chessBoardAfterMove,depth - 1);
                     minScore = Math.min(minScore, score);
+
                 }
                 return minScore;
             }
@@ -213,9 +230,7 @@ class MyRunnable implements Runnable {
 
         }
 
-
     }
-
 
 
     private int getMinScore(ArrayList<Integer> moveScores) {
@@ -257,8 +272,6 @@ class MyRunnable implements Runnable {
         }
         return value;
     }
-
-
 
 
     int getBlackScore(ChessBoard chessBoard) {
@@ -304,6 +317,7 @@ class MyRunnable implements Runnable {
         }
         return value;
     }
+
     public int getPiecesValueMinusKingFor(ChessBoard chessboard, Piece.Color color) {
         int value = 0;
         ArrayList<Integer> squares;
@@ -315,7 +329,7 @@ class MyRunnable implements Runnable {
 
         for (int square : squares) {
             Piece piece = chessboard.getPieceAt(square);
-            if(piece.getType() == Piece.Type.KING) continue;
+            if (piece.getType() == Piece.Type.KING) continue;
             value += getPositionalValue(piece);
 
         }
@@ -327,13 +341,13 @@ class MyRunnable implements Runnable {
         int piecePositionOnTable = ChessBoard.OUT_OF_BOARD;
         int file = ChessBoard.GetFile(piece.getPosition());
         int rank = ChessBoard.GetRank(piece.getPosition());
-        if(piece.getColor() == Piece.Color.WHITE){
+        if (piece.getColor() == Piece.Color.WHITE) {
             rank = 7 - rank;
         } else {
             file = 7 - file;
         }
-        piecePositionOnTable = ChessBoard.GetPosition(file,rank);
-        switch (piece.getType()){
+        piecePositionOnTable = ChessBoard.GetPosition(file, rank);
+        switch (piece.getType()) {
             case PAWN:
                 value += Piece.PAWN_VALUE + PAWN_SQUARES_TABLE[piecePositionOnTable];
                 break;
@@ -350,7 +364,7 @@ class MyRunnable implements Runnable {
                 value += Piece.QUEEN_VALUE + QUEEN_SQUARES_TABLE[piecePositionOnTable];
                 break;
             case KING:
-                if(isEndGame(chessBoard)){
+                if (isEndGame(chessBoard)) {
                     value += Piece.KING_VALUE + KING_END_GAME_SQUARES_TABLE[piecePositionOnTable];
 
                 } else {
@@ -361,13 +375,13 @@ class MyRunnable implements Runnable {
         return value;
     }
 
-    boolean isEndGame(ChessBoard chessBoard){
+    boolean isEndGame(ChessBoard chessBoard) {
         boolean endGame = false;
-        int whitePiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.Color.WHITE) ;
-        int blackPiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.Color.BLACK) ;
-        if(Math.abs(whitePiecesValue - blackPiecesValue) >= Piece.QUEEN_VALUE){
-            if(whitePiecesValue < Piece.QUEEN_VALUE) endGame = true;
-            if(blackPiecesValue < Piece.QUEEN_VALUE) endGame = true;
+        int whitePiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.Color.WHITE);
+        int blackPiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.Color.BLACK);
+        if (Math.abs(whitePiecesValue - blackPiecesValue) >= Piece.QUEEN_VALUE) {
+            if (whitePiecesValue < Piece.QUEEN_VALUE) endGame = true;
+            if (blackPiecesValue < Piece.QUEEN_VALUE) endGame = true;
         }
 
         return endGame;
@@ -380,86 +394,86 @@ class MyRunnable implements Runnable {
     }
 
     public static int[] PAWN_SQUARES_TABLE = {
-            0,  0,  0,  0,  0,  0,  0,  0,
+            0, 0, 0, 0, 0, 0, 0, 0,
             50, 50, 50, 50, 50, 50, 50, 50,
             10, 10, 20, 30, 30, 20, 10, 10,
-            5,  5, 10, 25, 25, 10,  5,  5,
-            0,  0,  0, 20, 20,  0,  0,  0,
-            5, -5,-10,  0,  0,-10, -5,  5,
-            5, 10, 10,-20,-20, 10, 10,  5,
-            0,  0,  0,  0,  0,  0,  0,  0
+            5, 5, 10, 25, 25, 10, 5, 5,
+            0, 0, 0, 20, 20, 0, 0, 0,
+            5, -5, -10, 0, 0, -10, -5, 5,
+            5, 10, 10, -20, -20, 10, 10, 5,
+            0, 0, 0, 0, 0, 0, 0, 0
     };
     public static int[] KNIGHT_SQUARES_TABLE = {
-            -50,-40,-30,-30,-30,-30,-40,-50,
-            -40,-20,  0,  0,  0,  0,-20,-40,
-            -30,  0, 10, 15, 15, 10,  0,-30,
-            -30,  5, 15, 20, 20, 15,  5,-30,
-            -30,  0, 15, 20, 20, 15,  0,-30,
-            -30,  5, 10, 15, 15, 10,  5,-30,
-            -40,-20,  0,  5,  5,  0,-20,-40,
-            -50,-40,-30,-30,-30,-30,-40,-50
+            -50, -40, -30, -30, -30, -30, -40, -50,
+            -40, -20, 0, 0, 0, 0, -20, -40,
+            -30, 0, 10, 15, 15, 10, 0, -30,
+            -30, 5, 15, 20, 20, 15, 5, -30,
+            -30, 0, 15, 20, 20, 15, 0, -30,
+            -30, 5, 10, 15, 15, 10, 5, -30,
+            -40, -20, 0, 5, 5, 0, -20, -40,
+            -50, -40, -30, -30, -30, -30, -40, -50
     };
     public static int[] BISHOP_SQUARES_TABLE = {
-            -20,-10,-10,-10,-10,-10,-10,-20,
-            -10,  0,  0,  0,  0,  0,  0,-10,
-            -10,  0,  5, 10, 10,  5,  0,-10,
-            -10,  5,  5, 10, 10,  5,  5,-10,
-            -10,  0, 10, 10, 10, 10,  0,-10,
-            -10, 10, 10, 10, 10, 10, 10,-10,
-            -10,  5,  0,  0,  0,  0,  5,-10,
-            -20,-10,-10,-10,-10,-10,-10,-20
+            -20, -10, -10, -10, -10, -10, -10, -20,
+            -10, 0, 0, 0, 0, 0, 0, -10,
+            -10, 0, 5, 10, 10, 5, 0, -10,
+            -10, 5, 5, 10, 10, 5, 5, -10,
+            -10, 0, 10, 10, 10, 10, 0, -10,
+            -10, 10, 10, 10, 10, 10, 10, -10,
+            -10, 5, 0, 0, 0, 0, 5, -10,
+            -20, -10, -10, -10, -10, -10, -10, -20
     };
     public static int[] ROOK_SQUARES_TABLE = {
-            0,  0,  0,  0,  0,  0,  0,  0,
-            5, 10, 10, 10, 10, 10, 10,  5,
-            -5,  0,  0,  0,  0,  0,  0, -5,
-            -5,  0,  0,  0,  0,  0,  0, -5,
-            -5,  0,  0,  0,  0,  0,  0, -5,
-            -5,  0,  0,  0,  0,  0,  0, -5,
-            -5,  0,  0,  0,  0,  0,  0, -5,
-            0,  0,  0,  5,  5,  0,  0,  0
+            0, 0, 0, 0, 0, 0, 0, 0,
+            5, 10, 10, 10, 10, 10, 10, 5,
+            -5, 0, 0, 0, 0, 0, 0, -5,
+            -5, 0, 0, 0, 0, 0, 0, -5,
+            -5, 0, 0, 0, 0, 0, 0, -5,
+            -5, 0, 0, 0, 0, 0, 0, -5,
+            -5, 0, 0, 0, 0, 0, 0, -5,
+            0, 0, 0, 5, 5, 0, 0, 0
     };
 
     public static int[] QUEEN_SQUARES_TABLE = {
-            -20,-10,-10, -5, -5,-10,-10,-20,
-            -10,  0,  0,  0,  0,  0,  0,-10,
-            -10,  0,  5,  5,  5,  5,  0,-10,
-            -5,  0,  5,  5,  5,  5,  0, -5,
-            0,  0,  5,  5,  5,  5,  0, -5,
-            -10,  5,  5,  5,  5,  5,  0,-10,
-            -10,  0,  5,  0,  0,  0,  0,-10,
-            -20,-10,-10, -5, -5,-10,-10,-20
+            -20, -10, -10, -5, -5, -10, -10, -20,
+            -10, 0, 0, 0, 0, 0, 0, -10,
+            -10, 0, 5, 5, 5, 5, 0, -10,
+            -5, 0, 5, 5, 5, 5, 0, -5,
+            0, 0, 5, 5, 5, 5, 0, -5,
+            -10, 5, 5, 5, 5, 5, 0, -10,
+            -10, 0, 5, 0, 0, 0, 0, -10,
+            -20, -10, -10, -5, -5, -10, -10, -20
     };
 
     public static int[] KING_MIDDLE_GAME_SQUARES_TABLE = {
-            -30,-40,-40,-50,-50,-40,-40,-30,
-            -30,-40,-40,-50,-50,-40,-40,-30,
-            -30,-40,-40,-50,-50,-40,-40,-30,
-            -30,-40,-40,-50,-50,-40,-40,-30,
-            -20,-30,-30,-40,-40,-30,-30,-20,
-            -10,-20,-20,-20,-20,-20,-20,-10,
-            20, 20,  0,  0,  0,  0, 20, 20,
-            20, 30, 10,  0,  0, 10, 30, 20
+            -30, -40, -40, -50, -50, -40, -40, -30,
+            -30, -40, -40, -50, -50, -40, -40, -30,
+            -30, -40, -40, -50, -50, -40, -40, -30,
+            -30, -40, -40, -50, -50, -40, -40, -30,
+            -20, -30, -30, -40, -40, -30, -30, -20,
+            -10, -20, -20, -20, -20, -20, -20, -10,
+            20, 20, 0, 0, 0, 0, 20, 20,
+            20, 30, 10, 0, 0, 10, 30, 20
     };
     public static int[] KING_END_GAME_SQUARES_TABLE = {
-            -50,-40,-30,-20,-20,-30,-40,-50,
-            -30,-20,-10,  0,  0,-10,-20,-30,
-            -30,-10, 20, 30, 30, 20,-10,-30,
-            -30,-10, 30, 40, 40, 30,-10,-30,
-            -30,-10, 30, 40, 40, 30,-10,-30,
-            -30,-10, 20, 30, 30, 20,-10,-30,
-            -30,-30,  0,  0,  0,  0,-30,-30,
-            -50,-30,-30,-30,-30,-30,-30,-50
+            -50, -40, -30, -20, -20, -30, -40, -50,
+            -30, -20, -10, 0, 0, -10, -20, -30,
+            -30, -10, 20, 30, 30, 20, -10, -30,
+            -30, -10, 30, 40, 40, 30, -10, -30,
+            -30, -10, 30, 40, 40, 30, -10, -30,
+            -30, -10, 20, 30, 30, 20, -10, -30,
+            -30, -30, 0, 0, 0, 0, -30, -30,
+            -50, -30, -30, -30, -30, -30, -30, -50
     };
-
 
 
 }
 
-class MoveScore implements Comparable<MoveScore>{
+class MoveScore implements Comparable<MoveScore> {
     private int score;
     public int moveIndex;
-    public MoveScore(int score,int moveIndex){
+
+    public MoveScore(int score, int moveIndex) {
         this.score = score;
         this.moveIndex = moveIndex;
     }
@@ -469,3 +483,4 @@ class MoveScore implements Comparable<MoveScore>{
         return other.score - this.score;
     }
 }
+

@@ -22,6 +22,8 @@ public class Piece {
 
     }
 
+
+
     public int getFile() {
         return getPosition() % 8;
     }
@@ -116,6 +118,25 @@ public class Piece {
 
     private static final int OUT_OF_BOARD_BITS_START = 11;
     private static final int OUT_OF_BOARD_BITS_END = 11;
+
+    public static int GetValueOf(Type type){
+        switch (type){
+            case PAWN:
+                return Piece.PAWN_VALUE;
+            case ROOK:
+                return Piece.ROOK_VALUE;
+            case KNIGHT:
+                return Piece.KNIGHT_VALUE;
+            case BISHOP:
+                return Piece.BISHOP_VALUE;
+            case QUEEN:
+                return Piece.QUEEN_VALUE;
+            case KING:
+                return Piece.KING_VALUE;
+            default:
+                return 0;
+        }
+    }
 
 
 }
