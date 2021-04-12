@@ -45,7 +45,7 @@ class MyRunnable implements Runnable {
 
     @Override
     public void run() {
-        long startTime = System.currentTimeMillis();
+        long startTime = System.nanoTime();
         LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
                 maxingPlayer);
         ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
@@ -53,8 +53,6 @@ class MyRunnable implements Runnable {
 
         moveScores = getMovesScores(toPlayMoves);
         Collections.sort(moveScores);
-        ArrayList<MoveScore> moveScoresFromMinimax = new ArrayList<>();
-
 
         int maxIndex = 0;
         int maxScore = Integer.MIN_VALUE;
@@ -63,61 +61,24 @@ class MyRunnable implements Runnable {
             chessBoardAfterMove.movePiece(toPlayMoves.get(moveScores.get(i).moveIndex));
             int score = miniMax(chessBoardAfterMove, maxScore,
                     Integer.MAX_VALUE, maxDepth - 1);
-            moveScoresFromMinimax.add(new MoveScore(score, i));
-
             if (score > maxScore) {
                 maxScore = score;
                 maxIndex = moveScores.get(i).moveIndex;
             }
-
-        }
-        Collections.sort(moveScoresFromMinimax);
-        boolean timeFinished = false;
-        int currentDepth = maxDepth;
-        ArrayList<MoveScore> moveScoresSecondIteration;
-        int currentMaxIndex = 0;
-
-        while (true) {
-            currentDepth++;
-            moveScoresSecondIteration = new ArrayList<>(moveScoresFromMinimax);
-            Collections.sort(moveScoresSecondIteration);
-            moveScoresFromMinimax.clear();
-            maxScore = Integer.MIN_VALUE;
-            currentMaxIndex = 0;
-            for (int i = 0; i < toPlayMoves.size(); i++) {
-                ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.movePiece(toPlayMoves.get(moveScoresSecondIteration.get(i).moveIndex));
-                int score = miniMax(chessBoardAfterMove, maxScore,
-                        Integer.MAX_VALUE, currentDepth - 1);
-                moveScoresFromMinimax.add(new MoveScore(score, i));
-                if (score > maxScore) {
-                    maxScore = score;
-                    currentMaxIndex = moveScoresSecondIteration.get(i).moveIndex;
-                }
-                if((System.currentTimeMillis() - startTime) > 4000 && (i / toPlayMoves.size()) < 0.6){
-                    timeFinished = true;
-                    break;
-                }
-            }
-            if(timeFinished)
-            {
-                break;
-            } else {
-                maxIndex = currentMaxIndex;
-            }
+            if(maxScore == Integer.MAX_VALUE) break;
         }
 
 
-        long duration = System.currentTimeMillis() - startTime;
+        long duration = System.nanoTime() - startTime;
+        duration = duration / 1000; // convert to milli second
         Log.d(Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
                 maxIndex);
-        if(timeFinished) currentDepth--;
-        Log.d(Game.DEBUG, "Duration: " + duration + " depth " + currentDepth);
+        Log.d(Game.DEBUG, "Duration: " + duration);
 
 
 //        maxIndex = 0;
 //        maxScore = Integer.MIN_VALUE;
-//        startTime = System.currentTimeMillis();
+//        startTime = System.nanoTime();
 //        for (int i = 0; i < toPlayMoves.size(); i++) {
 //            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
 //            chessBoardAfterMove.movePiece(toPlayMoves.get(i));
@@ -128,7 +89,8 @@ class MyRunnable implements Runnable {
 //            }
 //            if(maxScore == Integer.MAX_VALUE) break;
 //        }
-//        duration = System.currentTimeMillis() - startTime;
+//        duration = System.nanoTime() - startTime;
+//        duration = duration / 1000; // convert to milli second
 //        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
 //                maxIndex);
 //        Log.d(Game.DEBUG,"Duration: " + duration);
@@ -141,7 +103,7 @@ class MyRunnable implements Runnable {
     private ArrayList<MoveScore> getMovesScores(ArrayList<Move> toPlayMoves) {
         ArrayList<MoveScore> moveScores = new ArrayList<>();
         for (int i = 0; i < toPlayMoves.size(); i++) {
-            moveScores.add(new MoveScore(getMoveScore(toPlayMoves.get(i)), i));
+             moveScores.add(new MoveScore(getMoveScore(toPlayMoves.get(i)),i));
         }
         return moveScores;
 
@@ -149,16 +111,16 @@ class MyRunnable implements Runnable {
 
     private int getMoveScore(Move move) {
         int score = 0;
-        if (move.isTake()) {
-            score += 1;
-            if (Piece.GetValueOf(move.getPieceType()) < Piece.GetValueOf(move.getTakenPieceType())) {
-                score += 1;
+        if(move.isTake()){
+            score +=1;
+            if(Piece.GetValueOf(move.getPieceType()) < Piece.GetValueOf(move.getTakenPieceType())){
+                score +=1;
             }
         }
-        if (move.isCastling()) {
+        if(move.isCastling()){
             score += 1;
         }
-        if (move.isPromote()) {
+        if(move.isPromote()){
             score += 3;
         }
         return score;
@@ -248,7 +210,7 @@ class MyRunnable implements Runnable {
                 for (int i = 0; i < toPlayMoves.size(); i++) {
                     ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                     chessBoardAfterMove.movePiece(toPlayMoves.get(i));
-                    int score = miniMax(chessBoardAfterMove, depth - 1);
+                    int score = miniMax(chessBoardAfterMove,depth - 1);
                     maxScore = Math.max(maxScore, score);
 
                 }
@@ -258,7 +220,7 @@ class MyRunnable implements Runnable {
                 for (int i = 0; i < toPlayMoves.size(); i++) {
                     ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                     chessBoardAfterMove.movePiece(toPlayMoves.get(i));
-                    int score = miniMax(chessBoardAfterMove, depth - 1);
+                    int score = miniMax(chessBoardAfterMove,depth - 1);
                     minScore = Math.min(minScore, score);
 
                 }
