@@ -1,64 +1,54 @@
 package com.maherhanna.cheeta;
 
 public class Move {
-    private final Piece.Type pieceType;
-    private final Piece.Color pieceColor;
-    private final int from;
-    private final int to;
-    private boolean castling;
-    private CastlingType castlingType;
-    private boolean takes ;
-    private Piece.Type takenPieceType;
-    private boolean promotes;
-    private PromoteToPieceType promotionPieceType;
-    private boolean enPasant;
+
+    private int bitValue;
 
 
     public Move(Piece piece, int from, int to){
-        this.pieceType = piece.getType();
-        pieceColor = piece.getColor();
-        this.from = from;
-        this.to = to;
-        castling = false;
-        castlingType = CastlingType.CASTLING_kING_SIDE;
-        takes = false;
-        takenPieceType = Piece.Type.PAWN;
-        promotes = false;
-        promotionPieceType = PromoteToPieceType.QUEEN;
+        bitValue = 0;
+        setPieceType(piece.getType());
+        setPieceColor(piece.getColor());
+        setFrom(from);
+        setTo(to);
     }
 
     public Move(Piece piece, int from, int to,boolean takes, Piece.Type takenPieceType){
         this(piece,from,to);
-        this.takes = true;
-        this.takenPieceType = takenPieceType;
+        setTakes(takes,takenPieceType);
     }
 
     public Move(Move copy){
-        pieceType = copy.pieceType;
-        pieceColor = copy.pieceColor;
-        from = copy.from;
-        to = copy.to;
-        castling = copy.castling;
-        castlingType = copy.castlingType;
-        takes = copy.takes;
-        takenPieceType = copy.takenPieceType;
-        promotes = copy.promotes;
-        promotionPieceType = copy.promotionPieceType;
-        enPasant = copy.enPasant;
+        bitValue = copy.bitValue;
     }
 
 
     public boolean isCastling(){
-        return castling;
+        return BitMath.getBitsValue(bitValue,CASTLING_START
+        ,CASTLING_MASK) == 1;
     }
-    public CastlingType getCastlingType(){return this.castlingType;}
+    public CastlingType getCastlingType(){
+        return CastlingType.values()
+                [BitMath.getBitsValue(bitValue,CASTLING_TYPE_START,CASTLING_TYPE_MASK)];
+    }
 
-    public boolean isTake(){return takes;}
-    public Piece.Type getTakenPieceType(){return this.takenPieceType;}
+    public boolean isTake(){
+        return BitMath.getBitsValue(bitValue,TAKE_START
+                ,TAKE_MASK) == 1;
+    }
+    public Piece.Type getTakenPieceType(){
+        return Piece.Type.values()
+                [BitMath.getBitsValue(bitValue,TAKE_TYPE_START,TAKE_TYPE_MASK)];
+    }
 
-    public boolean isPromote() { return promotes;}
+    public boolean isPromote() {
+        return BitMath.getBitsValue(bitValue,PROMOTE_START
+                ,PROMOTE_MASK) == 1;
+    }
     public Piece.Type getPromotionPieceType(){
         Piece.Type type = Piece.Type.QUEEN;
+        PromoteToPieceType promotionPieceType = PromoteToPieceType.values()[
+                BitMath.getBitsValue(bitValue,PROMOTE_TYPE_START,PROMOTE_TYPE_MASK)];
         switch (promotionPieceType){
             case ROOK:
                 type = Piece.Type.ROOK;
@@ -76,61 +66,99 @@ public class Move {
         return type;
     }
 
-    public boolean isEnPasant(){return enPasant;}
+    public boolean isEnPasant(){return BitMath.getBitsValue(bitValue,ENPASSANT_START
+            ,ENPASSANT_MASK) == 1;
+    }
 
     public boolean isPawnDoubleMove(){
         boolean pawnDoubleMove = false;
-        if(pieceType == Piece.Type.PAWN &&
-                Math.abs(ChessBoard.GetRank(to) - ChessBoard.GetRank(from)) == 2){
+        if(getPieceType() == Piece.Type.PAWN &&
+                Math.abs(ChessBoard.GetRank(getTo()) - ChessBoard.GetRank(getFrom())) == 2){
             pawnDoubleMove = true;
         }
         return pawnDoubleMove;
     }
 
-    public int getFrom(){return from;}
-    public int getTo(){return to;}
-    public Piece.Color getColor(){return pieceColor;}
-    public Piece.Type getPieceType(){return pieceType;}
-
-    public void setCastling(boolean castling) {
-        this.castling = castling;
+    public int getFrom(){
+        return BitMath.getBitsValue(bitValue,FROM_START,FROM_MASK);
     }
-    public void setCastlingType(CastlingType castlingType){
-        this.castlingType = castlingType;
+    public void setFrom(int position){
+        bitValue =  BitMath.setBitsValue(bitValue,FROM_START,FROM_MASK,position);
+    }
+    public int getTo(){return BitMath.getBitsValue(bitValue,TO_START,TO_MASK);}
+    public void setTo(int position){
+        bitValue =  BitMath.setBitsValue(bitValue,TO_START,TO_MASK,position);
+    }
+
+    public Piece.Color getColor(){
+        return Piece.Color.values()[BitMath.getBitsValue(bitValue,COLOR_START,COLOR_MASK)];
+    }
+    public Piece.Type getPieceType(){
+        return Piece.Type.values()[BitMath.getBitsValue(bitValue,TYPE_START,TYPE_MASK)];
+
+    }
+    public void setPieceType(Piece.Type type){
+        int value = type.ordinal();
+        bitValue = BitMath.setBitsValue(bitValue,TYPE_START,TYPE_MASK,value);
+    }
+
+    public void setPieceColor(Piece.Color color){
+        int value = color.ordinal();
+        bitValue = BitMath.setBitsValue(bitValue,COLOR_START,COLOR_MASK,value);
+    }
+
+    public void setCastling(boolean castling)
+    {
+        int value = 0;
+        if(castling) value = 1;
+        bitValue =  BitMath.setBitsValue(bitValue,CASTLING_START,CASTLING_MASK,value);
+    }
+    public void setCastlingType(CastlingType castlingType)
+    {
+        int value = castlingType.ordinal();
+        bitValue =  BitMath.setBitsValue(bitValue,CASTLING_TYPE_START,CASTLING_TYPE_MASK,value);
     }
 
     public void setCastling(boolean castling,CastlingType castlingType){
-        this.castling = castling;
-        this.castlingType = castlingType;
+        setCastling(castling);
+        setCastlingType(castlingType);
     }
     public void setTakes(boolean takes){
-        this.takes = takes;
+        int value = 0;
+        if(takes) value = 1;
+        bitValue =  BitMath.setBitsValue(bitValue,TAKE_START,TAKE_MASK,value);
     }
 
     public void setTakenPieceType(Piece.Type pieceType){
-        this.takenPieceType = pieceType;
+        int value = pieceType.ordinal();
+        bitValue =  BitMath.setBitsValue(bitValue,TAKE_TYPE_START,TAKE_TYPE_MASK,value);
     }
 
     public void setTakes(boolean takes, Piece.Type pieceType){
-        this.takes = takes;
-        this.takenPieceType = pieceType;
+        setTakes(takes);
+        setTakenPieceType(pieceType);
     }
 
     public void setPromotes(boolean promotes){
-        this.promotes = promotes;
+        int value = 0;
+        if(promotes) value = 1;
+        bitValue = BitMath.setBitsValue(bitValue,PROMOTE_START,PROMOTE_MASK,value);
     }
 
     public void setPromotionPieceType(PromoteToPieceType promotionPieceType){
-        this.promotionPieceType = promotionPieceType;
+        int value = promotionPieceType.ordinal();
+        bitValue = BitMath.setBitsValue(bitValue,PROMOTE_TYPE_START,PROMOTE_TYPE_MASK,value);
     }
 
     public void setPromotes(boolean promotes,PromoteToPieceType promotionPieceType){
-        this.promotes = promotes;
-        this.promotionPieceType = promotionPieceType;
+        setPromotes(promotes);
+        setPromotionPieceType(promotionPieceType);
     }
 
     public void setEnPasant(boolean enPasant){
-        this.enPasant = enPasant;
+        int value = 0;
+        if(enPasant) value = 1;
+        bitValue = BitMath.setBitsValue(bitValue,ENPASSANT_START,ENPASSANT_MASK,value);
         setTakes(true, Piece.Type.PAWN);
     }
 
@@ -140,4 +168,37 @@ public class Move {
     public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE}
 
     public enum PromoteToPieceType{QUEEN,KNIGHT,ROOK,BISHOP}
+
+    private static final int TYPE_MASK = 7;
+    private static final int TYPE_START = 0;
+
+    private static final int COLOR_MASK = 8;
+    private static final int COLOR_START = 3;
+
+    private static final int FROM_MASK = 1008;
+    private static final int FROM_START = 4;
+
+    private static final int TO_MASK = 64512;
+    private static final int TO_START = 10;
+
+    private static final int CASTLING_MASK = 65536;
+    private static final int CASTLING_START = 16;
+
+    private static final int CASTLING_TYPE_MASK = 131072;
+    private static final int CASTLING_TYPE_START = 17;
+
+    private static final int TAKE_MASK = 262144;
+    private static final int TAKE_START = 18;
+
+    private static final int TAKE_TYPE_MASK = 3670016;
+    private static final int TAKE_TYPE_START = 19;
+
+    private static final int PROMOTE_MASK = 4194304;
+    private static final int PROMOTE_START = 22;
+
+    private static final int PROMOTE_TYPE_MASK = 58720256;
+    private static final int PROMOTE_TYPE_START = 23;
+
+    private static final int ENPASSANT_MASK = 67108864;
+    private static final int ENPASSANT_START = 26;
 }

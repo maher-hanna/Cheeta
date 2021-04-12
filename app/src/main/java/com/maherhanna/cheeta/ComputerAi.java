@@ -88,7 +88,6 @@ class MyRunnable implements Runnable {
         Log.d(Game.DEBUG,"Duration: " + duration);
 
 
-        this.move = toPlayMoves.get(maxIndex);
 
 
 //        maxIndex = -1;
@@ -101,13 +100,14 @@ class MyRunnable implements Runnable {
 //                maxIndex = i;
 //            }
 //        }
-//        duration = System.nanoTime() - startTime;
+//        long duration = System.nanoTime() - startTime;
 //        duration = duration / 1000; // convert to milli second
 //        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
 //                maxIndex);
 //        Log.d(Game.DEBUG,"Duration: " + duration);
 
 
+        this.move = toPlayMoves.get(maxIndex);
 
     }
 
