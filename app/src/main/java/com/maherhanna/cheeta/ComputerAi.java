@@ -4,7 +4,6 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 
 public class ComputerAi {
     public Move getMove(ChessBoard chessBoard, Piece.Color toPlayNow, int depth) {
@@ -46,7 +45,7 @@ class MyRunnable implements Runnable {
     @Override
     public void run() {
         long startTime = System.nanoTime();
-        LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+        LegalMoves toPlayLegalMoves = MoveGenerator.getLegalMovesFor(chessBoard,
                 maxingPlayer);
         ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
         ArrayList<MoveScore> moveScores;
@@ -139,7 +138,7 @@ class MyRunnable implements Runnable {
 
             toPlayColor = chessBoard.moves.getToPlayNow();
 
-            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+            LegalMoves toPlayLegalMoves = MoveGenerator.getLegalMovesFor(chessBoard,
                     toPlayColor);
             ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
             ArrayList<MoveScore> moveScores;
@@ -200,7 +199,7 @@ class MyRunnable implements Runnable {
             return getScoreFor(chessBoard, maxingPlayer);
         } else {
 
-            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+            LegalMoves toPlayLegalMoves = MoveGenerator.getLegalMovesFor(chessBoard,
                     toPlayColor);
             ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
 
@@ -338,7 +337,7 @@ class MyRunnable implements Runnable {
 
     private int getPositionalValue(Piece piece) {
         int value = 0;
-        int piecePositionOnTable = ChessBoard.OUT_OF_BOARD;
+        int piecePositionOnTable = ChessBoard.OUT;
         int file = ChessBoard.GetFile(piece.getPosition());
         int rank = ChessBoard.GetRank(piece.getPosition());
         if (piece.getColor() == Piece.Color.WHITE) {

@@ -148,7 +148,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                 yTouchStart = 0;
 
 
-                if (draggedSquare != ChessBoard.OUT_OF_BOARD) {
+                if (draggedSquare != ChessBoard.OUT) {
                     //check for selecting a square
                     if (draggedSquare == targetPosition) {
                         selectedSquare = draggedSquare;
@@ -175,7 +175,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                 }
 
                 //if piece is selected
-                if (selectedSquare != ChessBoard.OUT_OF_BOARD) {
+                if (selectedSquare != ChessBoard.OUT) {
                     if (selectedSquare == targetPosition) break;
                     //check for selecting other piece
                     if (drawing.chessBoard.canMove(selectedSquare, targetPosition)) {
@@ -208,7 +208,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
         }
 
-        if (selectedSquare != ChessBoard.OUT_OF_BOARD || draggedSquare != ChessBoard.OUT_OF_BOARD) {
+        if (selectedSquare != ChessBoard.OUT || draggedSquare != ChessBoard.OUT) {
             int sourceSquare = Math.max(selectedSquare, draggedSquare);
             ArrayList<Integer> squareLegalMoves = drawing.getLegalMoves(sourceSquare);
 

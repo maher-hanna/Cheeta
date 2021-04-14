@@ -36,9 +36,9 @@ public class Piece {
         int newFile = getFile() + file;
         int newRank = getRank() + rank;
         if (newFile < ChessBoard.FILE_A || newFile > ChessBoard.FILE_H)
-            return ChessBoard.OUT_OF_BOARD;
+            return ChessBoard.OUT;
         if (newRank < ChessBoard.RANK_1 || newRank > ChessBoard.RANK_8)
-            return ChessBoard.OUT_OF_BOARD;
+            return ChessBoard.OUT;
         return (newRank * 8) + newFile;
     }
 

@@ -10,7 +10,7 @@ public class ChessboardMoves {
     }
 
     public ChessboardMoves(ChessboardMoves copy){
-        this.moves = (ArrayList<Move>)copy.moves.clone();
+        this.moves = new ArrayList<Move>(copy.moves);
     }
 
     public void add(Move move) {

@@ -3,7 +3,10 @@ package com.maherhanna.cheeta;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class LegalMovesChecker {
+public class MoveGenerator {
+    private long empty = 0L;
+
+
 
     public static LegalMoves getBlackLegalMoves(ChessBoard chessBoard) {
         LegalMoves legalMoves = new LegalMoves();
@@ -123,7 +126,7 @@ public class LegalMovesChecker {
         //--------------------------
 
 
-        int attackingSquare = ChessBoard.OUT_OF_BOARD;
+        int attackingSquare = ChessBoard.OUT;
 
 
         // attacked by a bishop or diagonal queen
@@ -136,7 +139,7 @@ public class LegalMovesChecker {
 
         while (true) {
             attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
-            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (attackingSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(attackingSquare)) {
                 fileOffset++;
                 rankOffset++;
@@ -159,7 +162,7 @@ public class LegalMovesChecker {
         rankOffset = 1;
         while (true) {
             attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
-            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (attackingSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(attackingSquare)) {
                 fileOffset--;
                 rankOffset++;
@@ -180,7 +183,7 @@ public class LegalMovesChecker {
         rankOffset = -1;
         while (true) {
             attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
-            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (attackingSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(attackingSquare)) {
                 fileOffset++;
                 rankOffset--;
@@ -201,7 +204,7 @@ public class LegalMovesChecker {
         rankOffset = -1;
         while (true) {
             attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
-            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (attackingSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(attackingSquare)) {
                 fileOffset--;
                 rankOffset--;
@@ -224,7 +227,7 @@ public class LegalMovesChecker {
         int offset = 1;
         while (true) {
             attackingSquare = ChessBoard.offsetFile(square, offset);
-            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (attackingSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(attackingSquare)) {
                 offset++;
                 continue;
@@ -244,7 +247,7 @@ public class LegalMovesChecker {
         offset = -1;
         while (true) {
             attackingSquare = ChessBoard.offsetFile(square, offset);
-            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (attackingSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(attackingSquare)) {
                 offset--;
 
@@ -265,7 +268,7 @@ public class LegalMovesChecker {
         offset = 1;
         while (true) {
             attackingSquare = ChessBoard.offsetRank(square, offset);
-            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (attackingSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(attackingSquare)) {
                 offset++;
 
@@ -286,7 +289,7 @@ public class LegalMovesChecker {
         offset = -1;
         while (true) {
             attackingSquare = ChessBoard.offsetRank(square, offset);
-            if (attackingSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (attackingSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(attackingSquare)) {
                 offset--;
 
@@ -310,7 +313,7 @@ public class LegalMovesChecker {
         for (fileOffset = -1; fileOffset <= 1; fileOffset++) {
             for (rankOffset = -1; rankOffset <= 1; rankOffset++) {
                 attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
-                if (attackingSquare == ChessBoard.OUT_OF_BOARD) continue;
+                if (attackingSquare == ChessBoard.OUT) continue;
                 if (chessBoard.isSquareEmpty(attackingSquare)) continue;
 
                 if (chessBoard.getPieceColor(attackingSquare) == opponentColor) {
@@ -332,7 +335,7 @@ public class LegalMovesChecker {
         for (fileOffset = -2; fileOffset <= 2; fileOffset += 4) {
             for (rankOffset = -1; rankOffset <= 1; rankOffset += 2) {
                 attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
-                if (attackingSquare == ChessBoard.OUT_OF_BOARD) continue;
+                if (attackingSquare == ChessBoard.OUT) continue;
                 if (chessBoard.isSquareEmpty(attackingSquare)) continue;
 
                 if (chessBoard.getPieceColor(attackingSquare) == opponentColor) {
@@ -349,7 +352,7 @@ public class LegalMovesChecker {
         for (rankOffset = -2; rankOffset <= 2; rankOffset += 4) {
             for (fileOffset = -1; fileOffset <= 1; fileOffset += 2) {
                 attackingSquare = ChessBoard.offset(square, fileOffset, rankOffset);
-                if (attackingSquare == ChessBoard.OUT_OF_BOARD) continue;
+                if (attackingSquare == ChessBoard.OUT) continue;
                 if (chessBoard.isSquareEmpty(attackingSquare)) continue;
 
                 if (chessBoard.getPieceColor(attackingSquare) == opponentColor) {
@@ -489,7 +492,7 @@ public class LegalMovesChecker {
         for (fileOffset = -2; fileOffset <= 2; fileOffset += 4) {
             for (rankOffset = -1; rankOffset <= 1; rankOffset += 2) {
                 int targetSquare = piece.offset(fileOffset, rankOffset);
-                if (targetSquare == ChessBoard.OUT_OF_BOARD) {
+                if (targetSquare == ChessBoard.OUT) {
                     continue;
                 }
                 if (chessBoard.isSquareEmpty(targetSquare)) {
@@ -508,7 +511,7 @@ public class LegalMovesChecker {
         for (rankOffset = -2; rankOffset <= 2; rankOffset += 4) {
             for (fileOffset = -1; fileOffset <= 1; fileOffset += 2) {
                 int targetSquare = piece.offset(fileOffset, rankOffset);
-                if (targetSquare == ChessBoard.OUT_OF_BOARD) {
+                if (targetSquare == ChessBoard.OUT) {
                     continue;
                 }
                 if (chessBoard.isSquareEmpty(targetSquare)) {
@@ -537,7 +540,7 @@ public class LegalMovesChecker {
         for (fileOffset = -1; fileOffset <= 1; fileOffset++) {
             for (rankOffset = -1; rankOffset <= 1; rankOffset++) {
                 int adjacentSquare = piece.offset(fileOffset, rankOffset);
-                if (adjacentSquare == ChessBoard.OUT_OF_BOARD) {
+                if (adjacentSquare == ChessBoard.OUT) {
                     continue;
                 }
                 if (chessBoard.isSquareEmpty(adjacentSquare)) {
@@ -569,7 +572,7 @@ public class LegalMovesChecker {
 
         while (true) {
             int upperRightSquare = piece.offset(fileOffset, rankOffset);
-            if (upperRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (upperRightSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(upperRightSquare)) {
                 queenLegalMoves.add(new Move(piece, piece.getPosition(), upperRightSquare));
             } else {
@@ -592,7 +595,7 @@ public class LegalMovesChecker {
         rankOffset = 1;
         while (true) {
             int upperLeftSquare = piece.offset(fileOffset, rankOffset);
-            if (upperLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (upperLeftSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(upperLeftSquare)) {
                 queenLegalMoves.add(new Move(piece, piece.getPosition(), upperLeftSquare));
             } else {
@@ -616,7 +619,7 @@ public class LegalMovesChecker {
         rankOffset = -1;
         while (true) {
             int lowerRightSquare = piece.offset(fileOffset, rankOffset);
-            if (lowerRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (lowerRightSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(lowerRightSquare)) {
                 queenLegalMoves.add(new Move(piece, piece.getPosition(), lowerRightSquare));
             } else {
@@ -639,7 +642,7 @@ public class LegalMovesChecker {
         rankOffset = -1;
         while (true) {
             int lowerLeftSquare = piece.offset(fileOffset, rankOffset);
-            if (lowerLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (lowerLeftSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(lowerLeftSquare)) {
                 queenLegalMoves.add(new Move(piece, piece.getPosition(), lowerLeftSquare));
             } else {
@@ -663,7 +666,7 @@ public class LegalMovesChecker {
         int offset = 1;
         while (true) {
             int toRightSquare = piece.offsetFile(offset);
-            if (toRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (toRightSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(toRightSquare)) {
                 queenLegalMoves.add(new Move(piece, piece.getPosition(), toRightSquare));
             } else {
@@ -682,7 +685,7 @@ public class LegalMovesChecker {
         offset = -1;
         while (true) {
             int toLeftSquare = piece.offsetFile(offset);
-            if (toLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (toLeftSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(toLeftSquare)) {
                 queenLegalMoves.add(new Move(piece, piece.getPosition(), toLeftSquare));
             } else {
@@ -705,7 +708,7 @@ public class LegalMovesChecker {
         offset = 1;
         while (true) {
             int toTopSquare = piece.offsetRank(offset);
-            if (toTopSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (toTopSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(toTopSquare)) {
                 queenLegalMoves.add(new Move(piece, piece.getPosition(), toTopSquare));
             } else {
@@ -724,7 +727,7 @@ public class LegalMovesChecker {
         offset = -1;
         while (true) {
             int toBottomSquare = piece.offsetRank(offset);
-            if (toBottomSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (toBottomSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(toBottomSquare)) {
                 queenLegalMoves.add(new Move(piece, piece.getPosition(), toBottomSquare));
             } else {
@@ -805,7 +808,7 @@ public class LegalMovesChecker {
 
             //check for takes
             int upperRightSquare = piece.offset(1, 1);
-            if (upperRightSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(upperRightSquare)) {
+            if (upperRightSquare != ChessBoard.OUT && !chessBoard.isSquareEmpty(upperRightSquare)) {
                 if (chessBoard.getPieceAt(upperRightSquare).getColor() != piece.getColor()) {
                     if (ChessBoard.GetRank(upperRightSquare) == ChessBoard.RANK_8) {
                         Move move = new Move(piece, piece.getPosition(), upperRightSquare);
@@ -821,7 +824,7 @@ public class LegalMovesChecker {
                 }
             }
             int upperLeftSquare = piece.offset(-1, 1);
-            if (upperLeftSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(upperLeftSquare)) {
+            if (upperLeftSquare != ChessBoard.OUT && !chessBoard.isSquareEmpty(upperLeftSquare)) {
                 if (chessBoard.getPieceAt(upperLeftSquare).getColor() != piece.getColor()) {
                     if (ChessBoard.GetRank(upperLeftSquare) == ChessBoard.RANK_8) {
                         Move move = new Move(piece, piece.getPosition(), upperLeftSquare);
@@ -895,7 +898,7 @@ public class LegalMovesChecker {
 
             //check for takes
             int lowerRightSquare = piece.offset(1, -1);
-            if (lowerRightSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(lowerRightSquare)) {
+            if (lowerRightSquare != ChessBoard.OUT && !chessBoard.isSquareEmpty(lowerRightSquare)) {
                 if (chessBoard.getPieceAt(lowerRightSquare).getColor() != piece.getColor()) {
                     if (ChessBoard.GetRank(lowerRightSquare) == ChessBoard.RANK_1) {
                         Move move = new Move(piece, piece.getPosition(), lowerRightSquare);
@@ -911,7 +914,7 @@ public class LegalMovesChecker {
                 }
             }
             int lowerLeftSquare = piece.offset(-1, -1);
-            if (lowerLeftSquare != ChessBoard.OUT_OF_BOARD && !chessBoard.isSquareEmpty(lowerLeftSquare)) {
+            if (lowerLeftSquare != ChessBoard.OUT && !chessBoard.isSquareEmpty(lowerLeftSquare)) {
                 if (chessBoard.getPieceAt(lowerLeftSquare).getColor() != piece.getColor()) {
                     if (ChessBoard.GetRank(lowerLeftSquare) == ChessBoard.RANK_1) {
                         Move move = new Move(piece, piece.getPosition(), lowerLeftSquare);
@@ -941,7 +944,7 @@ public class LegalMovesChecker {
         offset = 1;
         while (true) {
             int toRightSquare = piece.offsetFile(offset);
-            if (toRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (toRightSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(toRightSquare)) {
                 rookLegalMoves.add(new Move(piece, piece.getPosition(), toRightSquare));
             } else {
@@ -959,7 +962,7 @@ public class LegalMovesChecker {
         offset = -1;
         while (true) {
             int toLeftSquare = piece.offsetFile(offset);
-            if (toLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (toLeftSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(toLeftSquare)) {
                 rookLegalMoves.add(new Move(piece, piece.getPosition(), toLeftSquare));
             } else {
@@ -981,7 +984,7 @@ public class LegalMovesChecker {
         offset = 1;
         while (true) {
             int toTopSquare = piece.offsetRank(offset);
-            if (toTopSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (toTopSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(toTopSquare)) {
                 rookLegalMoves.add(new Move(piece, piece.getPosition(), toTopSquare));
             } else {
@@ -999,7 +1002,7 @@ public class LegalMovesChecker {
         offset = -1;
         while (true) {
             int toBottomSquare = piece.offsetRank(offset);
-            if (toBottomSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (toBottomSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(toBottomSquare)) {
                 rookLegalMoves.add(new Move(piece, piece.getPosition(), toBottomSquare));
             } else {
@@ -1033,7 +1036,7 @@ public class LegalMovesChecker {
 
         while (true) {
             int upperRightSquare = piece.offset(fileOffset, rankOffset);
-            if (upperRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (upperRightSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(upperRightSquare)) {
                 bishopLegalMoves.add(new Move(piece, piece.getPosition(), upperRightSquare));
             } else {
@@ -1055,7 +1058,7 @@ public class LegalMovesChecker {
         rankOffset = 1;
         while (true) {
             int upperLeftSquare = piece.offset(fileOffset, rankOffset);
-            if (upperLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (upperLeftSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(upperLeftSquare)) {
                 bishopLegalMoves.add(new Move(piece, piece.getPosition(), upperLeftSquare));
             } else {
@@ -1078,7 +1081,7 @@ public class LegalMovesChecker {
         rankOffset = -1;
         while (true) {
             int lowerRightSquare = piece.offset(fileOffset, rankOffset);
-            if (lowerRightSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (lowerRightSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(lowerRightSquare)) {
                 bishopLegalMoves.add(new Move(piece, piece.getPosition(), lowerRightSquare));
             } else {
@@ -1100,7 +1103,7 @@ public class LegalMovesChecker {
         rankOffset = -1;
         while (true) {
             int lowerLeftSquare = piece.offset(fileOffset, rankOffset);
-            if (lowerLeftSquare == ChessBoard.OUT_OF_BOARD) break;
+            if (lowerLeftSquare == ChessBoard.OUT) break;
             if (chessBoard.isSquareEmpty(lowerLeftSquare)) {
                 bishopLegalMoves.add(new Move(piece, piece.getPosition(), lowerLeftSquare));
             } else {
