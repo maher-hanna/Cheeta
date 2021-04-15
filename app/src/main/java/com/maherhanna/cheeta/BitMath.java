@@ -14,7 +14,7 @@ public class BitMath {
     public static int getBitsValue(int number,int startingBit,int bitMask){
         int value = 0;
         value = bitMask & number;
-        value = value >> startingBit;
+        value = value >>> startingBit;
         return  value;
 
     }

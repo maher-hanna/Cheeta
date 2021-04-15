@@ -2,6 +2,32 @@ package com.maherhanna.cheeta;
 
 
 public class Piece {
+
+    public static final int NONE = 0;
+    public static final int PAWN = 1;
+    public static final int ROOK = 2;
+    public static final int KNIGHT = 3;
+    public static final int BISHOP = 4;
+    public static final int QUEEN = 5;
+    public static final int KING = 6;
+
+
+    public static final int WHITE = 0;
+    public static final int BLACK = 1;
+
+    //bit representation positions
+    private static final int TYPE_BITS_START = 1;
+    private static final int TYPE_BITS_END = 3;
+
+    private static final int COLOR_BITS_START = 4;
+    private static final int COLOR_BITS_END = 4;
+
+    private static final int POSITION_BITS_START = 5;
+    private static final int POSITION_BITS_END = 10;
+
+    private static final int OUT_OF_BOARD_BITS_START = 11;
+    private static final int OUT_OF_BOARD_BITS_END = 11;
+
     private int position;
     private Color color;
     private Type type;
@@ -77,9 +103,11 @@ public class Piece {
 
     public enum Type {PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING}
 
+
     public enum Color {
-        BLACK(0),
-        WHITE(1);
+        WHITE(0),
+        BLACK(1);
+
 
         private final int color;
 
@@ -88,7 +116,7 @@ public class Piece {
         }
 
         public Color getOpposite() {
-            if (color == 0) {
+            if (color == 1) {
                 return WHITE;
             } else {
                 return BLACK;
@@ -106,18 +134,7 @@ public class Piece {
     public static int KING_VALUE = 20000;
 
 
-    //bit representation positions
-    private static final int TYPE_BITS_START = 1;
-    private static final int TYPE_BITS_END = 3;
 
-    private static final int COLOR_BITS_START = 4;
-    private static final int COLOR_BITS_END = 4;
-
-    private static final int POSITION_BITS_START = 5;
-    private static final int POSITION_BITS_END = 10;
-
-    private static final int OUT_OF_BOARD_BITS_START = 11;
-    private static final int OUT_OF_BOARD_BITS_END = 11;
 
     public static int GetValueOf(Type type){
         switch (type){

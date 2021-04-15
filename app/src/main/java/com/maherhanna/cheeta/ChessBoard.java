@@ -32,17 +32,6 @@ public class ChessBoard {
     public static final int FILE_G = 6;
     public static final int FILE_H = 7;
 
-    public static final int NONE = 0;
-    public static final int PAWN = 1;
-    public static final int ROOK = 2;
-    public static final int KNIGHT = 3;
-    public static final int BISHOP = 4;
-    public static final int QUEEN = 5;
-    public static final int KING = 6;
-
-
-    public static final int WHITE = 0;
-    public static final int BLACK = 1;
 
     public static final int NO_CASTLING = 0;
     public static final int CASTLING_KING_SIDE = 1;
@@ -80,11 +69,11 @@ public class ChessBoard {
     long allWhitePieces = 0;
     long allBlackPieces = 0;
 
-
+    long emptySquares = 0;
     long allPieces = 0;
     int[] allPiecesInfo = new int[MAX_POSITION];
 
-    int activeColor = WHITE;
+    int activeColor = Piece.WHITE;
     int whiteCastlingRights = NO_CASTLING;
     int blackCastlingRights = NO_CASTLING;
     int enPassantTarget = NO_SQUARE;
@@ -116,10 +105,14 @@ public class ChessBoard {
 
     public void setUpBoard() {
         setupFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\n");
+
+        for(int i = MIN_POSITION; i <= MAX_POSITION;i++){
+            if(pieceType(i) == Piece.NONE) continue;
+
+            setPieceAt(i,Piece.Type.values()[pieceType(i) - 1],Piece.Color.values()[pieceColor(i)]);
+        }
         print();
 
-        setupWhitePieces();
-        setupBlackPieces();
 
         updateWhiteLegalMoves(false);
         updateBlackLegalMoves(false);
@@ -216,15 +209,15 @@ public class ChessBoard {
                 currentRank--;
             }
         }
-        //-----------------------------------------------------------------------------
+        //***************************************************************************
 
         //skip space
         currentChar++;
 
 
         //parse active color
-        if(fenString.charAt(currentChar) == 'w') activeColor = WHITE;
-        else activeColor = BLACK;
+        if(fenString.charAt(currentChar) == 'w') activeColor = Piece.WHITE;
+        else activeColor = Piece.BLACK;
         currentChar++;
 
 
@@ -287,69 +280,86 @@ public class ChessBoard {
         blackPawns |= 1L << square;
         allBlackPieces |= blackPawns;
         allPieces |= blackPawns;
+        emptySquares = ~allPieces;
     }
     private void addBlackRook(int square) {
         blackRooks |= 1L << square;
         allBlackPieces |= blackRooks;
         allPieces |= blackRooks;
+        emptySquares = ~allPieces;
     }
     private void addBlackBishop(int square) {
         blackBishops |= 1L << square;
         allBlackPieces |= blackBishops;
         allPieces |= blackBishops;
+        emptySquares = ~ allPieces;
     }
     private void addBlackKnight(int square) {
         blackKnights |= 1L << square;
         allBlackPieces |= blackKnights;
         allPieces |= blackKnights;
+        emptySquares = ~allPieces;
     }
     private void addBlackQueen(int square) {
         blackQueens |= 1L << square;
         allBlackPieces |= blackQueens;
         allPieces |= blackQueens;
+        emptySquares = ~allPieces;
+
     }
     private void addBlackKing(int square) {
         blackKing |= 1L << square;
         allBlackPieces |= blackKing;
         allPieces |= blackKing;
+        emptySquares = ~allPieces;
+
     }
 
     private void addWhitePawn(int square) {
         whitePawns |= 1L << square;
         allWhitePieces |= whitePawns;
         allPieces |= whitePawns;
+        emptySquares = ~allPieces;
     }
     private void addWhiteRook(int square) {
         whiteRooks |= 1L << square;
         allWhitePieces |= whiteRooks;
         allPieces |= whiteRooks;
+        emptySquares = ~allPieces;
+
     }
     private void addWhiteBishop(int square) {
         whiteBishops |= 1L << square;
         allWhitePieces |= whiteBishops;
         allPieces |= whiteBishops;
+        emptySquares = ~allPieces;
+
     }
     private void addWhiteKnight(int square) {
         whiteKnights |= 1L << square;
         allWhitePieces |= whiteKnights;
         allPieces |= whiteKnights;
+        emptySquares = ~allPieces;
+
     }
     private void addWhiteQueen(int square) {
         whiteQueens |= 1L << square;
         allWhitePieces |= whiteQueens;
         allPieces |= whiteQueens;
+        emptySquares = ~allPieces;
+
     }
     private void addWhiteKing(int square) {
         whiteKing |= 1L << square;
         allWhitePieces |= whiteKing;
         allPieces |= whiteKing;
+        emptySquares = ~allPieces;
+
     }
 
 
     private void setupWhitePieces() {
 
-        Piece square;
-        Piece piece;
         for (int i = 0; i < 8; ++i) {
             int position = GetPosition(i, 1);
             setPieceAt(position, Piece.Type.PAWN, Piece.Color.WHITE);
@@ -672,8 +682,8 @@ public class ChessBoard {
         long isQueen = (((whiteQueens | blackQueens) & positionBit) >>> position);
         long isKing = (((whiteKing | blackKing) & positionBit) >>> position);
         return (int) (
-                (isPawn * PAWN) + (isRook * ROOK) + (isKnight * KNIGHT) +
-                        (isBishop * BISHOP) + (isQueen * QUEEN) + (isKing * KING)
+                (isPawn * Piece.PAWN) + (isRook * Piece.ROOK) + (isKnight * Piece.KNIGHT) +
+                        (isBishop * Piece.BISHOP) + (isQueen * Piece.QUEEN) + (isKing * Piece.KING)
         );
     }
 
@@ -808,8 +818,8 @@ public class ChessBoard {
             for (int file = 0; file < 8; file++) {
                 int pieceType = pieceType(Square(file,rank));
                 int pieceColor = pieceColor(Square(file,rank));
-                if(pieceColor == WHITE) currentSymbol = whitePiecesSymbols[pieceType];
-                if(pieceColor == BLACK) currentSymbol = blackPiecesSymbols[pieceType];
+                if(pieceColor == Piece.WHITE) currentSymbol = whitePiecesSymbols[pieceType];
+                if(pieceColor == Piece.BLACK) currentSymbol = blackPiecesSymbols[pieceType];
                 stringBuilder.append(currentSymbol);
                 stringBuilder.append(' ');
 
