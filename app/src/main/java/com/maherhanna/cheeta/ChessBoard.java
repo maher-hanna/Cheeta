@@ -111,9 +111,6 @@ public class ChessBoard {
 
             setPieceAt(i,Piece.Type.values()[pieceType(i) - 1],Piece.Color.values()[pieceColor(i)]);
         }
-        print();
-
-
         updateWhiteLegalMoves(false);
         updateBlackLegalMoves(false);
 
@@ -806,7 +803,7 @@ public class ChessBoard {
     //------------------------
 
 
-    //this function is for debugging
+
     public void print() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(" \n");
@@ -829,6 +826,27 @@ public class ChessBoard {
         }
         Log.d(Game.DEBUG, stringBuilder.toString());
     }
+
+    public static void printBitboard(long bitboard) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(" \n");
+
+
+        char currentSymbol = '0';
+        for (int rank = 7; rank >= 0; rank--) {
+            for (int file = 0; file < 8; file++) {
+                currentSymbol = '0';
+                if(BitMath.getBit(bitboard,Square(file,rank)) == 1) currentSymbol = '1';
+                stringBuilder.append(currentSymbol);
+                stringBuilder.append(' ');
+
+            }
+            stringBuilder.append('\n');
+
+        }
+        Log.d(Game.DEBUG, stringBuilder.toString());
+    }
+
 
 
 }

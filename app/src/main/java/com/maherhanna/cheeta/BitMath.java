@@ -8,7 +8,6 @@ public class BitMath {
         bitMask = bitMask & value;
         result = number | bitMask;
         return  result;
-
     }
 
     public static int getBitsValue(int number,int startingBit,int bitMask){
@@ -17,5 +16,35 @@ public class BitMath {
         value = value >>> startingBit;
         return  value;
 
+    }
+
+    public static boolean isBitSet(long bitboard,int index){
+        return (bitboard & (1L << index)) != 0;
+    }
+
+    public static int getBit(long bitboard,int index){
+        return (int)((bitboard & (1L << index)) >>> index);
+    }
+    public static long setBit(long bitboard,int index){
+        bitboard |= 1L << index;
+        return bitboard;
+    }
+
+    public static long getBitCount(long bitboard){
+        long count = 0;
+        while (bitboard != 0){
+            bitboard &= bitboard -1;
+            count++;
+        }
+        return count;
+    }
+
+    //get least significant bit index
+    public static long getLSBitIndex(long bitboard){
+        if(bitboard != 0){
+            return getBitCount ((bitboard & -bitboard) - 1);
+        } else {
+            return ChessBoard.OUT;
+        }
     }
 }
