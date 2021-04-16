@@ -2,7 +2,6 @@ package com.maherhanna.cheeta;
 
 import android.os.Handler;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 class Game {
@@ -11,6 +10,7 @@ class Game {
     private final Drawing drawing;
     private final ChessBoard chessBoard;
     private final ComputerAi computerAi;
+    public MoveGenerator moveGenerator = new MoveGenerator();
     public int gameType;
     private final int computerPlayDelayMilli;
     public boolean paused;
@@ -87,7 +87,7 @@ class Game {
 
     public void humanPlayed(Move humanMove) {
         humanMove = chessBoard.getLegalMovesFor(bottomScreenPlayerColor).getMove(humanMove);
-        chessBoard.movePiece(humanMove);
+        chessBoard.move(humanMove);
         drawing.drawAllPieces(humanMove);
         drawing.show();
         currentPlayer = bottomScreenPlayerColor.getOpposite();
@@ -146,7 +146,7 @@ class Game {
     public void playComputer(Piece.Color color) {
         if (paused) return;
         Move computerMove = computerAi.getMove(chessBoard, color,COMPUTER_MAX_SEARCH_DEPTH);
-        chessBoard.movePiece(computerMove);
+        chessBoard.move(computerMove);
         chessBoard.updateLegalMovesFor(color, false);
         Piece.Color opponentColor = color.getOpposite();
         chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));

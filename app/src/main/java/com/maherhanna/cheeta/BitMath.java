@@ -29,9 +29,12 @@ public class BitMath {
         bitboard |= 1L << index;
         return bitboard;
     }
+    public static long popBit(long bitboard,int index){
+        return ~(1L << index) & bitboard;
+    }
 
-    public static long getBitCount(long bitboard){
-        long count = 0;
+    public static int count1Bits(long bitboard){
+        int count = 0;
         while (bitboard != 0){
             bitboard &= bitboard -1;
             count++;
@@ -40,9 +43,9 @@ public class BitMath {
     }
 
     //get least significant bit index
-    public static long getLSBitIndex(long bitboard){
+    public static int getLSBitIndex(long bitboard){
         if(bitboard != 0){
-            return getBitCount ((bitboard & -bitboard) - 1);
+            return count1Bits((bitboard & -bitboard) - 1);
         } else {
             return ChessBoard.OUT;
         }

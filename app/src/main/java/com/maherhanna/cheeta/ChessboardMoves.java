@@ -16,6 +16,9 @@ public class ChessboardMoves {
     public void add(Move move) {
         this.moves.add(move);
     }
+    public void removeLastMove(){
+        moves.remove(moves.size() -1);
+    }
 
     public boolean hasPieceMoved(int initialPosition){
         boolean hasMoved = false;

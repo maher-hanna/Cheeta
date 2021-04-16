@@ -71,7 +71,6 @@ public class ChessBoard {
 
     long emptySquares = 0;
     long allPieces = 0;
-    int[] allPiecesInfo = new int[MAX_POSITION];
 
     int activeColor = Piece.WHITE;
     int whiteCastlingRights = NO_CASTLING;
@@ -86,6 +85,33 @@ public class ChessBoard {
     public ChessBoard(ChessBoard copy) {
         this.pieces = copy.pieces.clone();
         this.moves = new ChessboardMoves(copy.moves);
+
+        whitePawns = copy.whitePawns;
+        whiteRooks = copy.whiteRooks;
+        whiteBishops = copy.whiteBishops;
+        whiteKnights = copy.whiteKnights;
+        whiteQueens = copy.whiteQueens;
+        whiteKing = copy.whiteKing;
+
+        blackPawns = copy.blackPawns;
+        blackRooks = copy.blackRooks;
+        blackBishops = copy.blackBishops;
+        blackKnights = copy.blackKnights;
+        blackQueens = copy.blackQueens;
+        blackKing = copy.blackKing;
+
+        allWhitePieces = copy.allWhitePieces;
+        allBlackPieces = copy.blackPawns;
+
+        emptySquares = copy.emptySquares;
+        allPieces = copy.allPieces;
+
+        activeColor = copy.activeColor;
+        whiteCastlingRights = copy.whiteCastlingRights;
+        blackCastlingRights = copy.blackCastlingRights;
+        enPassantTarget = copy.enPassantTarget;
+        fiftyMovesDrawCount = copy.fiftyMovesDrawCount;
+        fullMovesCount = copy.fullMovesCount;
     }
 
 
@@ -113,6 +139,16 @@ public class ChessBoard {
         }
         updateWhiteLegalMoves(false);
         updateBlackLegalMoves(false);
+
+        ChessBoard test = new ChessBoard(this);
+        MoveGenerator moveGenerator = new MoveGenerator();
+        ArrayList<Move> moves = moveGenerator.getWhitepseudoLegalMoves(test);
+        for(Move move : moves){
+            test.move(move);
+            test.print();
+            test.unMove(move);
+        }
+
 
     }
 
@@ -353,55 +389,39 @@ public class ChessBoard {
         emptySquares = ~allPieces;
 
     }
+    private void removePiece(int square){
+        whitePawns = BitMath.popBit(whitePawns,square);
+        whiteRooks = BitMath.popBit(whiteRooks,square);
+        whiteKnights = BitMath.popBit(whiteKnights,square);
+        whiteBishops = BitMath.popBit(whiteBishops,square);
+        whiteQueens = BitMath.popBit(whiteQueens,square);
+        whiteKing = BitMath.popBit(whiteKing,square);
+
+        blackPawns = BitMath.popBit(blackPawns,square);
+        blackRooks = BitMath.popBit(blackRooks,square);
+        blackKnights = BitMath.popBit(blackKnights,square);
+        blackBishops = BitMath.popBit(blackBishops,square);
+        blackQueens = BitMath.popBit(blackQueens,square);
+        blackKing = BitMath.popBit(blackKing,square);
 
 
-    private void setupWhitePieces() {
+        allWhitePieces = BitMath.popBit(allWhitePieces,square);
+        allBlackPieces = BitMath.popBit(allBlackPieces,square);
 
-        for (int i = 0; i < 8; ++i) {
-            int position = GetPosition(i, 1);
-            setPieceAt(position, Piece.Type.PAWN, Piece.Color.WHITE);
-        }
+        allPieces = BitMath.popBit(allPieces,square);
 
-        setPieceAt(0, Piece.Type.ROOK, Piece.Color.WHITE);
-        setPieceAt(1, Piece.Type.KNIGHT, Piece.Color.WHITE);
-        setPieceAt(2, Piece.Type.BISHOP, Piece.Color.WHITE);
-        setPieceAt(3, Piece.Type.QUEEN, Piece.Color.WHITE);
-        setPieceAt(4, Piece.Type.KING, Piece.Color.WHITE);
-        setPieceAt(5, Piece.Type.BISHOP, Piece.Color.WHITE);
-        setPieceAt(6, Piece.Type.KNIGHT, Piece.Color.WHITE);
-        setPieceAt(7, Piece.Type.ROOK, Piece.Color.WHITE);
-
-
+        emptySquares = ~allPieces;
     }
-
-    private void setupBlackPieces() {
-        for (int i = 0; i < 8; ++i) {
-            setPieceAt(GetPosition(i, 6), Piece.Type.PAWN, Piece.Color.BLACK);
-
-        }
-
-        setPieceAt(GetPosition(0, 7), Piece.Type.ROOK, Piece.Color.BLACK);
-        setPieceAt(GetPosition(1, 7), Piece.Type.KNIGHT, Piece.Color.BLACK);
-        setPieceAt(GetPosition(2, 7), Piece.Type.BISHOP, Piece.Color.BLACK);
-        setPieceAt(GetPosition(3, 7), Piece.Type.QUEEN, Piece.Color.BLACK);
-        setPieceAt(GetPosition(4, 7), Piece.Type.KING, Piece.Color.BLACK );
-        setPieceAt(GetPosition(5, 7), Piece.Type.BISHOP, Piece.Color.BLACK );
-        setPieceAt(GetPosition(6, 7), Piece.Type.KNIGHT, Piece.Color.BLACK );
-        setPieceAt(GetPosition(7, 7), Piece.Type.ROOK, Piece.Color.BLACK );
-
-    }
-
-
 
 
 
     public void updateBlackLegalMoves(boolean kingInCheck) {
-        blackLegalMoves = MoveGenerator.getBlackLegalMoves(this);
+        blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this);
     }
 
 
     public void updateWhiteLegalMoves(boolean kingInCheck) {
-        whiteLegalMoves = MoveGenerator.getWhiteLegalMoves(this);
+        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this);
 
     }
 
@@ -460,7 +480,7 @@ public class ChessBoard {
 
 
     public boolean isKingInCheck(Piece.Color kingColor) {
-        return MoveGenerator.isSquareAttacked(this, getKingPosition(kingColor), kingColor.getOpposite());
+        return LegalMovesChecker.isSquareAttacked(this, getKingPosition(kingColor), kingColor.getOpposite());
     }
 
 
@@ -491,7 +511,7 @@ public class ChessBoard {
 
 
 
-    public void movePiece(Move move) {
+    public void move(Move move) {
         int fromSquare = move.getFrom();
         int toSquare = move.getTo();
         setPieceAt(toSquare, getPieceAt(fromSquare));
@@ -505,12 +525,12 @@ public class ChessBoard {
             Piece.Color moveColor = move.getColor();
 
             if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
-                rookPosition = MoveGenerator.getInitialRookKingSide(this,
+                rookPosition = LegalMovesChecker.getInitialRookKingSide(this,
                         moveColor);
                 rookCastlingTarget = move.getFrom() + 1;
 
             } else {
-                rookPosition = MoveGenerator.getInitialRookQueenSide(this,
+                rookPosition = LegalMovesChecker.getInitialRookQueenSide(this,
                         moveColor);
                 rookCastlingTarget = move.getFrom() -1;
             }
@@ -534,6 +554,57 @@ public class ChessBoard {
 
     }
 
+    public void unMove(Move move) {
+        int fromSquare = move.getFrom();
+        int toSquare = move.getTo();
+        setPieceAt(fromSquare, getPieceAt(toSquare));
+        getPieceAt(fromSquare).setPosition(fromSquare);
+        setPieceAt(toSquare, null);
+
+        if(move.isTake()){
+            setPieceAt(toSquare,move.getTakenPieceType(),move.getColor().getOpposite());
+            getPieceAt(toSquare).setPosition(toSquare);
+
+        }
+
+
+
+        if (move.isCastling()) {
+            int rookPosition;
+            int rookCastlingTarget;
+            Piece.Color moveColor = move.getColor();
+
+            if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
+                rookPosition = LegalMovesChecker.getInitialRookKingSide(this,
+                        moveColor);
+                rookCastlingTarget = move.getFrom() + 1;
+
+            } else {
+                rookPosition = LegalMovesChecker.getInitialRookQueenSide(this,
+                        moveColor);
+                rookCastlingTarget = move.getFrom() -1;
+            }
+            setPieceAt(rookCastlingTarget, getPieceAt(rookPosition) );
+            setPieceAt(rookPosition, null);
+            getPieceAt(rookCastlingTarget).setPosition(rookCastlingTarget);
+        }
+        if(move.isPromote()){
+            getPieceAt(toSquare).setType(move.getPromotionPieceType());
+        }
+        if(move.isEnPasant()){
+            if(move.getColor() == Piece.Color.WHITE){
+                setPieceAt(ChessBoard.offsetRank(move.getTo(),-1),null);
+            }
+            else {
+                setPieceAt(ChessBoard.offsetRank(move.getTo(),1),null);
+            }
+        }
+
+        moves.removeLastMove();
+
+    }
+
+
     //get and set a square info
     public Piece getPieceAt(int position) {
 
@@ -555,7 +626,7 @@ public class ChessBoard {
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
         boolean isKingInCheck = isKingInCheck(currentToPlayColor);
 
-        LegalMoves currentToPlayLegalMoves = MoveGenerator.getLegalMovesFor(this,
+        LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this,
                 currentToPlayColor);
 
         if (isKingInCheck) {
@@ -652,9 +723,55 @@ public class ChessBoard {
     public void setPieceAt(int position, Piece piece) {
         if(piece == null){
             pieces[position] = null;
+            removePiece(position);
             return;
         }
         pieces[position] = new Piece(piece);
+        if(piece.getColor() == Piece.Color.WHITE){
+            switch (piece.getType()){
+                case PAWN:
+                    addWhitePawn(position);
+                    break;
+                case ROOK:
+                    addWhiteRook(position);
+                    break;
+                case KNIGHT:
+                    addWhiteKnight(position);
+                    break;
+                case BISHOP:
+                    addWhiteBishop(position);
+                    break;
+                case QUEEN:
+                    addWhiteQueen(position);
+                    break;
+                case KING:
+                    addWhiteKing(position);
+                    break;
+            }
+        } else {
+            switch (piece.getType()){
+                case PAWN:
+                    addBlackPawn(position);
+                    break;
+                case ROOK:
+                    addBlackRook(position);
+                    break;
+                case KNIGHT:
+                    addBlackKnight(position);
+                    break;
+                case BISHOP:
+                    addBlackBishop(position);
+                    break;
+                case QUEEN:
+                    addBlackQueen(position);
+                    break;
+                case KING:
+                    addBlackKing(position);
+                    break;
+            }
+
+        }
+
     }
 
     public boolean isSquareEmpty(int position) {
