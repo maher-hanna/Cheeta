@@ -101,7 +101,7 @@ public class ChessBoard {
         blackKing = copy.blackKing;
 
         allWhitePieces = copy.allWhitePieces;
-        allBlackPieces = copy.blackPawns;
+        allBlackPieces = copy.allBlackPieces;
 
         emptySquares = copy.emptySquares;
         allPieces = copy.allPieces;
@@ -140,21 +140,21 @@ public class ChessBoard {
         updateWhiteLegalMoves(false);
         updateBlackLegalMoves(false);
 
-        ChessBoard test = new ChessBoard(this);
-        test.setPieceAt(Square("d3"), Piece.Type.PAWN, Piece.Color.BLACK);
-        test.setPieceAt(Square("d6"), Piece.Type.PAWN, Piece.Color.WHITE);
-        MoveGenerator moveGenerator = new MoveGenerator();
-        ArrayList<Move> whiteMoves = moveGenerator.getWhitepseudoLegalMoves(test);
-        ArrayList<Move> BlackMoves = moveGenerator.getBlackpseudoLegalMoves(test);
+//        ChessBoard test = new ChessBoard(this);
+//        test.setPieceAt(Square("d2"), Piece.Type.PAWN, Piece.Color.BLACK);
+//        test.setPieceAt(Square("d6"), Piece.Type.PAWN, Piece.Color.WHITE);
+//        MoveGenerator moveGenerator = new MoveGenerator();
+//        ArrayList<Move> whiteMoves = moveGenerator.getWhitepseudoLegalMoves(test);
+//        ArrayList<Move> blackMoves = moveGenerator.getBlackpseudoLegalMoves(test);
+//
+//        for(Move move : blackMoves){
+//            test.move(move);
+//            test.print();
+//            test.unMove(move);
+//        }
 
-        for(Move move : BlackMoves){
-            test.move(move);
-            test.print();
-            test.unMove(move);
+
         }
-
-
-    }
 
     public void setupFromFen(String fenString){
         int currentFile = FILE_A;
@@ -542,7 +542,7 @@ public class ChessBoard {
             getPieceAt(rookCastlingTarget).setPosition(rookCastlingTarget);
         }
         if(move.isPromote()){
-            getPieceAt(toSquare).setType(move.getPromotionPieceType());
+            setPieceAt(toSquare,move.getPromotionPieceType(),move.getColor());
         }
         if(move.isEnPasant()){
             if(move.getColor() == Piece.Color.WHITE){
@@ -561,13 +561,17 @@ public class ChessBoard {
         int fromSquare = move.getFrom();
         int toSquare = move.getTo();
         setPieceAt(fromSquare, getPieceAt(toSquare));
+
         getPieceAt(fromSquare).setPosition(fromSquare);
         setPieceAt(toSquare, null);
 
         if(move.isTake()){
             setPieceAt(toSquare,move.getTakenPieceType(),move.getColor().getOpposite());
             getPieceAt(toSquare).setPosition(toSquare);
+        }
 
+        if(move.isPromote()){
+            setPieceAt(fromSquare, Piece.Type.PAWN,move.getColor());
         }
 
 
@@ -591,9 +595,7 @@ public class ChessBoard {
             setPieceAt(rookPosition, null);
             getPieceAt(rookCastlingTarget).setPosition(rookCastlingTarget);
         }
-        if(move.isPromote()){
-            getPieceAt(toSquare).setType(move.getPromotionPieceType());
-        }
+
         if(move.isEnPasant()){
             if(move.getColor() == Piece.Color.WHITE){
                 setPieceAt(ChessBoard.offsetRank(move.getTo(),-1),null);

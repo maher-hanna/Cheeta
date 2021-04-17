@@ -9,6 +9,8 @@ public class MoveGenerator {
     private static long notHFile = 0x7f7f7f7f7f7f7f7fL;
     private static long rank4 = 0xff000000L;
     private static long rank5 = 0xff00000000L;
+    private static long rank8 = 0xff00000000000000L;
+    private static long rank1 = 0xffL;
 
 
     private static long south (long square) {return  square >>> 8;}
@@ -52,15 +54,21 @@ public class MoveGenerator {
         for(int i = 0 ; i < count;i++){
             int index = BitMath.getLSBitIndex(singlePushes);
             singlePushes = BitMath.popBit(singlePushes,index);
-            moves.add(new Move(new Piece(Piece.Type.PAWN, Piece.Color.WHITE,index - 8),
-                    index - 8,index));
+            Move move = new Move(new Piece(Piece.Type.PAWN, Piece.Color.WHITE,index - 8),
+                    index - 8,index);
+            if(ChessBoard.GetRank(index) == ChessBoard.RANK_8){
+                move.setPromotes(true, Move.PromoteToPieceType.QUEEN);
+            }
+            moves.add(move);
         }
         count = BitMath.count1Bits(doublePushes);
         for(int i = 0 ; i < count;i++){
             int index = BitMath.getLSBitIndex(doublePushes);
             doublePushes = BitMath.popBit(doublePushes,index);
-            moves.add(new Move(new Piece(Piece.Type.PAWN, Piece.Color.WHITE,index - 16),
-                    index - 16,index));
+            Move move = new Move(new Piece(Piece.Type.PAWN, Piece.Color.WHITE,index - 16),
+                    index - 16,index);
+
+            moves.add(move);
         }
 
 
@@ -79,7 +87,11 @@ public class MoveGenerator {
             attacksWest = BitMath.popBit(attacksWest,index);
             Move attack = new Move(new Piece(Piece.Type.PAWN, Piece.Color.WHITE,index - 7),
                     index - 7,index);
+
             attack.setTakes(true,chessBoard.getPieceType(index));
+            if(ChessBoard.GetRank(index) == ChessBoard.RANK_8){
+                attack.setPromotes(true, Move.PromoteToPieceType.QUEEN);
+            }
             attacks.add(attack);
 
         }
@@ -91,6 +103,9 @@ public class MoveGenerator {
             Move attack = new Move(new Piece(Piece.Type.PAWN, Piece.Color.WHITE,index - 9),
                     index - 9,index);
             attack.setTakes(true,chessBoard.getPieceType(index));
+            if(ChessBoard.GetRank(index) == ChessBoard.RANK_8){
+                attack.setPromotes(true, Move.PromoteToPieceType.QUEEN);
+            }
             attacks.add(attack);
 
         }
@@ -120,17 +135,24 @@ public class MoveGenerator {
         for(int i = 0 ; i < count;i++){
             int index = BitMath.getLSBitIndex(singlePushes);
             singlePushes = BitMath.popBit(singlePushes,index);
-            moves.add(new Move(new Piece(Piece.Type.PAWN, Piece.Color.BLACK,index + 8),
-                    index + 8,index));
+            Move move = new Move(new Piece(Piece.Type.PAWN, Piece.Color.BLACK,index + 8),
+                    index + 8,index);
+            if(ChessBoard.GetRank(index) == ChessBoard.RANK_1){
+                move.setPromotes(true, Move.PromoteToPieceType.QUEEN);
+            }
+            moves.add(move);
         }
 
         count = BitMath.count1Bits(doublePushes);
         for(int i = 0 ; i < count;i++){
             int index = BitMath.getLSBitIndex(doublePushes);
+            Move move = new Move(new Piece(Piece.Type.PAWN, Piece.Color.BLACK,index + 16),
+                    index + 16,index);
             doublePushes = BitMath.popBit(doublePushes,index);
-            moves.add(new Move(new Piece(Piece.Type.PAWN, Piece.Color.BLACK,index + 16),
-                    index + 16,index));
+            moves.add(move);
         }
+
+
 
         return moves;
 
@@ -141,6 +163,7 @@ public class MoveGenerator {
         long attacksWest = blackPawnsAttackWest(chessBoard.blackPawns,chessBoard.allWhitePieces);
         long attacksEast = blackPawnsAttackEast(chessBoard.blackPawns,chessBoard.allWhitePieces);
 
+
         int count = BitMath.count1Bits(attacksWest);
         for(int i = 0 ; i < count;i++){
             int index = BitMath.getLSBitIndex(attacksWest);
@@ -148,6 +171,10 @@ public class MoveGenerator {
             Move attack = new Move(new Piece(Piece.Type.PAWN, Piece.Color.BLACK,index + 9),
                     index + 9,index);
             attack.setTakes(true,chessBoard.getPieceType(index));
+
+            if(ChessBoard.GetRank(index) == ChessBoard.RANK_1){
+                attack.setPromotes(true, Move.PromoteToPieceType.QUEEN);
+            }
             attacks.add(attack);
 
         }
@@ -160,6 +187,9 @@ public class MoveGenerator {
             Move attack = new Move(new Piece(Piece.Type.PAWN, Piece.Color.BLACK,index + 7),
                     index + 7,index);
             attack.setTakes(true,chessBoard.getPieceType(index));
+            if(ChessBoard.GetRank(index) == ChessBoard.RANK_1){
+                attack.setPromotes(true, Move.PromoteToPieceType.QUEEN);
+            }
             attacks.add(attack);
 
         }
