@@ -2,6 +2,7 @@ package com.maherhanna.cheeta;
 
 import android.os.Handler;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 class Game {
@@ -45,7 +46,23 @@ class Game {
 
         chessBoard.setUpBoard();
 
+
         drawing.chessBoard = this.chessBoard;
+
+
+        //test move generator
+        //------------------------------------------------------------------------------
+        ChessBoard test = new ChessBoard(drawing);
+        test.setupFromFen("r1bqkbnr/pppppppp/n7/8/8/P7/1PPPPPPP/RNBQKBNR w QqKk - 2 2");
+        ArrayList<Move> whiteMoves = moveGenerator.getWhitePseudoLegalMoves(test);
+        ArrayList<Move> blackMoves = moveGenerator.getBlackPseudoLegalMoves(test);
+
+        for(Move move : whiteMoves){
+            test.move(move);
+            test.print();
+            test.unMove(move);
+        }
+        //**********************************************************************************
 
     }
 

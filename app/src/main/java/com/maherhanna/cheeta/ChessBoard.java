@@ -132,29 +132,7 @@ public class ChessBoard {
     public void setUpBoard() {
         setupFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\n");
 
-        for(int i = MIN_POSITION; i <= MAX_POSITION;i++){
-            if(pieceType(i) == Piece.NONE) continue;
-
-            setPieceAt(i,Piece.Type.values()[pieceType(i) - 1],Piece.Color.values()[pieceColor(i)]);
-        }
-        updateWhiteLegalMoves(false);
-        updateBlackLegalMoves(false);
-
-//        ChessBoard test = new ChessBoard(this);
-//        test.setPieceAt(Square("d2"), Piece.Type.PAWN, Piece.Color.BLACK);
-//        test.setPieceAt(Square("d6"), Piece.Type.PAWN, Piece.Color.WHITE);
-//        MoveGenerator moveGenerator = new MoveGenerator();
-//        ArrayList<Move> whiteMoves = moveGenerator.getWhitepseudoLegalMoves(test);
-//        ArrayList<Move> blackMoves = moveGenerator.getBlackpseudoLegalMoves(test);
-//
-//        for(Move move : blackMoves){
-//            test.move(move);
-//            test.print();
-//            test.unMove(move);
-//        }
-
-
-        }
+    }
 
     public void setupFromFen(String fenString){
         int currentFile = FILE_A;
@@ -310,6 +288,14 @@ public class ChessBoard {
 
         //parse full move count since start of game
         fullMovesCount = scanner.nextInt();
+
+        for(int i = MIN_POSITION; i <= MAX_POSITION;i++){
+            if(pieceType(i) == Piece.NONE) continue;
+
+            setPieceAt(i,Piece.Type.values()[pieceType(i) - 1],Piece.Color.values()[pieceColor(i)]);
+        }
+        updateWhiteLegalMoves(false);
+        updateBlackLegalMoves(false);
 
     }
 
@@ -578,22 +564,23 @@ public class ChessBoard {
 
         if (move.isCastling()) {
             int rookPosition;
-            int rookCastlingTarget;
+            int currentRookPosition;
+
             Piece.Color moveColor = move.getColor();
 
             if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
                 rookPosition = LegalMovesChecker.getInitialRookKingSide(this,
                         moveColor);
-                rookCastlingTarget = move.getFrom() + 1;
+                currentRookPosition = move.getFrom() + 1;
 
             } else {
                 rookPosition = LegalMovesChecker.getInitialRookQueenSide(this,
                         moveColor);
-                rookCastlingTarget = move.getFrom() -1;
+                currentRookPosition = move.getFrom() - 1;
+
             }
-            setPieceAt(rookCastlingTarget, getPieceAt(rookPosition) );
-            setPieceAt(rookPosition, null);
-            getPieceAt(rookCastlingTarget).setPosition(rookCastlingTarget);
+            setPieceAt(rookPosition, Piece.Type.ROOK,moveColor );
+            setPieceAt(currentRookPosition, null);
         }
 
         if(move.isEnPasant()){

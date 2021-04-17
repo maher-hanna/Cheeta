@@ -33,7 +33,7 @@ public class BitMath {
         return ~(1L << index) & bitboard;
     }
 
-    public static int count1Bits(long bitboard){
+    public static int countSetBits(long bitboard){
         int count = 0;
         while (bitboard != 0){
             bitboard &= bitboard -1;
@@ -45,7 +45,7 @@ public class BitMath {
     //get least significant bit index
     public static int getLSBitIndex(long bitboard){
         if(bitboard != 0){
-            return count1Bits((bitboard & -bitboard) - 1);
+            return countSetBits((bitboard & -bitboard) - 1);
         } else {
             return ChessBoard.OUT;
         }
