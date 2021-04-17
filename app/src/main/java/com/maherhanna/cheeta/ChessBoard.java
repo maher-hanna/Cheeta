@@ -141,9 +141,13 @@ public class ChessBoard {
         updateBlackLegalMoves(false);
 
         ChessBoard test = new ChessBoard(this);
+        test.setPieceAt(Square("d3"), Piece.Type.PAWN, Piece.Color.BLACK);
+        test.setPieceAt(Square("d6"), Piece.Type.PAWN, Piece.Color.WHITE);
         MoveGenerator moveGenerator = new MoveGenerator();
-        ArrayList<Move> moves = moveGenerator.getWhitepseudoLegalMoves(test);
-        for(Move move : moves){
+        ArrayList<Move> whiteMoves = moveGenerator.getWhitepseudoLegalMoves(test);
+        ArrayList<Move> BlackMoves = moveGenerator.getBlackpseudoLegalMoves(test);
+
+        for(Move move : BlackMoves){
             test.move(move);
             test.print();
             test.unMove(move);
@@ -390,25 +394,24 @@ public class ChessBoard {
 
     }
     private void removePiece(int square){
-        whitePawns = BitMath.popBit(whitePawns,square);
-        whiteRooks = BitMath.popBit(whiteRooks,square);
-        whiteKnights = BitMath.popBit(whiteKnights,square);
-        whiteBishops = BitMath.popBit(whiteBishops,square);
-        whiteQueens = BitMath.popBit(whiteQueens,square);
-        whiteKing = BitMath.popBit(whiteKing,square);
-
-        blackPawns = BitMath.popBit(blackPawns,square);
-        blackRooks = BitMath.popBit(blackRooks,square);
-        blackKnights = BitMath.popBit(blackKnights,square);
-        blackBishops = BitMath.popBit(blackBishops,square);
-        blackQueens = BitMath.popBit(blackQueens,square);
-        blackKing = BitMath.popBit(blackKing,square);
-
-
-        allWhitePieces = BitMath.popBit(allWhitePieces,square);
-        allBlackPieces = BitMath.popBit(allBlackPieces,square);
 
         allPieces = BitMath.popBit(allPieces,square);
+        allWhitePieces = allPieces & allWhitePieces;
+        allBlackPieces = allPieces & allBlackPieces;
+
+        whitePawns = allPieces & whitePawns;
+        whiteRooks = allPieces & whiteRooks;
+        whiteKnights = allPieces & whiteKnights;
+        whiteBishops = allPieces & whiteBishops;
+        whiteQueens = allPieces & whiteQueens;
+        whiteKing = allPieces & whiteKing;
+
+        blackPawns = allPieces & blackPawns;
+        blackRooks = allPieces & blackRooks;
+        blackKnights = allPieces & blackKnights;
+        blackBishops = allPieces & blackBishops;
+        blackQueens = allPieces & blackQueens;
+        blackKing = allPieces & blackKing;
 
         emptySquares = ~allPieces;
     }
@@ -616,7 +619,62 @@ public class ChessBoard {
     }
 
     public void setPieceAt(int position, Piece.Type pieceType, Piece.Color pieceColor) {
-        pieces[position] = new Piece(pieceType, pieceColor, position);
+        Piece piece = new Piece(pieceType, pieceColor, position);
+        setPieceAt(position,piece);
+    }
+    public void setPieceAt(int position, Piece piece) {
+        removePiece(position);
+
+        if(piece == null){
+            pieces[position] = null;
+            return;
+        }
+        pieces[position] = new Piece(piece);
+        if(piece.getColor() == Piece.Color.WHITE){
+            switch (piece.getType()){
+                case PAWN:
+                    addWhitePawn(position);
+                    break;
+                case ROOK:
+                    addWhiteRook(position);
+                    break;
+                case KNIGHT:
+                    addWhiteKnight(position);
+                    break;
+                case BISHOP:
+                    addWhiteBishop(position);
+                    break;
+                case QUEEN:
+                    addWhiteQueen(position);
+                    break;
+                case KING:
+                    addWhiteKing(position);
+                    break;
+            }
+        } else {
+            switch (piece.getType()){
+                case PAWN:
+                    addBlackPawn(position);
+                    break;
+                case ROOK:
+                    addBlackRook(position);
+                    break;
+                case KNIGHT:
+                    addBlackKnight(position);
+                    break;
+                case BISHOP:
+                    addBlackBishop(position);
+                    break;
+                case QUEEN:
+                    addBlackQueen(position);
+                    break;
+                case KING:
+                    addBlackKing(position);
+                    break;
+            }
+
+        }
+
     }
 
 
@@ -720,59 +778,6 @@ public class ChessBoard {
     }
 
 
-    public void setPieceAt(int position, Piece piece) {
-        if(piece == null){
-            pieces[position] = null;
-            removePiece(position);
-            return;
-        }
-        pieces[position] = new Piece(piece);
-        if(piece.getColor() == Piece.Color.WHITE){
-            switch (piece.getType()){
-                case PAWN:
-                    addWhitePawn(position);
-                    break;
-                case ROOK:
-                    addWhiteRook(position);
-                    break;
-                case KNIGHT:
-                    addWhiteKnight(position);
-                    break;
-                case BISHOP:
-                    addWhiteBishop(position);
-                    break;
-                case QUEEN:
-                    addWhiteQueen(position);
-                    break;
-                case KING:
-                    addWhiteKing(position);
-                    break;
-            }
-        } else {
-            switch (piece.getType()){
-                case PAWN:
-                    addBlackPawn(position);
-                    break;
-                case ROOK:
-                    addBlackRook(position);
-                    break;
-                case KNIGHT:
-                    addBlackKnight(position);
-                    break;
-                case BISHOP:
-                    addBlackBishop(position);
-                    break;
-                case QUEEN:
-                    addBlackQueen(position);
-                    break;
-                case KING:
-                    addBlackKing(position);
-                    break;
-            }
-
-        }
-
-    }
 
     public boolean isSquareEmpty(int position) {
         return getPieceAt(position) == null;
