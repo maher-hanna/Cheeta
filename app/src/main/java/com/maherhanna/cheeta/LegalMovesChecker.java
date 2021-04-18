@@ -5,17 +5,16 @@ import java.util.Iterator;
 
 public class LegalMovesChecker {
 
-    public static LegalMoves getBlackLegalMoves(ChessBoard chessBoard) {
+    public static LegalMoves getBlackLegalMoves(ChessBoard chessBoard, MoveGenerator moveGenerator) {
         LegalMoves legalMoves = new LegalMoves();
         ArrayList<Integer> blackPositions = chessBoard.getBlackPositions();
 
-        for (int i = 0; i < blackPositions.size(); i++) {
-            int square = blackPositions.get(i);
-            Piece piece = chessBoard.getPieceAt(square);
+        ArrayList<Move> pseudoLegalMoves = Game.moveGenerator.getBlackPseudoLegalMoves(chessBoard);
+        removeMovesThatExposeKing(chessBoard, pseudoLegalMoves, Piece.Color.BLACK);
 
-            ArrayList<Move> pieceLegalMoves = getPieceMoves(chessBoard, piece);
-            removeMovesThatExposeKing(chessBoard, pieceLegalMoves, piece);
-            legalMoves.addMovesFor(square, pieceLegalMoves);
+        for (int i = 0; i < pseudoLegalMoves.size(); i++) {
+
+            legalMoves.addMoveFor(pseudoLegalMoves.get(i).getFrom(),pseudoLegalMoves.get(i) );
 
         }
         checkCastling(chessBoard, legalMoves, Piece.Color.BLACK);
@@ -23,26 +22,28 @@ public class LegalMovesChecker {
         return legalMoves;
     }
 
-    public static LegalMoves getWhiteLegalMoves(ChessBoard chessBoard) {
+    public static LegalMoves getWhiteLegalMoves(ChessBoard chessBoard, MoveGenerator moveGenerator) {
         LegalMoves legalMoves = new LegalMoves();
         ArrayList<Integer> whitePositions = chessBoard.getWhitePositions();
-        for (int i = 0; i < whitePositions.size(); i++) {
-            int position = whitePositions.get(i);
-            Piece piece = chessBoard.getPieceAt(position);
-            ArrayList<Move> pieceLegalMoves = getPieceMoves(chessBoard, piece);
-            removeMovesThatExposeKing(chessBoard, pieceLegalMoves, piece);
 
-            legalMoves.addMovesFor(position, pieceLegalMoves);
+        ArrayList<Move> pseudoLegalMoves = Game.moveGenerator.getWhitePseudoLegalMoves(chessBoard);
+        removeMovesThatExposeKing(chessBoard, pseudoLegalMoves, Piece.Color.WHITE);
+
+        for (int i = 0; i < pseudoLegalMoves.size(); i++) {
+
+            legalMoves.addMoveFor(pseudoLegalMoves.get(i).getFrom(),pseudoLegalMoves.get(i) );
+
         }
         checkCastling(chessBoard, legalMoves, Piece.Color.WHITE);
+
         return legalMoves;
     }
 
-    public static LegalMoves getLegalMovesFor(ChessBoard chessBoard, Piece.Color color){
+    public static LegalMoves getLegalMovesFor(ChessBoard chessBoard, MoveGenerator moveGenerator, Piece.Color color){
         if(color == Piece.Color.WHITE){
-            return getWhiteLegalMoves(chessBoard);
+            return getWhiteLegalMoves(chessBoard, moveGenerator);
         } else{
-            return getBlackLegalMoves(chessBoard);
+            return getBlackLegalMoves(chessBoard, moveGenerator);
         }
     }
 
@@ -368,7 +369,7 @@ public class LegalMovesChecker {
     }
 
 
-    private static void removeMovesThatExposeKing(ChessBoard chessBoard, ArrayList<Move> pieceLegalMoves, Piece piece) {
+    private static void removeMovesThatExposeKing(ChessBoard chessBoard, ArrayList<Move> pieceLegalMoves, Piece.Color kingColor) {
 
         Iterator<Move> itr = pieceLegalMoves.iterator();
         while (itr.hasNext()) {
@@ -377,7 +378,7 @@ public class LegalMovesChecker {
             Move move = itr.next();
             chessBoardAfterMove.move(move);
             if (isSquareAttacked(chessBoardAfterMove,
-                    chessBoardAfterMove.getKingPosition(piece.getColor()), piece.getColor().getOpposite())) {
+                    chessBoardAfterMove.getKingPosition(kingColor), kingColor.getOpposite())) {
                 itr.remove();
             }
         }

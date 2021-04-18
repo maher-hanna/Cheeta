@@ -45,7 +45,7 @@ class MyRunnable implements Runnable {
     @Override
     public void run() {
         long startTime = System.nanoTime();
-        LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+        LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,Game.moveGenerator ,
                 maxingPlayer);
         ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
         ArrayList<MoveScore> moveScores;
@@ -138,7 +138,7 @@ class MyRunnable implements Runnable {
 
             toPlayColor = chessBoard.moves.getToPlayNow();
 
-            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,Game.moveGenerator ,
                     toPlayColor);
             ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
             ArrayList<MoveScore> moveScores;
@@ -199,7 +199,7 @@ class MyRunnable implements Runnable {
             return getScoreFor(chessBoard, maxingPlayer);
         } else {
 
-            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,
+            LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard,Game.moveGenerator ,
                     toPlayColor);
             ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
 

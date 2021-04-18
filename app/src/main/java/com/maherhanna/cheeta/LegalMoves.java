@@ -18,12 +18,16 @@ public class LegalMoves {
     }
 
     public void addMoveFor(int position, Move move){
+        if(legalMoves.get(position) == null){
+            legalMoves.put(position,new ArrayList<>());
+        }
         legalMoves.get(position).add(move);
     }
 
     public ArrayList<Integer> getLegalTargetsFor(int position)
     {
         ArrayList<Integer> targetSquares = new ArrayList<>();
+        if(legalMoves.get(position) == null) return targetSquares;
         for(Move move: legalMoves.get(position)){
             targetSquares.add(move.getTo());
         }
@@ -55,6 +59,7 @@ public class LegalMoves {
     }
 
     public boolean canMove(int from, int to){
+        if(legalMoves.get(from) == null) return false;
         for(Move move: legalMoves.get(from)){
             if(move.getTo() == to){
                 return true;

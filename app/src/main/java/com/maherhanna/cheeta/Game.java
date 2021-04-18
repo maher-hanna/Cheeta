@@ -11,7 +11,7 @@ class Game {
     private final Drawing drawing;
     private final ChessBoard chessBoard;
     private final ComputerAi computerAi;
-    public MoveGenerator moveGenerator = new MoveGenerator();
+    public static MoveGenerator moveGenerator = new MoveGenerator();
     public int gameType;
     private final int computerPlayDelayMilli;
     public boolean paused;
@@ -52,17 +52,17 @@ class Game {
 
         //test move generator
         //------------------------------------------------------------------------------
-        ChessBoard test = new ChessBoard(drawing);
-        test.setupFromFen("r6r/1b2k1bq/8/8/7B/8/8/R3K2R b QK - 3 2");
-        test.setPieceAt(ChessBoard.Square("d4"),Piece.Type.QUEEN, Piece.Color.WHITE);
-        ArrayList<Move> blackMoves = moveGenerator.getQueensMoves(test,test.blackQueens,Piece.BLACK,Piece.QUEEN);
-        ArrayList<Move> whiteMoves = moveGenerator.getQueensMoves(test,test.whiteQueens,Piece.WHITE,Piece.QUEEN);
-
-        for(Move move : blackMoves){
-            test.move(move);
-            test.print();
-            test.unMove(move);
-        }
+//        ChessBoard test = new ChessBoard(drawing);
+//        test.setupFromFen("r6r/1b2k1bq/8/8/7B/8/8/R3K2R b QK - 3 2");
+//        test.setPieceAt(ChessBoard.Square("d4"),Piece.Type.QUEEN, Piece.Color.WHITE);
+//        ArrayList<Move> blackMoves = moveGenerator.getQueensMoves(test,test.blackQueens,Piece.BLACK,Piece.QUEEN);
+//        ArrayList<Move> whiteMoves = moveGenerator.getQueensMoves(test,test.whiteQueens,Piece.WHITE,Piece.QUEEN);
+//
+//        for(Move move : blackMoves){
+//            test.move(move);
+//            test.print();
+//            test.unMove(move);
+//        }
         //**********************************************************************************
 
     }

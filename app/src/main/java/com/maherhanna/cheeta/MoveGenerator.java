@@ -485,7 +485,7 @@ public class MoveGenerator {
 
             }
             count = BitMath.countSetBits(captureTargets);
-            long captureTargetsCopy = quietTargets;
+            long captureTargetsCopy = captureTargets;
             for (int index = 0; index < count; index++) {
                 int captureTarget = BitMath.getLSBitIndex(captureTargetsCopy);
                 captureTargetsCopy = BitMath.popBit(captureTargetsCopy, captureTarget);
@@ -697,7 +697,7 @@ public class MoveGenerator {
 
         if (blocker != 0) {
             int blockerIndex = ChessBoard.OUT;
-            if (rayDirection == NORTH_EAST || rayDirection == SOUTH_EAST) {
+            if (rayDirection == NORTH_EAST || rayDirection == NORTH_WEST) {
                 blockerIndex = BitMath.getLSBitIndex(blocker);
             } else {
                 blockerIndex = BitMath.getMSBitIndex(blocker);

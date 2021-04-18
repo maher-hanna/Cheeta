@@ -405,12 +405,12 @@ public class ChessBoard {
 
 
     public void updateBlackLegalMoves(boolean kingInCheck) {
-        blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this);
+        blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this, Game.moveGenerator);
     }
 
 
     public void updateWhiteLegalMoves(boolean kingInCheck) {
-        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this);
+        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this, Game.moveGenerator);
 
     }
 
@@ -673,7 +673,7 @@ public class ChessBoard {
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
         boolean isKingInCheck = isKingInCheck(currentToPlayColor);
 
-        LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this,
+        LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this,Game.moveGenerator ,
                 currentToPlayColor);
 
         if (isKingInCheck) {
