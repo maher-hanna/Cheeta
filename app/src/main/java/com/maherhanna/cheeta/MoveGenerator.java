@@ -525,7 +525,7 @@ public class MoveGenerator {
     }
 
 
-    public ArrayList<Move> getRooksMoves(ChessBoard chessBoard, int color) {
+    public ArrayList<Move> getRooksMoves(ChessBoard chessBoard,long rooks, int color,int pieceType) {
         ArrayList<Move> moves = new ArrayList<>();
         long quietTargets = 0;
         long captureTarget = 0;
@@ -534,17 +534,14 @@ public class MoveGenerator {
         long eastTargets = 0;
         long westTargets = 0;
 
-        long rooks = 0;
+        //use pieceType to get queen moves
+        Piece.Type type = Piece.Type.values()[pieceType];
+
+
         int rookPosition = ChessBoard.OUT;
 
-        int rooksCount = 0;
-        if (color == Piece.BLACK) {
-            rooksCount = BitMath.countSetBits(chessBoard.blackRooks);
-            rooks = chessBoard.blackRooks;
-        } else {
-            rooksCount = BitMath.countSetBits(chessBoard.whiteRooks);
-            rooks = chessBoard.whiteRooks;
-        }
+        int rooksCount = BitMath.countSetBits(rooks);
+
 
         for (int rook = 0; rook < rooksCount; rook++) {
             rookPosition = BitMath.getLSBitIndex(rooks);
@@ -575,7 +572,7 @@ public class MoveGenerator {
 
             if(captureTarget != 0){
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
-                move = new Move(new Piece(Piece.Type.ROOK, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         rookPosition), rookPosition, captureTargetIndex);
                 move.setTakes(true, chessBoard.getPieceType(captureTargetIndex));
                 moves.add(move);
@@ -585,7 +582,7 @@ public class MoveGenerator {
             for (int i = 0; i < quietTargetsCount; i++) {
                 int target = BitMath.getLSBitIndex(quietTargets);
                 quietTargets = BitMath.popBit(quietTargets, target);
-                move = new Move(new Piece(Piece.Type.KING, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         rookPosition), rookPosition, target);
 
                 moves.add(move);
@@ -607,7 +604,7 @@ public class MoveGenerator {
 
             if(captureTarget != 0){
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
-                move = new Move(new Piece(Piece.Type.ROOK, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         rookPosition), rookPosition, captureTargetIndex);
                 move.setTakes(true, chessBoard.getPieceType(captureTargetIndex));
                 moves.add(move);
@@ -617,7 +614,7 @@ public class MoveGenerator {
             for (int i = 0; i < quietTargetsCount; i++) {
                 int target = BitMath.getLSBitIndex(quietTargets);
                 quietTargets = BitMath.popBit(quietTargets, target);
-                move = new Move(new Piece(Piece.Type.KING, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         rookPosition), rookPosition, target);
 
                 moves.add(move);
@@ -638,7 +635,7 @@ public class MoveGenerator {
 
             if(captureTarget != 0){
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
-                move = new Move(new Piece(Piece.Type.ROOK, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         rookPosition), rookPosition, captureTargetIndex);
                 move.setTakes(true, chessBoard.getPieceType(captureTargetIndex));
                 moves.add(move);
@@ -647,7 +644,7 @@ public class MoveGenerator {
             for (int i = 0; i < quietTargetsCount; i++) {
                 int target = BitMath.getLSBitIndex(quietTargets);
                 quietTargets = BitMath.popBit(quietTargets, target);
-                move = new Move(new Piece(Piece.Type.KING, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         rookPosition), rookPosition, target);
 
                 moves.add(move);
@@ -668,7 +665,7 @@ public class MoveGenerator {
 
             if(captureTarget != 0){
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
-                move = new Move(new Piece(Piece.Type.ROOK, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         rookPosition), rookPosition, captureTargetIndex);
                 move.setTakes(true, chessBoard.getPieceType(captureTargetIndex));
                 moves.add(move);
@@ -677,7 +674,7 @@ public class MoveGenerator {
             for (int i = 0; i < quietTargetsCount; i++) {
                 int target = BitMath.getLSBitIndex(quietTargets);
                 quietTargets = BitMath.popBit(quietTargets, target);
-                move = new Move(new Piece(Piece.Type.KING, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         rookPosition), rookPosition, target);
 
                 moves.add(move);
@@ -690,6 +687,206 @@ public class MoveGenerator {
     }
     //*******************************************************************************
 
+
+    //-------------------------------------------------------------------------------
+    //bishop moves
+
+    private long bishopAttacks(int rayDirection, int square, long occupied) {
+        long attacks = bishopAttacksMask[rayDirection][square];
+        long blocker = bishopAttacksMask[rayDirection][square] & occupied;
+
+        if (blocker != 0) {
+            int blockerIndex = ChessBoard.OUT;
+            if (rayDirection == NORTH_EAST || rayDirection == SOUTH_EAST) {
+                blockerIndex = BitMath.getLSBitIndex(blocker);
+            } else {
+                blockerIndex = BitMath.getMSBitIndex(blocker);
+
+            }
+            attacks ^= bishopAttacksMask[rayDirection][blockerIndex];
+        }
+        return attacks;
+    }
+
+
+    public ArrayList<Move> getBishopsMoves(ChessBoard chessBoard, long bishops, int color,int pieceType) {
+        ArrayList<Move> moves = new ArrayList<>();
+        long quietTargets = 0;
+        long captureTarget = 0;
+        long northWestTargets = 0;
+        long southWestTargets = 0;
+        long northEastTargets = 0;
+        long southEastTargets = 0;
+
+        //use pieceType to get queen moves
+        Piece.Type type = Piece.Type.values()[pieceType];
+
+
+
+        int bishopPosition = ChessBoard.OUT;
+
+        int bishopsCount = BitMath.countSetBits(bishops);
+
+
+        for (int bishop = 0; bishop < bishopsCount; bishop++) {
+            bishopPosition = BitMath.getLSBitIndex(bishops);
+            bishops = BitMath.popBit(bishops, bishopPosition);
+
+            northWestTargets = bishopAttacks(NORTH_WEST, bishopPosition, chessBoard.allPieces);
+            southWestTargets = bishopAttacks(SOUTH_WEST, bishopPosition, chessBoard.allPieces);
+            northEastTargets = bishopAttacks(NORTH_EAST, bishopPosition, chessBoard.allPieces);
+            southEastTargets = bishopAttacks(SOUTH_EAST, bishopPosition, chessBoard.allPieces);
+
+
+            Move move;
+            int captureTargetIndex = ChessBoard.OUT;
+
+            //north west moves
+            quietTargets = 0;
+            captureTarget = 0;
+            captureTargetIndex = ChessBoard.OUT;
+            if (color == Piece.BLACK) {
+                captureTarget = northWestTargets & chessBoard.allWhitePieces;
+
+            } else {
+                captureTarget = northWestTargets & chessBoard.allBlackPieces;
+
+            }
+            quietTargets = northWestTargets & chessBoard.emptySquares;
+
+
+            if(captureTarget != 0){
+                captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
+                move = new Move(new Piece(type, Piece.Color.values()[color],
+                        bishopPosition), bishopPosition, captureTargetIndex);
+                move.setTakes(true, chessBoard.getPieceType(captureTargetIndex));
+                moves.add(move);
+            }
+
+            int quietTargetsCount = BitMath.countSetBits(quietTargets);
+            for (int i = 0; i < quietTargetsCount; i++) {
+                int target = BitMath.getLSBitIndex(quietTargets);
+                quietTargets = BitMath.popBit(quietTargets, target);
+                move = new Move(new Piece(type, Piece.Color.values()[color],
+                        bishopPosition), bishopPosition, target);
+
+                moves.add(move);
+            }
+
+
+            //south west moves
+            quietTargets = 0;
+            captureTarget = 0;
+            captureTargetIndex = ChessBoard.OUT;
+            if (color == Piece.BLACK) {
+                captureTarget = southWestTargets & chessBoard.allWhitePieces;
+
+            } else {
+                captureTarget = southWestTargets & chessBoard.allBlackPieces;
+
+            }
+            quietTargets = southWestTargets & chessBoard.emptySquares;
+
+            if(captureTarget != 0){
+                captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
+                move = new Move(new Piece(type, Piece.Color.values()[color],
+                        bishopPosition), bishopPosition, captureTargetIndex);
+                move.setTakes(true, chessBoard.getPieceType(captureTargetIndex));
+                moves.add(move);
+            }
+
+            quietTargetsCount = BitMath.countSetBits(quietTargets);
+            for (int i = 0; i < quietTargetsCount; i++) {
+                int target = BitMath.getLSBitIndex(quietTargets);
+                quietTargets = BitMath.popBit(quietTargets, target);
+                move = new Move(new Piece(type, Piece.Color.values()[color],
+                        bishopPosition), bishopPosition, target);
+
+                moves.add(move);
+            }
+
+            //south east moves
+            quietTargets = 0;
+            captureTarget = 0;
+            captureTargetIndex = ChessBoard.OUT;
+            if (color == Piece.BLACK) {
+                captureTarget = southEastTargets & chessBoard.allWhitePieces;
+
+            } else {
+                captureTarget = southEastTargets & chessBoard.allBlackPieces;
+
+            }
+            quietTargets = southEastTargets & chessBoard.emptySquares;
+
+            if(captureTarget != 0){
+                captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
+                move = new Move(new Piece(type, Piece.Color.values()[color],
+                        bishopPosition), bishopPosition, captureTargetIndex);
+                move.setTakes(true, chessBoard.getPieceType(captureTargetIndex));
+                moves.add(move);
+            }
+            quietTargetsCount = BitMath.countSetBits(quietTargets);
+            for (int i = 0; i < quietTargetsCount; i++) {
+                int target = BitMath.getLSBitIndex(quietTargets);
+                quietTargets = BitMath.popBit(quietTargets, target);
+                move = new Move(new Piece(Piece.Type.KING, Piece.Color.values()[color],
+                        bishopPosition), bishopPosition, target);
+
+                moves.add(move);
+            }
+
+            //north east moves
+            quietTargets = 0;
+            captureTarget = 0;
+            captureTargetIndex = ChessBoard.OUT;
+            if (color == Piece.BLACK) {
+                captureTarget = northEastTargets & chessBoard.allWhitePieces;
+
+            } else {
+                captureTarget = northEastTargets & chessBoard.allBlackPieces;
+
+            }
+            quietTargets = northEastTargets & chessBoard.emptySquares;
+
+            if(captureTarget != 0){
+                captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
+                move = new Move(new Piece(type, Piece.Color.values()[color],
+                        bishopPosition), bishopPosition, captureTargetIndex);
+                move.setTakes(true, chessBoard.getPieceType(captureTargetIndex));
+                moves.add(move);
+            }
+            quietTargetsCount = BitMath.countSetBits(quietTargets);
+            for (int i = 0; i < quietTargetsCount; i++) {
+                int target = BitMath.getLSBitIndex(quietTargets);
+                quietTargets = BitMath.popBit(quietTargets, target);
+                move = new Move(new Piece(type, Piece.Color.values()[color],
+                        bishopPosition), bishopPosition, target);
+
+                moves.add(move);
+            }
+        }
+
+
+        return moves;
+
+
+    }
+    //*******************************************************************************
+
+
+
+    //-------------------------------------------------------------------------------
+    //queen moves
+
+    public ArrayList<Move> getQueensMoves(ChessBoard chessBoard, long queens, int color,int pieceType) {
+        ArrayList<Move> moves = new ArrayList<>();
+        moves.addAll(getBishopsMoves(chessBoard,queens,color,pieceType));
+        moves.addAll(getRooksMoves(chessBoard,queens,color,pieceType));
+        return moves;
+    }
+    //*******************************************************************************
+
+
     public ArrayList<Move> getWhitePseudoLegalMoves(ChessBoard chessBoard) {
         ArrayList<Move> moves = new ArrayList<>();
 
@@ -700,11 +897,18 @@ public class MoveGenerator {
         //add king moves
         moves.addAll(getKingMoves(chessBoard, Piece.WHITE));
 
-        //add knight moves
+        //add knights moves
         moves.addAll(getKnightMoves(chessBoard, Piece.WHITE));
 
-        //add rook moves
-        moves.addAll(getRooksMoves(chessBoard, Piece.WHITE));
+        //add rooks moves
+        moves.addAll(getRooksMoves(chessBoard,chessBoard.whiteRooks, Piece.WHITE,Piece.ROOK));
+
+        //add bishops moves
+        moves.addAll(getBishopsMoves(chessBoard,chessBoard.whiteBishops,Piece.WHITE,Piece.BISHOP));
+
+        //add queens moves
+        moves.addAll(getQueensMoves(chessBoard,chessBoard.whiteQueens,Piece.WHITE,Piece.QUEEN));
+
         return moves;
     }
 
@@ -719,11 +923,18 @@ public class MoveGenerator {
         //add king moves
         moves.addAll(getKingMoves(chessBoard, Piece.BLACK));
 
-        //add knight moves
+        //add knights moves
         moves.addAll(getKnightMoves(chessBoard, Piece.BLACK));
 
-        //add rook moves
-        moves.addAll(getRooksMoves(chessBoard, Piece.BLACK));
+        //add rooks moves
+        moves.addAll(getRooksMoves(chessBoard,chessBoard.blackRooks, Piece.BLACK,Piece.ROOK));
+
+        //add bishops moves
+        moves.addAll(getBishopsMoves(chessBoard,chessBoard.blackBishops,Piece.BLACK,Piece.BISHOP));
+
+        //add queens moves
+        moves.addAll(getQueensMoves(chessBoard,chessBoard.blackQueens,Piece.BLACK,Piece.QUEEN));
+
         return moves;
     }
 }
