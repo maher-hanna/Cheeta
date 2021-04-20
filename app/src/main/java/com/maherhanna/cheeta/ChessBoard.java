@@ -72,12 +72,14 @@ public class ChessBoard {
     long emptySquares = 0;
     long allPieces = 0;
 
+    //state
     int activeColor = Piece.WHITE;
     int whiteCastlingRights = NO_CASTLING;
     int blackCastlingRights = NO_CASTLING;
     int enPassantTarget = NO_SQUARE;
     int fiftyMovesDrawCount = 0;
     int fullMovesCount = 0;
+
     //---------------------------------------------------------------------------------
 
 
@@ -130,7 +132,7 @@ public class ChessBoard {
     }
 
     public void setUpBoard() {
-        setupFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\n");
+        setupFromFen("rnbqkbnr/ppp1p1pp/8/8/3pPp2/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
 
     }
 
@@ -379,6 +381,7 @@ public class ChessBoard {
         emptySquares = ~allPieces;
 
     }
+
     private void removePiece(int square){
 
         allPieces = BitMath.popBit(allPieces,square);
@@ -508,10 +511,23 @@ public class ChessBoard {
         getPieceAt(toSquare).setPosition(toSquare);
 
 
+        //set enPassant target
+        enPassantTarget = NO_SQUARE;
+        Piece.Color moveColor = move.getColor();
+
+        if(move.isPawnDoubleMove()){
+            if(moveColor == Piece.Color.WHITE){
+                enPassantTarget = move.getTo() - 8;
+            } else {
+                enPassantTarget = move.getTo() + 8;
+            }
+        }
+
         if (move.isCastling()) {
             int rookPosition;
             int rookCastlingTarget;
-            Piece.Color moveColor = move.getColor();
+            if(moveColor == Piece.Color.WHITE) whiteCastlingRights = NO_CASTLING;
+            else blackCastlingRights = NO_CASTLING;
 
             if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
                 rookPosition = LegalMovesChecker.getInitialRookKingSide(this,
@@ -540,6 +556,8 @@ public class ChessBoard {
         }
 
         moves.add(move);
+        if(activeColor == Piece.WHITE) activeColor = Piece.BLACK;
+        else activeColor = Piece.WHITE;
 
     }
 
@@ -593,6 +611,16 @@ public class ChessBoard {
         }
 
         moves.removeLastMove();
+
+        Move lastMove = moves.getLastMove();
+        if(lastMove.isPawnDoubleMove()){
+            if(lastMove.getColor() == Piece.Color.WHITE){
+                enPassantTarget = lastMove.getTo() - 8;
+            } else {
+                enPassantTarget = lastMove.getTo() + 8;
+            }
+
+        }
 
     }
 

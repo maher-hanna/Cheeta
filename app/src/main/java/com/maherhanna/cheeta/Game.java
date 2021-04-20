@@ -70,11 +70,11 @@ class Game {
 
     public void start() {
         if (gameType == COMPUTER_HUMAN) {
-            if (bottomScreenPlayerColor == Piece.Color.WHITE) {
+            if (bottomScreenPlayerColor == Piece.Color.values()[chessBoard.activeColor]) {
                 currentPlayer = bottomScreenPlayerColor;
                 drawing.waitHumanToPlay();
             } else {
-                playComputer(Piece.Color.WHITE);
+                playComputer(bottomScreenPlayerColor.getOpposite());
 
             }
         } else {
@@ -85,12 +85,12 @@ class Game {
 
     public void resume() {
         if (gameType == COMPUTER_HUMAN) {
-            if (currentPlayer == bottomScreenPlayerColor) {
+            if (Piece.Color.values()[chessBoard.activeColor] == bottomScreenPlayerColor) {
                 drawing.waitHumanToPlay();
                 return;
             }
         }
-        playComputer(currentPlayer);
+        playComputer(Piece.Color.values()[chessBoard.activeColor]);
 
 
     }

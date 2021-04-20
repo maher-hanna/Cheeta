@@ -413,6 +413,6 @@ public class Drawing {
         return game.bottomScreenPlayerColor;
     }
     public boolean canHumanPlay(){
-        return game.currentPlayer == game.bottomScreenPlayerColor;
+        return Piece.Color.values()[chessBoard.activeColor] == game.bottomScreenPlayerColor;
     }
 }

@@ -71,13 +71,10 @@ public class Move {
     }
 
     public boolean isPawnDoubleMove(){
-        boolean pawnDoubleMove = false;
-        if(getPieceType() == Piece.Type.PAWN &&
-                Math.abs(ChessBoard.GetRank(getTo()) - ChessBoard.GetRank(getFrom())) == 2){
-            pawnDoubleMove = true;
-        }
-        return pawnDoubleMove;
+        return BitMath.isBitSet(bitValue,PAWN_DOUBLE_PUSH_START);
     }
+
+
 
     public int getFrom(){
         return BitMath.getBitsValue(bitValue,FROM_START,FROM_MASK);
@@ -161,8 +158,11 @@ public class Move {
         bitValue = BitMath.setBitsValue(bitValue,ENPASSANT_START,ENPASSANT_MASK,value);
         setTakes(true, Piece.Type.PAWN);
     }
-
-
+    public void setPawnDoublePush(boolean pawnDoublePush){
+        int value = 0;
+        if(pawnDoublePush) value = 1;
+        bitValue = BitMath.setBitsValue(bitValue,PAWN_DOUBLE_PUSH_START,PAWN_DOUBLE_PUSH_MASK,value);
+    }
 
 
     public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE}
@@ -201,4 +201,9 @@ public class Move {
 
     private static final int ENPASSANT_MASK = 67108864;
     private static final int ENPASSANT_START = 26;
+
+    private static final int PAWN_DOUBLE_PUSH_MASK = 67108864;
+    private static final int PAWN_DOUBLE_PUSH_START = 27;
+
+
 }
