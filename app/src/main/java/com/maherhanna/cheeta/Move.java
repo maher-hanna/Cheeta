@@ -2,7 +2,7 @@ package com.maherhanna.cheeta;
 
 public class Move {
 
-    private int bitValue;
+    private long bitValue;
 
 
     public Move(Piece piece, int from, int to){
@@ -29,7 +29,7 @@ public class Move {
     }
     public CastlingType getCastlingType(){
         return CastlingType.values()
-                [BitMath.getBitsValue(bitValue,CASTLING_TYPE_START,CASTLING_TYPE_MASK)];
+                [(int)BitMath.getBitsValue(bitValue,CASTLING_TYPE_START,CASTLING_TYPE_MASK)];
     }
 
     public boolean isTake(){
@@ -38,7 +38,7 @@ public class Move {
     }
     public Piece.Type getTakenPieceType(){
         return Piece.Type.values()
-                [BitMath.getBitsValue(bitValue,TAKE_TYPE_START,TAKE_TYPE_MASK)];
+                [(int)BitMath.getBitsValue(bitValue,TAKE_TYPE_START,TAKE_TYPE_MASK)];
     }
 
     public boolean isPromote() {
@@ -48,7 +48,7 @@ public class Move {
     public Piece.Type getPromotionPieceType(){
         Piece.Type type = Piece.Type.QUEEN;
         PromoteToPieceType promotionPieceType = PromoteToPieceType.values()[
-                BitMath.getBitsValue(bitValue,PROMOTE_TYPE_START,PROMOTE_TYPE_MASK)];
+                (int)BitMath.getBitsValue(bitValue,PROMOTE_TYPE_START,PROMOTE_TYPE_MASK)];
         switch (promotionPieceType){
             case ROOK:
                 type = Piece.Type.ROOK;
@@ -73,25 +73,27 @@ public class Move {
     public boolean isPawnDoubleMove(){
         return BitMath.isBitSet(bitValue,PAWN_DOUBLE_PUSH_START);
     }
+    public int getFiftyMoves(){return (int)BitMath.getBitsValue(bitValue,FIFTY_MOVES_START,
+            FIFTY_MOVES_MASK);}
 
 
 
     public int getFrom(){
-        return BitMath.getBitsValue(bitValue,FROM_START,FROM_MASK);
+        return (int)BitMath.getBitsValue(bitValue,FROM_START,FROM_MASK);
     }
     public void setFrom(int position){
         bitValue =  BitMath.setBitsValue(bitValue,FROM_START,FROM_MASK,position);
     }
-    public int getTo(){return BitMath.getBitsValue(bitValue,TO_START,TO_MASK);}
+    public int getTo(){return (int)BitMath.getBitsValue(bitValue,TO_START,TO_MASK);}
     public void setTo(int position){
         bitValue =  BitMath.setBitsValue(bitValue,TO_START,TO_MASK,position);
     }
 
     public Piece.Color getColor(){
-        return Piece.Color.values()[BitMath.getBitsValue(bitValue,COLOR_START,COLOR_MASK)];
+        return Piece.Color.values()[(int)BitMath.getBitsValue(bitValue,COLOR_START,COLOR_MASK)];
     }
     public Piece.Type getPieceType(){
-        return Piece.Type.values()[BitMath.getBitsValue(bitValue,TYPE_START,TYPE_MASK)];
+        return Piece.Type.values()[(int)BitMath.getBitsValue(bitValue,TYPE_START,TYPE_MASK)];
 
     }
     public void setPieceType(Piece.Type type){
@@ -163,47 +165,53 @@ public class Move {
         if(pawnDoublePush) value = 1;
         bitValue = BitMath.setBitsValue(bitValue,PAWN_DOUBLE_PUSH_START,PAWN_DOUBLE_PUSH_MASK,value);
     }
+    public void setFiftyMoves(int fiftyMoves){
+        bitValue = BitMath.setBitsValue(bitValue,FIFTY_MOVES_START,FIFTY_MOVES_MASK,fiftyMoves);
+    }
 
 
     public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE}
 
     public enum PromoteToPieceType{QUEEN,KNIGHT,ROOK,BISHOP}
 
-    private static final int TYPE_MASK = 7;
-    private static final int TYPE_START = 0;
+    private static final long TYPE_MASK = 7;
+    private static final long TYPE_START = 0;
 
-    private static final int COLOR_MASK = 8;
-    private static final int COLOR_START = 3;
+    private static final long COLOR_MASK = 8;
+    private static final long COLOR_START = 3;
 
-    private static final int FROM_MASK = 1008;
-    private static final int FROM_START = 4;
+    private static final long FROM_MASK = 1008;
+    private static final long FROM_START = 4;
 
-    private static final int TO_MASK = 64512;
-    private static final int TO_START = 10;
+    private static final long TO_MASK = 64512;
+    private static final long TO_START = 10;
 
-    private static final int CASTLING_MASK = 65536;
-    private static final int CASTLING_START = 16;
+    private static final long CASTLING_MASK = 65536;
+    private static final long CASTLING_START = 16;
 
-    private static final int CASTLING_TYPE_MASK = 131072;
-    private static final int CASTLING_TYPE_START = 17;
+    private static final long CASTLING_TYPE_MASK = 131072;
+    private static final long CASTLING_TYPE_START = 17;
 
-    private static final int TAKE_MASK = 262144;
-    private static final int TAKE_START = 18;
+    private static final long TAKE_MASK = 262144;
+    private static final long TAKE_START = 18;
 
-    private static final int TAKE_TYPE_MASK = 3670016;
-    private static final int TAKE_TYPE_START = 19;
+    private static final long TAKE_TYPE_MASK = 3670016;
+    private static final long TAKE_TYPE_START = 19;
 
-    private static final int PROMOTE_MASK = 4194304;
-    private static final int PROMOTE_START = 22;
+    private static final long PROMOTE_MASK = 4194304;
+    private static final long PROMOTE_START = 22;
 
-    private static final int PROMOTE_TYPE_MASK = 58720256;
-    private static final int PROMOTE_TYPE_START = 23;
+    private static final long PROMOTE_TYPE_MASK = 58720256;
+    private static final long PROMOTE_TYPE_START = 23;
 
-    private static final int ENPASSANT_MASK = 67108864;
-    private static final int ENPASSANT_START = 26;
+    private static final long ENPASSANT_MASK = 67108864;
+    private static final long ENPASSANT_START = 26;
 
-    private static final int PAWN_DOUBLE_PUSH_MASK = 67108864;
-    private static final int PAWN_DOUBLE_PUSH_START = 27;
+    private static final long PAWN_DOUBLE_PUSH_MASK = 67108864;
+    private static final long PAWN_DOUBLE_PUSH_START = 27;
+
+    private static final long FIFTY_MOVES_MASK = 4227858432L;
+    private static final long FIFTY_MOVES_START = 28;
 
 
 }

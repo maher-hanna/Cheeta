@@ -39,9 +39,10 @@ public class ChessBoard {
     public static final int CASTLING_BOTH_SIDES = 3;
 
 
-    public static int Piece(int type, int color){return type | (color << 3) ;}
+    public static int Piece(int type, int color) {
+        return type | (color << 3);
+    }
     //----------------------------------------------------------------------------------
-
 
 
     //data
@@ -78,10 +79,17 @@ public class ChessBoard {
     int blackCastlingRights = NO_CASTLING;
     int enPassantTarget = NO_SQUARE;
     int fiftyMovesDrawCount = 0;
-    int fullMovesCount = 0;
+    int fullMovesCount = 1;
+    //castling
+    int whiteKingMovedAt = 0;
+    int blackKingMovedAt = 0;
+    int whiteRookKingSideMoved = 0;
+    int blackRookKingSideMoved = 0;
+    int whiteRookQueenSideMoved = 0;
+    int blackRookQueenSideMoved = 0;
+
 
     //---------------------------------------------------------------------------------
-
 
 
     public ChessBoard(ChessBoard copy) {
@@ -132,66 +140,66 @@ public class ChessBoard {
     }
 
     public void setUpBoard() {
-        setupFromFen("rnbqkbnr/ppp1p1pp/8/8/3pPp2/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+        setupFromFen("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
 
     }
 
-    public void setupFromFen(String fenString){
+    public void setupFromFen(String fenString) {
         int currentFile = FILE_A;
         int currentRank = RANK_8;
         int currentChar = 0;
 
         //parse piece placement
         //------------------------------------------------------------------------------
-        while(currentRank >= RANK_1){
+        while (currentRank >= RANK_1) {
 
-            switch (fenString.charAt(currentChar)){
+            switch (fenString.charAt(currentChar)) {
                 case 'r':
-                    addBlackRook(GetPosition(currentFile,currentRank));
+                    addBlackRook(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'p':
-                    addBlackPawn(GetPosition(currentFile,currentRank));
+                    addBlackPawn(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'b':
-                    addBlackBishop(GetPosition(currentFile,currentRank));
+                    addBlackBishop(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'n':
-                    addBlackKnight(GetPosition(currentFile,currentRank));
+                    addBlackKnight(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'q':
-                    addBlackQueen(GetPosition(currentFile,currentRank));
+                    addBlackQueen(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'k':
-                    addBlackKing(GetPosition(currentFile,currentRank));
+                    addBlackKing(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'R':
-                    addWhiteRook(GetPosition(currentFile,currentRank));
+                    addWhiteRook(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'P':
-                    addWhitePawn(GetPosition(currentFile,currentRank));
+                    addWhitePawn(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'B':
-                    addWhiteBishop(GetPosition(currentFile,currentRank));
+                    addWhiteBishop(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'N':
-                    addWhiteKnight(GetPosition(currentFile,currentRank));
+                    addWhiteKnight(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'Q':
-                    addWhiteQueen(GetPosition(currentFile,currentRank));
+                    addWhiteQueen(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case 'K':
-                    addWhiteKing(GetPosition(currentFile,currentRank));
+                    addWhiteKing(GetPosition(currentFile, currentRank));
                     currentFile++;
                     break;
                 case '1':
@@ -206,7 +214,7 @@ public class ChessBoard {
                 case '4':
                     currentFile += 4;
                     break;
-                    case '5':
+                case '5':
                     currentFile += 5;
                     break;
                 case '6':
@@ -221,7 +229,7 @@ public class ChessBoard {
             }
             currentChar++;
 
-            if(currentFile > FILE_H){
+            if (currentFile > FILE_H) {
                 currentFile = FILE_A;
                 currentRank--;
             }
@@ -233,7 +241,7 @@ public class ChessBoard {
 
 
         //parse active color
-        if(fenString.charAt(currentChar) == 'w') activeColor = Piece.WHITE;
+        if (fenString.charAt(currentChar) == 'w') activeColor = Piece.WHITE;
         else activeColor = Piece.BLACK;
         currentChar++;
 
@@ -243,8 +251,8 @@ public class ChessBoard {
 
         //parse castling rights
         //-----------------------------------------------------------------------------------
-        while(fenString.charAt(currentChar) != ' '){
-            switch (fenString.charAt(currentChar)){
+        while (fenString.charAt(currentChar) != ' ') {
+            switch (fenString.charAt(currentChar)) {
                 case '-':
                     whiteCastlingRights = NO_CASTLING;
                     blackCastlingRights = NO_CASTLING;
@@ -275,8 +283,8 @@ public class ChessBoard {
 
 
         //parse En passant target square
-        if(fenString.charAt(currentChar) == '-') enPassantTarget = NO_SQUARE;
-        enPassantTarget = Square(fenString.substring(currentChar,currentChar + 2));
+        if (fenString.charAt(currentChar) == '-') enPassantTarget = NO_SQUARE;
+        enPassantTarget = Square(fenString.substring(currentChar, currentChar + 2));
         currentChar++;
 
         //skip space
@@ -291,10 +299,10 @@ public class ChessBoard {
         //parse full move count since start of game
         fullMovesCount = scanner.nextInt();
 
-        for(int i = MIN_POSITION; i <= MAX_POSITION;i++){
-            if(pieceType(i) == Piece.NONE) continue;
+        for (int i = MIN_POSITION; i <= MAX_POSITION; i++) {
+            if (pieceType(i) == Piece.NONE) continue;
 
-            setPieceAt(i,Piece.Type.values()[pieceType(i) - 1],Piece.Color.values()[pieceColor(i)]);
+            setPieceAt(i, Piece.Type.values()[pieceType(i) - 1], Piece.Color.values()[pieceColor(i)]);
         }
         updateWhiteLegalMoves(false);
         updateBlackLegalMoves(false);
@@ -307,24 +315,28 @@ public class ChessBoard {
         allPieces |= blackPawns;
         emptySquares = ~allPieces;
     }
+
     private void addBlackRook(int square) {
         blackRooks |= 1L << square;
         allBlackPieces |= blackRooks;
         allPieces |= blackRooks;
         emptySquares = ~allPieces;
     }
+
     private void addBlackBishop(int square) {
         blackBishops |= 1L << square;
         allBlackPieces |= blackBishops;
         allPieces |= blackBishops;
-        emptySquares = ~ allPieces;
+        emptySquares = ~allPieces;
     }
+
     private void addBlackKnight(int square) {
         blackKnights |= 1L << square;
         allBlackPieces |= blackKnights;
         allPieces |= blackKnights;
         emptySquares = ~allPieces;
     }
+
     private void addBlackQueen(int square) {
         blackQueens |= 1L << square;
         allBlackPieces |= blackQueens;
@@ -332,6 +344,7 @@ public class ChessBoard {
         emptySquares = ~allPieces;
 
     }
+
     private void addBlackKing(int square) {
         blackKing |= 1L << square;
         allBlackPieces |= blackKing;
@@ -346,6 +359,7 @@ public class ChessBoard {
         allPieces |= whitePawns;
         emptySquares = ~allPieces;
     }
+
     private void addWhiteRook(int square) {
         whiteRooks |= 1L << square;
         allWhitePieces |= whiteRooks;
@@ -353,6 +367,7 @@ public class ChessBoard {
         emptySquares = ~allPieces;
 
     }
+
     private void addWhiteBishop(int square) {
         whiteBishops |= 1L << square;
         allWhitePieces |= whiteBishops;
@@ -360,6 +375,7 @@ public class ChessBoard {
         emptySquares = ~allPieces;
 
     }
+
     private void addWhiteKnight(int square) {
         whiteKnights |= 1L << square;
         allWhitePieces |= whiteKnights;
@@ -367,6 +383,7 @@ public class ChessBoard {
         emptySquares = ~allPieces;
 
     }
+
     private void addWhiteQueen(int square) {
         whiteQueens |= 1L << square;
         allWhitePieces |= whiteQueens;
@@ -374,6 +391,7 @@ public class ChessBoard {
         emptySquares = ~allPieces;
 
     }
+
     private void addWhiteKing(int square) {
         whiteKing |= 1L << square;
         allWhitePieces |= whiteKing;
@@ -382,9 +400,9 @@ public class ChessBoard {
 
     }
 
-    private void removePiece(int square){
+    private void removePiece(int square) {
 
-        allPieces = BitMath.popBit(allPieces,square);
+        allPieces = BitMath.popBit(allPieces, square);
         allWhitePieces = allPieces & allWhitePieces;
         allBlackPieces = allPieces & allBlackPieces;
 
@@ -404,7 +422,6 @@ public class ChessBoard {
 
         emptySquares = ~allPieces;
     }
-
 
 
     public void updateBlackLegalMoves(boolean kingInCheck) {
@@ -469,12 +486,9 @@ public class ChessBoard {
     }
 
 
-
-
     public boolean isKingInCheck(Piece.Color kingColor) {
         return LegalMovesChecker.isSquareAttacked(this, getKingPosition(kingColor), kingColor.getOpposite());
     }
-
 
 
     public int getKingPosition(Piece.Color kingColor) {
@@ -502,7 +516,6 @@ public class ChessBoard {
     }
 
 
-
     public void move(Move move) {
         int fromSquare = move.getFrom();
         int toSquare = move.getTo();
@@ -515,18 +528,20 @@ public class ChessBoard {
         enPassantTarget = NO_SQUARE;
         Piece.Color moveColor = move.getColor();
 
-        if(move.isPawnDoubleMove()){
-            if(moveColor == Piece.Color.WHITE){
+        if (move.isPawnDoubleMove()) {
+            if (moveColor == Piece.Color.WHITE) {
                 enPassantTarget = move.getTo() - 8;
             } else {
                 enPassantTarget = move.getTo() + 8;
             }
         }
 
+        if(moveColor == Piece.Color.WHITE) fullMovesCount ++;
+
         if (move.isCastling()) {
             int rookPosition;
             int rookCastlingTarget;
-            if(moveColor == Piece.Color.WHITE) whiteCastlingRights = NO_CASTLING;
+            if (moveColor == Piece.Color.WHITE) whiteCastlingRights = NO_CASTLING;
             else blackCastlingRights = NO_CASTLING;
 
             if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
@@ -537,26 +552,32 @@ public class ChessBoard {
             } else {
                 rookPosition = LegalMovesChecker.getInitialRookQueenSide(this,
                         moveColor);
-                rookCastlingTarget = move.getFrom() -1;
+                rookCastlingTarget = move.getFrom() - 1;
             }
-            setPieceAt(rookCastlingTarget, getPieceAt(rookPosition) );
+            setPieceAt(rookCastlingTarget, getPieceAt(rookPosition));
             setPieceAt(rookPosition, null);
             getPieceAt(rookCastlingTarget).setPosition(rookCastlingTarget);
         }
-        if(move.isPromote()){
-            setPieceAt(toSquare,move.getPromotionPieceType(),move.getColor());
+        if (move.isPromote()) {
+            setPieceAt(toSquare, move.getPromotionPieceType(), move.getColor());
         }
-        if(move.isEnPasant()){
-            if(move.getColor() == Piece.Color.WHITE){
-                setPieceAt(ChessBoard.offsetRank(move.getTo(),-1),null);
-            }
-            else {
-                setPieceAt(ChessBoard.offsetRank(move.getTo(),1),null);
+        if (move.isEnPasant()) {
+            if (move.getColor() == Piece.Color.WHITE) {
+                setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), null);
+            } else {
+                setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), null);
             }
         }
 
+        //increase fifty moves if no capture or pawn push
+        fiftyMovesDrawCount++;
+        if (move.isTake() || move.getPieceType() == Piece.Type.PAWN) {
+            fiftyMovesDrawCount = 0;
+        }
+        move.setFiftyMoves(fiftyMovesDrawCount);
+
         moves.add(move);
-        if(activeColor == Piece.WHITE) activeColor = Piece.BLACK;
+        if (activeColor == Piece.WHITE) activeColor = Piece.BLACK;
         else activeColor = Piece.WHITE;
 
     }
@@ -569,15 +590,18 @@ public class ChessBoard {
         getPieceAt(fromSquare).setPosition(fromSquare);
         setPieceAt(toSquare, null);
 
-        if(move.isTake()){
-            setPieceAt(toSquare,move.getTakenPieceType(),move.getColor().getOpposite());
+        if (move.isTake()) {
+            setPieceAt(toSquare, move.getTakenPieceType(), move.getColor().getOpposite());
             getPieceAt(toSquare).setPosition(toSquare);
         }
 
-        if(move.isPromote()){
-            setPieceAt(fromSquare, Piece.Type.PAWN,move.getColor());
+        if (move.isPromote()) {
+            setPieceAt(fromSquare, Piece.Type.PAWN, move.getColor());
         }
 
+        if(move.getColor() == Piece.Color.WHITE){
+            fullMovesCount--;
+        }
 
 
         if (move.isCastling()) {
@@ -597,27 +621,37 @@ public class ChessBoard {
                 currentRookPosition = move.getFrom() - 1;
 
             }
-            setPieceAt(rookPosition, Piece.Type.ROOK,moveColor );
+            setPieceAt(rookPosition, Piece.Type.ROOK, moveColor);
             setPieceAt(currentRookPosition, null);
         }
 
-        if(move.isEnPasant()){
-            if(move.getColor() == Piece.Color.WHITE){
-                setPieceAt(ChessBoard.offsetRank(move.getTo(),-1),null);
-            }
-            else {
-                setPieceAt(ChessBoard.offsetRank(move.getTo(),1),null);
+        if (move.isEnPasant()) {
+            if (move.getColor() == Piece.Color.WHITE) {
+                setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), null);
+            } else {
+                setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), null);
             }
         }
 
+
+
+        if (activeColor == Piece.WHITE) activeColor = Piece.BLACK;
+        else activeColor = Piece.WHITE;
         moves.removeLastMove();
 
-        Move lastMove = moves.getLastMove();
-        if(lastMove.isPawnDoubleMove()){
-            if(lastMove.getColor() == Piece.Color.WHITE){
-                enPassantTarget = lastMove.getTo() - 8;
+
+        Move previousMove = moves.getLastMove();
+
+        //restore previous fifty moves count
+        fiftyMovesDrawCount = previousMove.getFiftyMoves();
+
+
+        //restore previous en passant target
+        if (previousMove.isPawnDoubleMove()) {
+            if (previousMove.getColor() == Piece.Color.WHITE) {
+                enPassantTarget = previousMove.getTo() - 8;
             } else {
-                enPassantTarget = lastMove.getTo() + 8;
+                enPassantTarget = previousMove.getTo() + 8;
             }
 
         }
@@ -637,18 +671,19 @@ public class ChessBoard {
 
     public void setPieceAt(int position, Piece.Type pieceType, Piece.Color pieceColor) {
         Piece piece = new Piece(pieceType, pieceColor, position);
-        setPieceAt(position,piece);
+        setPieceAt(position, piece);
     }
+
     public void setPieceAt(int position, Piece piece) {
         removePiece(position);
 
-        if(piece == null){
+        if (piece == null) {
             pieces[position] = null;
             return;
         }
         pieces[position] = new Piece(piece);
-        if(piece.getColor() == Piece.Color.WHITE){
-            switch (piece.getType()){
+        if (piece.getColor() == Piece.Color.WHITE) {
+            switch (piece.getType()) {
                 case PAWN:
                     addWhitePawn(position);
                     break;
@@ -669,7 +704,7 @@ public class ChessBoard {
                     break;
             }
         } else {
-            switch (piece.getType()){
+            switch (piece.getType()) {
                 case PAWN:
                     addBlackPawn(position);
                     break;
@@ -695,13 +730,13 @@ public class ChessBoard {
     }
 
 
-    public Game.GameStatus checkStatus(){
+    public Game.GameStatus checkStatus() {
         Piece.Color lastPlayed = moves.getLastPlayed();
         Game.GameStatus gameStatus = Game.GameStatus.NOT_FINISHED;
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
         boolean isKingInCheck = isKingInCheck(currentToPlayColor);
 
-        LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this,Game.moveGenerator ,
+        LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this, Game.moveGenerator,
                 currentToPlayColor);
 
         if (isKingInCheck) {
@@ -725,15 +760,18 @@ public class ChessBoard {
             }
 
         }
+        if(fiftyMovesDrawCount == 50){
+            gameStatus = Game.GameStatus.FINISHED_DRAW;
+        }
 
         return gameStatus;
     }
 
-    public boolean checkGameFinished(){
+    public boolean checkGameFinished() {
         boolean finished = false;
         Game.GameStatus gameStatus = checkStatus();
-        if(gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
-        || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK){
+        if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
+                || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
             finished = true;
         }
         return finished;
@@ -760,7 +798,7 @@ public class ChessBoard {
             }
 
             // tow kings and a bishop or knight
-            if(remainingPieceType == Piece.Type.BISHOP || remainingPieceType == Piece.Type.KNIGHT){
+            if (remainingPieceType == Piece.Type.BISHOP || remainingPieceType == Piece.Type.KNIGHT) {
                 return true;
             }
 
@@ -778,22 +816,19 @@ public class ChessBoard {
             Piece secondPiece = remainingPieces.get(1);
 
             // tow king and tow bishops of the same square color
-            if(firstPiece.getType() == Piece.Type.BISHOP && secondPiece.getType() == Piece.Type.BISHOP){
-                if(firstPiece.getColor() != secondPiece.getColor()){
+            if (firstPiece.getType() == Piece.Type.BISHOP && secondPiece.getType() == Piece.Type.BISHOP) {
+                if (firstPiece.getColor() != secondPiece.getColor()) {
                     return ChessBoard.GetSquareColor(firstPiece.getPosition()) ==
                             ChessBoard.GetSquareColor(secondPiece.getPosition());
                 }
             }
 
 
-
         }
-
 
 
         return false;
     }
-
 
 
     public boolean isSquareEmpty(int position) {
@@ -808,9 +843,12 @@ public class ChessBoard {
         return pieces[position].getColor() == Piece.Color.WHITE;
     }
 
-    public int pieceColor(int position){return (int) ((allBlackPieces & (1L <<position)) >>> position) ;}
-    public int pieceType(int position){
-        long  positionBit = 1L << position;
+    public int pieceColor(int position) {
+        return (int) ((allBlackPieces & (1L << position)) >>> position);
+    }
+
+    public int pieceType(int position) {
+        long positionBit = 1L << position;
         long isPawn = (((whitePawns | blackPawns) & positionBit) >>> position);
         long isRook = (((whiteRooks | blackRooks) & positionBit) >>> position);
         long isKnight = (((whiteKnights | blackKnights) & positionBit) >>> position);
@@ -823,16 +861,17 @@ public class ChessBoard {
         );
     }
 
-    public Piece.Color getPieceColor(int position){
+    public Piece.Color getPieceColor(int position) {
         return pieces[position].getColor();
     }
-    public Piece.Type getPieceType(int position){
+
+    public Piece.Type getPieceType(int position) {
         return pieces[position].getType();
     }
 
-    public boolean isPieceAt(int square, Piece.Type type, Piece.Color color){
-        if(square == OUT) return false;
-        if(isSquareEmpty(square)) return false;
+    public boolean isPieceAt(int square, Piece.Type type, Piece.Color color) {
+        if (square == OUT) return false;
+        if (isSquareEmpty(square)) return false;
         return getPieceColor(square) == color && getPieceType(square) == type;
     }
 
@@ -853,7 +892,7 @@ public class ChessBoard {
         char rankChar = square.charAt(1);
         int file = NO_SQUARE;
         int rank = NO_SQUARE;
-        switch (fileChar){
+        switch (fileChar) {
             case 'a':
                 file = FILE_A;
                 break;
@@ -880,7 +919,7 @@ public class ChessBoard {
                 break;
         }
 
-        switch (rankChar){
+        switch (rankChar) {
             case '1':
                 rank = RANK_1;
                 break;
@@ -906,7 +945,7 @@ public class ChessBoard {
                 rank = RANK_8;
                 break;
         }
-        return GetPosition(file,rank);
+        return GetPosition(file, rank);
     }
 
     public static int GetFile(int position) {
@@ -917,22 +956,25 @@ public class ChessBoard {
         return position / 8;
     }
 
-    public static int offset(int square, int file, int rank){
+    public static int offset(int square, int file, int rank) {
         int newFile = GetFile(square) + file;
         int newRank = GetRank(square) + rank;
-        if(newFile < ChessBoard.FILE_A || newFile > ChessBoard.FILE_H) return ChessBoard.OUT;
-        if(newRank < ChessBoard.RANK_1 || newRank > ChessBoard.RANK_8) return ChessBoard.OUT;
+        if (newFile < ChessBoard.FILE_A || newFile > ChessBoard.FILE_H) return ChessBoard.OUT;
+        if (newRank < ChessBoard.RANK_1 || newRank > ChessBoard.RANK_8) return ChessBoard.OUT;
 
-        return (newRank * 8 )  + newFile;
+        return (newRank * 8) + newFile;
     }
-    public static int offsetFile(int square,int file){
-        return offset(square,file,0);
+
+    public static int offsetFile(int square, int file) {
+        return offset(square, file, 0);
     }
-    public static int offsetRank(int square,int rank){
-        return offset(square,0,rank);
+
+    public static int offsetRank(int square, int rank) {
+        return offset(square, 0, rank);
     }
-    public static Piece.Color GetSquareColor(int square){
-        if((square % 2) == 0){
+
+    public static Piece.Color GetSquareColor(int square) {
+        if ((square % 2) == 0) {
             return Piece.Color.BLACK;
         } else {
             return Piece.Color.WHITE;
@@ -942,20 +984,19 @@ public class ChessBoard {
     //------------------------
 
 
-
     public void print() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(" \n");
-        char[] blackPiecesSymbols = {'0','p','r','n','b','q','k'};
-        char[] whitePiecesSymbols = {'0','P','R','N','B','Q','K'};
+        char[] blackPiecesSymbols = {'0', 'p', 'r', 'n', 'b', 'q', 'k'};
+        char[] whitePiecesSymbols = {'0', 'P', 'R', 'N', 'B', 'Q', 'K'};
 
         char currentSymbol = '0';
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
-                int pieceType = pieceType(Square(file,rank));
-                int pieceColor = pieceColor(Square(file,rank));
-                if(pieceColor == Piece.WHITE) currentSymbol = whitePiecesSymbols[pieceType];
-                if(pieceColor == Piece.BLACK) currentSymbol = blackPiecesSymbols[pieceType];
+                int pieceType = pieceType(Square(file, rank));
+                int pieceColor = pieceColor(Square(file, rank));
+                if (pieceColor == Piece.WHITE) currentSymbol = whitePiecesSymbols[pieceType];
+                if (pieceColor == Piece.BLACK) currentSymbol = blackPiecesSymbols[pieceType];
                 stringBuilder.append(currentSymbol);
                 stringBuilder.append(' ');
 
@@ -975,7 +1016,7 @@ public class ChessBoard {
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
                 currentSymbol = '0';
-                if(BitMath.getBit(bitboard,Square(file,rank)) == 1) currentSymbol = '1';
+                if (BitMath.getBit(bitboard, Square(file, rank)) == 1) currentSymbol = '1';
                 stringBuilder.append(currentSymbol);
                 stringBuilder.append(' ');
 
@@ -985,7 +1026,6 @@ public class ChessBoard {
         }
         Log.d(Game.DEBUG, stringBuilder.toString());
     }
-
 
 
 }

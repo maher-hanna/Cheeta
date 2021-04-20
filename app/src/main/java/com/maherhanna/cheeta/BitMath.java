@@ -19,6 +19,15 @@ public class BitMath {
             };
     //********************************************************************************8888
 
+    public static long setBitsValue(long number, long startingBit, long bitMask, int value){
+        long result = 0;
+        value = value << startingBit;
+        number = number &(~bitMask);
+        bitMask = bitMask & value;
+        result = number | bitMask;
+        return  result;
+    }
+
     public static int setBitsValue(int number, int startingBit, int bitMask, int value){
         int result = 0;
         value = value << startingBit;
@@ -27,7 +36,6 @@ public class BitMath {
         result = number | bitMask;
         return  result;
     }
-
     public static int getBitsValue(int number,int startingBit,int bitMask){
         int value = 0;
         value = bitMask & number;
@@ -35,8 +43,15 @@ public class BitMath {
         return  value;
 
     }
+    public static long getBitsValue(long number,long startingBit,long bitMask){
+        long value = 0;
+        value = bitMask & number;
+        value = value >>> startingBit;
+        return  value;
 
-    public static boolean isBitSet(long bitboard,int index){
+    }
+
+    public static boolean isBitSet(long bitboard,long index){
         return (bitboard & (1L << index)) != 0;
     }
 
