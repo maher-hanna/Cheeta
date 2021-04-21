@@ -75,18 +75,11 @@ public class ChessBoard {
 
     //state
     int activeColor = Piece.WHITE;
-    int whiteCastlingRights = NO_CASTLING;
-    int blackCastlingRights = NO_CASTLING;
+    int whiteCastlingRights = CASTLING_BOTH_SIDES;
+    int blackCastlingRights = CASTLING_BOTH_SIDES;
     int enPassantTarget = NO_SQUARE;
     int fiftyMovesDrawCount = 0;
     int fullMovesCount = 1;
-    //castling
-    int whiteKingMovedAt = 0;
-    int blackKingMovedAt = 0;
-    int whiteRookKingSideMoved = 0;
-    int blackRookKingSideMoved = 0;
-    int whiteRookQueenSideMoved = 0;
-    int blackRookQueenSideMoved = 0;
 
 
     //---------------------------------------------------------------------------------
@@ -133,6 +126,7 @@ public class ChessBoard {
         }
 
         moves = new ChessboardMoves();
+
         blackLegalMoves = new LegalMoves();
         whiteLegalMoves = new LegalMoves();
 
@@ -140,7 +134,7 @@ public class ChessBoard {
     }
 
     public void setUpBoard() {
-        setupFromFen("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+        setupFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     }
 
@@ -304,6 +298,7 @@ public class ChessBoard {
 
             setPieceAt(i, Piece.Type.values()[pieceType(i) - 1], Piece.Color.values()[pieceColor(i)]);
         }
+        moves.initialEnPassantTarget = enPassantTarget;
         updateWhiteLegalMoves(false);
         updateBlackLegalMoves(false);
 
@@ -522,11 +517,13 @@ public class ChessBoard {
         setPieceAt(toSquare, getPieceAt(fromSquare));
         setPieceAt(fromSquare, null);
         getPieceAt(toSquare).setPosition(toSquare);
+        Piece.Color moveColor = move.getColor();
+
+        if (moveColor == Piece.Color.WHITE) fullMovesCount++;
 
 
         //set enPassant target
         enPassantTarget = NO_SQUARE;
-        Piece.Color moveColor = move.getColor();
 
         if (move.isPawnDoubleMove()) {
             if (moveColor == Piece.Color.WHITE) {
@@ -536,7 +533,8 @@ public class ChessBoard {
             }
         }
 
-        if(moveColor == Piece.Color.WHITE) fullMovesCount ++;
+        move.setPreviousWCastlingRights(whiteCastlingRights);
+        move.setPreviousBCastlingRights(blackCastlingRights);
 
         if (move.isCastling()) {
             int rookPosition;
@@ -557,7 +555,42 @@ public class ChessBoard {
             setPieceAt(rookCastlingTarget, getPieceAt(rookPosition));
             setPieceAt(rookPosition, null);
             getPieceAt(rookCastlingTarget).setPosition(rookCastlingTarget);
+        } else {
+            if (move.getPieceType() == Piece.Type.ROOK) {
+                if (moveColor == Piece.Color.WHITE) {
+                    if (move.getFrom() == LegalMovesChecker.getInitialRookKingSide(this, Piece.Color.WHITE)) {
+                        //king side
+                        whiteCastlingRights = BitMath.unSetBit(whiteCastlingRights, 0);
+
+                    } else {
+                        //queen side
+                        whiteCastlingRights = BitMath.unSetBit(whiteCastlingRights, 1);
+
+                    }
+
+                } else {
+                    if (move.getFrom() == LegalMovesChecker.getInitialRookKingSide(this, Piece.Color.WHITE)) {
+                        //king side
+                        blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 0);
+
+                    } else {
+                        //queen side
+                        blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 1);
+
+                    }
+
+                }
+            }
+            if(move.getPieceType() == Piece.Type.KING){
+                if(moveColor == Piece.Color.WHITE){
+                    whiteCastlingRights = NO_CASTLING;
+                } else {
+                    blackCastlingRights = NO_CASTLING;
+                }
+            }
         }
+
+
         if (move.isPromote()) {
             setPieceAt(toSquare, move.getPromotionPieceType(), move.getColor());
         }
@@ -569,12 +602,12 @@ public class ChessBoard {
             }
         }
 
+        move.setPreviousFiftyMoves(fiftyMovesDrawCount);
         //increase fifty moves if no capture or pawn push
         fiftyMovesDrawCount++;
         if (move.isTake() || move.getPieceType() == Piece.Type.PAWN) {
             fiftyMovesDrawCount = 0;
         }
-        move.setFiftyMoves(fiftyMovesDrawCount);
 
         moves.add(move);
         if (activeColor == Piece.WHITE) activeColor = Piece.BLACK;
@@ -599,7 +632,7 @@ public class ChessBoard {
             setPieceAt(fromSquare, Piece.Type.PAWN, move.getColor());
         }
 
-        if(move.getColor() == Piece.Color.WHITE){
+        if (move.getColor() == Piece.Color.WHITE) {
             fullMovesCount--;
         }
 
@@ -625,35 +658,43 @@ public class ChessBoard {
             setPieceAt(currentRookPosition, null);
         }
 
+
         if (move.isEnPasant()) {
             if (move.getColor() == Piece.Color.WHITE) {
-                setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), null);
+                setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), Piece.Type.PAWN, Piece.Color.BLACK);
             } else {
-                setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), null);
+                setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), Piece.Type.PAWN, Piece.Color.WHITE);
             }
         }
 
 
-
         if (activeColor == Piece.WHITE) activeColor = Piece.BLACK;
         else activeColor = Piece.WHITE;
-        moves.removeLastMove();
 
-
-        Move previousMove = moves.getLastMove();
 
         //restore previous fifty moves count
-        fiftyMovesDrawCount = previousMove.getFiftyMoves();
+        fiftyMovesDrawCount = move.getPreviousFiftyMoves();
 
+
+        //restore prvious castling rights
+        whiteCastlingRights = move.getPreviousWCastlingRights();
+        blackCastlingRights = move.getPreviousBCastlingRights();
+
+        moves.removeLastMove();
 
         //restore previous en passant target
-        if (previousMove.isPawnDoubleMove()) {
-            if (previousMove.getColor() == Piece.Color.WHITE) {
-                enPassantTarget = previousMove.getTo() - 8;
-            } else {
-                enPassantTarget = previousMove.getTo() + 8;
-            }
+        if(moves.notEmpty()){
+            Move previousMove = moves.getLastMove();
+            if (previousMove.isPawnDoubleMove()) {
+                if (previousMove.getColor() == Piece.Color.WHITE) {
+                    enPassantTarget = previousMove.getTo() - 8;
+                } else {
+                    enPassantTarget = previousMove.getTo() + 8;
+                }
 
+            }
+        } else {
+            enPassantTarget = moves.initialEnPassantTarget;
         }
 
     }
@@ -760,7 +801,7 @@ public class ChessBoard {
             }
 
         }
-        if(fiftyMovesDrawCount == 50){
+        if (fiftyMovesDrawCount == 50) {
             gameStatus = Game.GameStatus.FINISHED_DRAW;
         }
 

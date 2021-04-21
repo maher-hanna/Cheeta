@@ -73,10 +73,15 @@ public class Move {
     public boolean isPawnDoubleMove(){
         return BitMath.isBitSet(bitValue,PAWN_DOUBLE_PUSH_START);
     }
-    public int getFiftyMoves(){return (int)BitMath.getBitsValue(bitValue,FIFTY_MOVES_START,
-            FIFTY_MOVES_MASK);}
 
+    public int getPreviousFiftyMoves(){return (int)BitMath.getBitsValue(bitValue, PREVIOUS_FIFTY_MOVES_START,
+            PREVIOUS_FIFTY_MOVES_MASK);}
 
+    public int getPreviousWCastlingRights(){return (int) BitMath.getBitsValue(bitValue, PREVIOUS_WCASTLING_RIGHTS_START,
+            PREVIOUS_WCASTLING_RIGHTS_MASK);}
+
+    public int getPreviousBCastlingRights(){return (int) BitMath.getBitsValue(bitValue, PREVIOUS_BCASTLING_RIGHTS_START,
+            PREVIOUS_BCASTLING_RIGHTS_MASK);}
 
     public int getFrom(){
         return (int)BitMath.getBitsValue(bitValue,FROM_START,FROM_MASK);
@@ -165,9 +170,15 @@ public class Move {
         if(pawnDoublePush) value = 1;
         bitValue = BitMath.setBitsValue(bitValue,PAWN_DOUBLE_PUSH_START,PAWN_DOUBLE_PUSH_MASK,value);
     }
-    public void setFiftyMoves(int fiftyMoves){
-        bitValue = BitMath.setBitsValue(bitValue,FIFTY_MOVES_START,FIFTY_MOVES_MASK,fiftyMoves);
+    public void setPreviousFiftyMoves(int fiftyMoves){
+        bitValue = BitMath.setBitsValue(bitValue, PREVIOUS_FIFTY_MOVES_START, PREVIOUS_FIFTY_MOVES_MASK,fiftyMoves);
     }
+
+    public void setPreviousWCastlingRights(int whiteCastlingRights){bitValue =  BitMath.setBitsValue(bitValue, PREVIOUS_WCASTLING_RIGHTS_START,
+            PREVIOUS_WCASTLING_RIGHTS_MASK,whiteCastlingRights);}
+    public void setPreviousBCastlingRights(int blackCastlingRights){bitValue =  BitMath.setBitsValue(bitValue, PREVIOUS_BCASTLING_RIGHTS_START,
+            PREVIOUS_BCASTLING_RIGHTS_MASK,blackCastlingRights);}
+
 
 
     public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE}
@@ -210,8 +221,16 @@ public class Move {
     private static final long PAWN_DOUBLE_PUSH_MASK = 67108864;
     private static final long PAWN_DOUBLE_PUSH_START = 27;
 
-    private static final long FIFTY_MOVES_MASK = 4227858432L;
-    private static final long FIFTY_MOVES_START = 28;
+    private static final long PREVIOUS_FIFTY_MOVES_MASK = 4227858432L;
+    private static final long PREVIOUS_FIFTY_MOVES_START = 28;
+
+    private static final long PREVIOUS_BCASTLING_RIGHTS_MASK = 51539607552L;
+    private static final long PREVIOUS_BCASTLING_RIGHTS_START = 34;
+
+    private static final long PREVIOUS_WCASTLING_RIGHTS_MASK = 206158430208L;
+    private static final long PREVIOUS_WCASTLING_RIGHTS_START = 36;
+
+
 
 
 }

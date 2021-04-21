@@ -55,8 +55,8 @@ class Game {
 //        ChessBoard test = new ChessBoard(drawing);
 //        test.setupFromFen("r6r/1b2k1bq/8/8/7B/8/8/R3K2R b QK - 3 2");
 //        test.setPieceAt(ChessBoard.Square("d4"),Piece.Type.QUEEN, Piece.Color.WHITE);
-//        ArrayList<Move> blackMoves = moveGenerator.getQueensMoves(test,test.blackQueens,Piece.BLACK,Piece.QUEEN);
-//        ArrayList<Move> whiteMoves = moveGenerator.getQueensMoves(test,test.whiteQueens,Piece.WHITE,Piece.QUEEN);
+//        ArrayList<Move> whiteMoves = LegalMovesChecker.getWhiteLegalMoves(test,moveGenerator).getAllLegalMoves();
+//        ArrayList<Move> blackMoves = LegalMovesChecker.getBlackLegalMoves(test,moveGenerator).getAllLegalMoves();
 //
 //        for(Move move : blackMoves){
 //            test.move(move);

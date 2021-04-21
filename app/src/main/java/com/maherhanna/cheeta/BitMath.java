@@ -21,9 +21,10 @@ public class BitMath {
 
     public static long setBitsValue(long number, long startingBit, long bitMask, int value){
         long result = 0;
-        value = value << startingBit;
+        long valueMask = value;
+        valueMask = valueMask  << startingBit;
         number = number &(~bitMask);
-        bitMask = bitMask & value;
+        bitMask = bitMask & valueMask;
         result = number | bitMask;
         return  result;
     }
@@ -61,6 +62,11 @@ public class BitMath {
     public static long setBit(long bitboard,int index){
         bitboard |= 1L << index;
         return bitboard;
+    }
+
+    public static int unSetBit(int value,int index){
+        value &= ~(1 << index);
+        return value;
     }
     public static long popBit(long bitboard,int index){
         return ~(1L << index) & bitboard;

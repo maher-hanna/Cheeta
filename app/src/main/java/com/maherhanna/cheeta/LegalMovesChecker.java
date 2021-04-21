@@ -1,5 +1,7 @@
 package com.maherhanna.cheeta;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -52,8 +54,6 @@ public class LegalMovesChecker {
                                       Piece.Color color) {
 
         int initialKingPosition = getInitialKingPosition(chessBoard, color);
-        int initialRookKingSidePosition = getInitialRookKingSide(chessBoard, color);
-        int initialRookQueenSidePosition = getInitialRookQueenSide(chessBoard, color);
         int kingTarget = 0;
         if (canCastleKingSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
             kingTarget = initialKingPosition + 2;
@@ -419,26 +419,25 @@ public class LegalMovesChecker {
         if (kingInCheck) {
             return false;
         }
+        if(color == Piece.Color.WHITE){
+            if(chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING){
+                return false;
+            }
+            if(chessBoard.whiteCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE){
+                return false;
+            }
+
+        } else {
+            if(chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING){
+                return false;
+            }
+            if(chessBoard.blackCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE){
+                return false;
+            }
+
+        }
 
         int initialKingPosition = getInitialKingPosition(chessBoard, color);
-        if (chessBoard.isSquareEmpty(initialKingPosition)) {
-            return false;
-        }
-
-        if (chessBoard.moves.hasPieceMoved(initialKingPosition)) {
-            return false;
-        }
-
-
-        int initialRookKingSidePosition = getInitialRookKingSide(chessBoard, color);
-
-        if (chessBoard.isSquareEmpty(initialRookKingSidePosition)) {
-            return false;
-        }
-
-        if (chessBoard.moves.hasPieceMoved(initialRookKingSidePosition)) {
-            return false;
-        }
 
         if (!chessBoard.isSquareEmpty(initialKingPosition + 1) ||
                 !chessBoard.isSquareEmpty(initialKingPosition + 2)) {
@@ -454,21 +453,24 @@ public class LegalMovesChecker {
         if (kingInCheck) {
             return false;
         }
-        int initialKingPosition = getInitialKingPosition(chessBoard, color);
-        if (chessBoard.isSquareEmpty(initialKingPosition)) {
-            return false;
-        }
-        if (chessBoard.moves.hasPieceMoved(initialKingPosition)) {
-            return false;
-        }
+        if(color == Piece.Color.WHITE){
+            if(chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING){
+                return false;
+            }
+            if(chessBoard.whiteCastlingRights == ChessBoard.CASTLING_KING_SIDE){
+                return false;
+            }
 
-        int initialRookQueenSidePosition = getInitialRookQueenSide(chessBoard, color);
-        if (chessBoard.isSquareEmpty(initialRookQueenSidePosition)) {
-            return false;
+        } else {
+            if(chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING){
+                return false;
+            }
+            if(chessBoard.blackCastlingRights == ChessBoard.CASTLING_KING_SIDE){
+                return false;
+            }
+
         }
-        if (chessBoard.moves.hasPieceMoved(initialRookQueenSidePosition)) {
-            return false;
-        }
+        int initialKingPosition = getInitialKingPosition(chessBoard, color);
 
 
         if (!chessBoard.isSquareEmpty(initialKingPosition - 1) ||

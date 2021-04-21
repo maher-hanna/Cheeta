@@ -591,7 +591,7 @@ public class MoveGenerator {
         long westTargets = 0;
 
         //use pieceType to get queen moves
-        Piece.Type type = Piece.Type.values()[pieceType];
+        Piece.Type type = Piece.Type.values()[pieceType - 1];
 
 
         int rookPosition = ChessBoard.OUT;
@@ -775,7 +775,7 @@ public class MoveGenerator {
         long southEastTargets = 0;
 
         //use pieceType to get queen moves
-        Piece.Type type = Piece.Type.values()[pieceType];
+        Piece.Type type = Piece.Type.values()[pieceType - 1];
 
 
         int bishopPosition = ChessBoard.OUT;
