@@ -777,10 +777,9 @@ public class ChessBoard {
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
         boolean isKingInCheck = isKingInCheck(currentToPlayColor);
 
-        LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this, Game.moveGenerator,
-                currentToPlayColor);
-
         if (isKingInCheck) {
+            LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this, Game.moveGenerator,
+                    currentToPlayColor);
             if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
                 //win
                 if (lastPlayed == Piece.Color.WHITE) {
@@ -791,19 +790,26 @@ public class ChessBoard {
                 }
             }
         } else {
+            LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this, Game.moveGenerator,
+                    currentToPlayColor);
             if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
 
                 //draw stalemate
                 gameStatus = Game.GameStatus.FINISHED_DRAW;
-            }
-            if (insufficientMaterial()) {
-                gameStatus = Game.GameStatus.FINISHED_DRAW;
+            } else{
+                if (insufficientMaterial()) {
+                    gameStatus = Game.GameStatus.FINISHED_DRAW;
+                    return gameStatus;
+                }
+                if (fiftyMovesDrawCount == 50) {
+                    gameStatus = Game.GameStatus.FINISHED_DRAW;
+                    return gameStatus;
+                }
             }
 
+
         }
-        if (fiftyMovesDrawCount == 50) {
-            gameStatus = Game.GameStatus.FINISHED_DRAW;
-        }
+
 
         return gameStatus;
     }
