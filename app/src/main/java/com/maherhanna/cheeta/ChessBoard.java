@@ -569,7 +569,7 @@ public class ChessBoard {
                     }
 
                 } else {
-                    if (move.getFrom() == LegalMovesChecker.getInitialRookKingSide(this, Piece.Color.WHITE)) {
+                    if (move.getFrom() == LegalMovesChecker.getInitialRookKingSide(this, Piece.Color.BLACK)) {
                         //king side
                         blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 0);
 
