@@ -1,67 +1,35 @@
 package com.maherhanna.cheeta;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 
 public class LegalMoves {
-    private final HashMap<Integer, ArrayList<Move>> legalMoves;
-    public LegalMoves(){
-        legalMoves = new HashMap<>();
-    }
+    private ArrayList<Move> legalMoves;
     public LegalMoves(LegalMoves copy){
-        this.legalMoves = new HashMap<>(copy.legalMoves);
+        this.legalMoves = new ArrayList<Move>(copy.legalMoves);
     }
-
-    public void addMovesFor(int position, ArrayList<Move> moves){
-        legalMoves.put(position,moves);
-    }
-
-    public void addMoveFor(int position, Move move){
-        if(legalMoves.get(position) == null){
-            legalMoves.put(position,new ArrayList<>());
-        }
-        legalMoves.get(position).add(move);
+    public LegalMoves(){
+        legalMoves = new ArrayList<>();
     }
 
     public ArrayList<Integer> getLegalTargetsFor(int position)
     {
         ArrayList<Integer> targetSquares = new ArrayList<>();
-        if(legalMoves.get(position) == null) return targetSquares;
-        for(Move move: legalMoves.get(position)){
-            targetSquares.add(move.getTo());
+        for(Move move: legalMoves){
+            if(move.getFrom() == position){
+                targetSquares.add(move.getTo());
+            }
         }
         return targetSquares;
     }
 
-    public ArrayList<Move> getLegalMovesFor(int position){
-        return legalMoves.get(position);
-    }
 
-    public boolean contains(int position){
-        for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
-            for(Move move: pieceLegalMoves){
-                if(move.getTo() == position){
-                    return true;
-
-                }
-            }
-
-        }
-        return false;
-    }
-    public ArrayList<Move> getAllLegalMoves(){
-        ArrayList<Move> allLegalMoves = new ArrayList<>();
-        for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
-            allLegalMoves.addAll(pieceLegalMoves);
-        }
-        return allLegalMoves;
-    }
 
     public boolean canMove(int from, int to){
-        if(legalMoves.get(from) == null) return false;
-        for(Move move: legalMoves.get(from)){
-            if(move.getTo() == to){
+        ArrayList<Integer> targetsForFrom = getLegalTargetsFor(from);
+        if(targetsForFrom.isEmpty()) return false;
+        for(int target : targetsForFrom){
+            if(target == to){
                 return true;
             }
         }
@@ -69,26 +37,30 @@ public class LegalMoves {
     }
 
 
-    public int getNumberOfMoves(){
-        int numberOfMoves = 0;
-        for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
-            numberOfMoves += pieceLegalMoves.size();
-        }
-        return numberOfMoves;
+    public int size(){
+        return legalMoves.size();
+    }
+    public Move get(int index){
+        return legalMoves.get(index);
+    }
+
+    public void add(Move newMove){
+        legalMoves.add(newMove);
+    }
+
+    public void addAll(ArrayList<Move> moves){
+        legalMoves.addAll(moves);
     }
 
 
     public Move getMove(Move basicMove) {
         Move legalMove = new Move(basicMove);
-        for(ArrayList<Move> pieceLegalMoves: legalMoves.values()){
-            for(Move move: pieceLegalMoves){
-                if(move.getFrom() == basicMove.getFrom() &&
-                move.getTo() == basicMove.getTo()){
-                    legalMove = move;
+        for(Move move: legalMoves){
+            if((move.getFrom() == basicMove.getFrom()) &&
+                    (move.getTo() == basicMove.getTo())){
+                legalMove = new Move(move);
 
-                }
             }
-
         }
         return legalMove;
     }

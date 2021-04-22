@@ -49,7 +49,6 @@ class MyRunnable implements Runnable {
 
         LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard, Game.moveGenerator,
                 maxingPlayer);
-        ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
         ArrayList<MoveScore> moveScores;
         ArrayList<MoveScore> moveScoresAfterSearch = new ArrayList<>();
 
@@ -57,13 +56,13 @@ class MyRunnable implements Runnable {
         boolean timeFinished = false;
         int bestMoveIndex = 0;
         long timeLeft = maxSearchTime;
-        for(int i = 0; i < toPlayMoves.size();i++){
+        for(int i = 0; i < toPlayLegalMoves.size();i++){
             moveScoresAfterSearch.add(new MoveScore(0,i));
         }
         do{
             timeLeft =(startTime + maxSearchTime) -  System.nanoTime() ;
             maxDepth++;
-            moveScores = search(chessBoard,toPlayMoves , moveScoresAfterSearch, timeLeft, maxDepth);
+            moveScores = search(chessBoard,toPlayLegalMoves , moveScoresAfterSearch, timeLeft, maxDepth);
             if(moveScores.isEmpty()){
                 break;
             }
@@ -101,12 +100,12 @@ class MyRunnable implements Runnable {
 //                maxIndex);
 //        Log.d(Game.DEBUG,"Duration: " + (float)duration / 1000000);
 
-        this.move = toPlayMoves.get(bestMoveIndex);
+        this.move = toPlayLegalMoves.get(bestMoveIndex);
 
     }
 
 
-    public ArrayList<MoveScore> search(ChessBoard chessBoard, ArrayList<Move> moves, ArrayList<MoveScore> moveScores, long timeLeft, int maxDepth){
+    public ArrayList<MoveScore> search(ChessBoard chessBoard, LegalMoves moves, ArrayList<MoveScore> moveScores, long timeLeft, int maxDepth){
         int maxScore = Integer.MIN_VALUE;
         boolean timeFinished = false;
         long searchStart = System.nanoTime();
@@ -159,13 +158,12 @@ class MyRunnable implements Runnable {
 
         LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard, Game.moveGenerator,
                 toPlayColor);
-        ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
 
         if (maxing) {
             int maxScore = Integer.MIN_VALUE;
-            for (int i = 0; i < toPlayMoves.size(); i++) {
+            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayMoves.get(i));
+                chessBoardAfterMove.move(toPlayLegalMoves.get(i));
                 int score = miniMax(chessBoardAfterMove, alpha, beta,
                         depth - 1, !maxing);
                 maxScore = Math.max(maxScore, score);
@@ -178,9 +176,9 @@ class MyRunnable implements Runnable {
             return maxScore;
         } else {
             int minScore = Integer.MAX_VALUE;
-            for (int i = 0; i < toPlayMoves.size(); i++) {
+            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayMoves.get(i));
+                chessBoardAfterMove.move(toPlayLegalMoves.get(i));
                 int score = miniMax(chessBoardAfterMove, alpha, beta,
                         depth - 1,!maxing );
                 minScore = Math.min(minScore, score);
@@ -223,13 +221,13 @@ class MyRunnable implements Runnable {
 
         LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard, Game.moveGenerator,
                 toPlayColor);
-        ArrayList<Move> toPlayMoves = toPlayLegalMoves.getAllLegalMoves();
+
 
         if (maxing) {
             int maxScore = Integer.MIN_VALUE;
-            for (int i = 0; i < toPlayMoves.size(); i++) {
+            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayMoves.get(i));
+                chessBoardAfterMove.move(toPlayLegalMoves.get(i));
                 int score = miniMax(chessBoardAfterMove,
                         depth - 1, !maxing);
                 maxScore = Math.max(maxScore, score);
@@ -238,9 +236,9 @@ class MyRunnable implements Runnable {
             return maxScore;
         } else {
             int minScore = Integer.MAX_VALUE;
-            for (int i = 0; i < toPlayMoves.size(); i++) {
+            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayMoves.get(i));
+                chessBoardAfterMove.move(toPlayLegalMoves.get(i));
                 int score = miniMax(chessBoardAfterMove,
                         depth - 1,!maxing );
                 minScore = Math.min(minScore, score);

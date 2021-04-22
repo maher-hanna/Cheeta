@@ -783,7 +783,7 @@ public class ChessBoard {
         if (isKingInCheck) {
             LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this, Game.moveGenerator,
                     currentToPlayColor);
-            if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
+            if (currentToPlayLegalMoves.size() == 0) {
                 //win
                 if (lastPlayed == Piece.Color.WHITE) {
                     gameStatus = Game.GameStatus.FINISHED_WIN_WHITE;
@@ -795,7 +795,7 @@ public class ChessBoard {
         } else {
             LegalMoves currentToPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(this, Game.moveGenerator,
                     currentToPlayColor);
-            if (currentToPlayLegalMoves.getNumberOfMoves() == 0) {
+            if (currentToPlayLegalMoves.size() == 0) {
 
                 //draw stalemate
                 gameStatus = Game.GameStatus.FINISHED_DRAW;

@@ -14,11 +14,7 @@ public class LegalMovesChecker {
         ArrayList<Move> pseudoLegalMoves = Game.moveGenerator.getBlackPseudoLegalMoves(chessBoard);
         removeMovesThatExposeKing(chessBoard, pseudoLegalMoves, Piece.Color.BLACK);
 
-        for (int i = 0; i < pseudoLegalMoves.size(); i++) {
-
-            legalMoves.addMoveFor(pseudoLegalMoves.get(i).getFrom(),pseudoLegalMoves.get(i) );
-
-        }
+        legalMoves.addAll(pseudoLegalMoves);
         checkCastling(chessBoard, legalMoves, Piece.Color.BLACK);
 
         return legalMoves;
@@ -31,11 +27,7 @@ public class LegalMovesChecker {
         ArrayList<Move> pseudoLegalMoves = Game.moveGenerator.getWhitePseudoLegalMoves(chessBoard);
         removeMovesThatExposeKing(chessBoard, pseudoLegalMoves, Piece.Color.WHITE);
 
-        for (int i = 0; i < pseudoLegalMoves.size(); i++) {
-
-            legalMoves.addMoveFor(pseudoLegalMoves.get(i).getFrom(),pseudoLegalMoves.get(i) );
-
-        }
+        legalMoves.addAll(pseudoLegalMoves);
         checkCastling(chessBoard, legalMoves, Piece.Color.WHITE);
 
         return legalMoves;
@@ -61,14 +53,14 @@ public class LegalMovesChecker {
             Move move = new Move(king, initialKingPosition, kingTarget);
             move.setCastling(true, Move.CastlingType.CASTLING_kING_SIDE);
 
-            legalMoves.addMoveFor(initialKingPosition, move);
+            legalMoves.add(move);
         }
         if (canCastleQueenSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
             kingTarget = initialKingPosition - 2;
             Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
             Move move = new Move(king, initialKingPosition, kingTarget);
             move.setCastling(true, Move.CastlingType.CASTLING_QUEEN_SIDE);
-            legalMoves.addMoveFor(initialKingPosition, move);
+            legalMoves.add( move);
 
         }
 
