@@ -539,8 +539,11 @@ public class ChessBoard {
         if (move.isCastling()) {
             int rookPosition;
             int rookCastlingTarget;
-            if (moveColor == Piece.Color.WHITE) whiteCastlingRights = NO_CASTLING;
-            else blackCastlingRights = NO_CASTLING;
+            if (moveColor == Piece.Color.WHITE){
+                whiteCastlingRights = NO_CASTLING;
+            } else{
+                blackCastlingRights = NO_CASTLING;
+            }
 
             if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
                 rookPosition = LegalMovesChecker.getInitialRookKingSide(this,

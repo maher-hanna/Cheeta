@@ -884,7 +884,7 @@ public class MoveGenerator {
             for (int i = 0; i < quietTargetsCount; i++) {
                 int target = BitMath.getLSBitIndex(quietTargets);
                 quietTargets = BitMath.popBit(quietTargets, target);
-                move = new Move(new Piece(Piece.Type.KING, Piece.Color.values()[color],
+                move = new Move(new Piece(type, Piece.Color.values()[color],
                         bishopPosition), bishopPosition, target);
 
                 moves.add(move);
