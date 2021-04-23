@@ -49,37 +49,32 @@ class MyRunnable implements Runnable {
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard, Game.moveGenerator,
                 maxingPlayer);
-        ArrayList<MoveScore> moveScores;
-        ArrayList<MoveScore> moveScoresAfterSearch = new ArrayList<>();
+
 
         int maxDepth = 0;
         boolean timeFinished = false;
-        int bestMoveIndex = 0;
         long timeLeft = maxSearchTime;
-        for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-            moveScoresAfterSearch.add(new MoveScore(0, i));
-        }
+        int moveIndex = 0;
         do {
             timeLeft = (startTime + maxSearchTime) - System.nanoTime();
             maxDepth++;
-            moveScores = search(chessBoard, toPlayLegalMoves, moveScoresAfterSearch, timeLeft, maxDepth);
-            if (moveScores.isEmpty()) {
+            int currentDepthMoveIndex = search(chessBoard, toPlayLegalMoves,timeLeft, maxDepth);
+            if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
                 break;
+            } else{
+                moveIndex = currentDepthMoveIndex;
             }
-            moveScoresAfterSearch = new ArrayList<>(moveScores);
-            Collections.sort(moveScoresAfterSearch);
-            bestMoveIndex = moveScoresAfterSearch.get(0).moveIndex;
-            moveScores.clear();
+
         } while (!timeFinished);
 
 
         long duration = System.nanoTime() - startTime;
         duration = duration / 1000; // convert to milli second
         Log.d(Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
-                bestMoveIndex);
+                moveIndex);
         Log.d(Game.DEBUG, "Duration: " + (float) duration / 1000000 + " depth " + maxDepth);
 
-//
+
 //        evaluations = 0;
 //        int maxIndex = 0;
 //        int maxScore = Integer.MIN_VALUE;
@@ -99,25 +94,29 @@ class MyRunnable implements Runnable {
 //                maxIndex);
 //        Log.d(Game.DEBUG,"Duration: " + (float)duration / 1000000);
 
-        this.move = toPlayLegalMoves.get(bestMoveIndex);
+        this.move = toPlayLegalMoves.get(moveIndex);
 
     }
 
 
-    public ArrayList<MoveScore> search(ChessBoard chessBoard, LegalMoves moves, ArrayList<MoveScore> moveScores, long timeLeft, int maxDepth) {
+    public int search(ChessBoard chessBoard, LegalMoves moves, long timeLeft, int maxDepth) {
         int maxScore = Integer.MIN_VALUE;
         boolean timeFinished = false;
         long searchStart = System.nanoTime();
         int score = 0;
+        int maxIndex =  ChessBoard.NO_SQUARE;
+        int currentMaxIndex = 0;
         float progress = 0;
-        ArrayList<MoveScore> currentMovesScores = new ArrayList<>();
-        for (int i = 0; i < moveScores.size(); i++) {
+        for (int i = 0; i < moves.size(); i++) {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-            chessBoardAfterMove.move(moves.get(moveScores.get(i).moveIndex));
+            chessBoardAfterMove.move(moves.get(i));
             score = miniMax(chessBoardAfterMove, maxScore,
                     Integer.MAX_VALUE, maxDepth - 1, false);
-            currentMovesScores.add(new MoveScore(score, moveScores.get(i).moveIndex));
-            progress = (float) i / moveScores.size();
+            if(score > maxScore){
+                maxScore = score;
+                currentMaxIndex = i;
+            }
+            progress = (float) i / moves.size();
             if ((System.nanoTime() - searchStart) > timeLeft) {
                 if (progress < 0.75) {
                     timeFinished = true;
@@ -126,8 +125,8 @@ class MyRunnable implements Runnable {
 
             }
         }
-        if (timeFinished) currentMovesScores.clear();
-        return currentMovesScores;
+        if (!timeFinished) maxIndex = currentMaxIndex;
+        return maxIndex;
     }
 
 
