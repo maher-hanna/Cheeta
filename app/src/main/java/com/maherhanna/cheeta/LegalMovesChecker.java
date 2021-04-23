@@ -29,10 +29,10 @@ public class LegalMovesChecker {
         return legalMoves;
     }
 
-    public static LegalMoves getLegalMovesFor(ChessBoard chessBoard, MoveGenerator moveGenerator, Piece.Color color){
-        if(color == Piece.Color.WHITE){
+    public static LegalMoves getLegalMovesFor(ChessBoard chessBoard, MoveGenerator moveGenerator, Piece.Color color) {
+        if (color == Piece.Color.WHITE) {
             return getWhiteLegalMoves(chessBoard);
-        } else{
+        } else {
             return getBlackLegalMoves(chessBoard);
         }
     }
@@ -56,7 +56,7 @@ public class LegalMovesChecker {
             Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
             Move move = new Move(king, initialKingPosition, kingTarget);
             move.setCastling(true, Move.CastlingType.CASTLING_QUEEN_SIDE);
-            legalMoves.add( move);
+            legalMoves.add(move);
 
         }
 
@@ -361,25 +361,20 @@ public class LegalMovesChecker {
 
         Iterator<Move> itr = pieceLegalMoves.iterator();
         ChessBoard chessBoardAfterMove;
-        int kingPosition = chessBoard.getKingPosition(kingColor);
         while (itr.hasNext()) {
             chessBoardAfterMove = new ChessBoard(chessBoard);
 
             Move move = itr.next();
-            if(move.getPieceType() == Piece.Type.KING){
-                if(Game.moveGenerator.isSquareAttacked(chessBoard,
-                        move.getTo(), kingColor.getOpposite())){
-                    itr.remove();
 
-                }
-            }else{
-                chessBoardAfterMove.move(move);
+            chessBoardAfterMove.move(move);
+            int kingPosition = chessBoardAfterMove.getKingPosition(kingColor);
+            chessBoardAfterMove.setPieceAt(kingPosition,null);
 
-                if (Game.moveGenerator.isSquareAttacked(chessBoardAfterMove,
-                        kingPosition, kingColor.getOpposite())) {
-                    itr.remove();
-                }
+            if (Game.moveGenerator.isSquareAttacked(chessBoardAfterMove,
+                    kingPosition, kingColor.getOpposite())) {
+                itr.remove();
             }
+
 
         }
 
@@ -419,19 +414,19 @@ public class LegalMovesChecker {
         if (kingInCheck) {
             return false;
         }
-        if(color == Piece.Color.WHITE){
-            if(chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING){
+        if (color == Piece.Color.WHITE) {
+            if (chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING) {
                 return false;
             }
-            if(chessBoard.whiteCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE){
+            if (chessBoard.whiteCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE) {
                 return false;
             }
 
         } else {
-            if(chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING){
+            if (chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING) {
                 return false;
             }
-            if(chessBoard.blackCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE){
+            if (chessBoard.blackCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE) {
                 return false;
             }
 
@@ -453,19 +448,19 @@ public class LegalMovesChecker {
         if (kingInCheck) {
             return false;
         }
-        if(color == Piece.Color.WHITE){
-            if(chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING){
+        if (color == Piece.Color.WHITE) {
+            if (chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING) {
                 return false;
             }
-            if(chessBoard.whiteCastlingRights == ChessBoard.CASTLING_KING_SIDE){
+            if (chessBoard.whiteCastlingRights == ChessBoard.CASTLING_KING_SIDE) {
                 return false;
             }
 
         } else {
-            if(chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING){
+            if (chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING) {
                 return false;
             }
-            if(chessBoard.blackCastlingRights == ChessBoard.CASTLING_KING_SIDE){
+            if (chessBoard.blackCastlingRights == ChessBoard.CASTLING_KING_SIDE) {
                 return false;
             }
 

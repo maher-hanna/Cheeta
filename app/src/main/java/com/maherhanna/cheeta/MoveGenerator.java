@@ -1038,6 +1038,27 @@ public class MoveGenerator {
     }
 
 
+
+    public ChessBoard movePiece(ChessBoard chessBoard,Move move){
+        ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+        int fromSquare = move.getFrom();
+        int toSquare = move.getTo();
+        chessBoardAfterMove.setPieceAt(toSquare, chessBoardAfterMove.getPieceAt(fromSquare));
+        chessBoardAfterMove.setPieceAt(fromSquare, null);
+        chessBoardAfterMove.getPieceAt(toSquare).setPosition(toSquare);
+
+        if (move.isEnPasant()) {
+            if (move.getColor() == Piece.Color.WHITE) {
+                chessBoardAfterMove.setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), null);
+            } else {
+                chessBoardAfterMove.setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), null);
+            }
+        }
+        return chessBoardAfterMove;
+
+    }
+
+
     public ArrayList<Move> getWhitePseudoLegalMoves(ChessBoard chessBoard) {
         ArrayList<Move> moves = new ArrayList<>();
 
