@@ -361,10 +361,6 @@ public class Drawing {
         waitingForHuman = true;
     }
 
-    public boolean isWaitingForHumanToPlay() {
-        return waitingForHuman;
-    }
-
     public void humanPlayed(Move humanMove) {
         game.humanPlayed(humanMove);
 
@@ -376,10 +372,6 @@ public class Drawing {
 
     public boolean isGameFinished() {
         return game.isGameFinished();
-    }
-
-    public Piece getPieceAt(int position) {
-        return chessBoard.getPieceAt(position);
     }
 
     public ArrayList<Integer> getLegalMoves(int square) {

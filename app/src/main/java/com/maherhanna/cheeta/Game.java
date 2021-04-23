@@ -42,7 +42,7 @@ class Game {
         }
         //--------------------------------
 
-        this.chessBoard = new ChessBoard(drawing);
+        this.chessBoard = new ChessBoard();
 
         chessBoard.setUpBoard();
 

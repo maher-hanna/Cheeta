@@ -1088,6 +1088,19 @@ public class MoveGenerator {
         }
     }
 
+    boolean isKingAttacked(ChessBoard chessBoard, Piece.Color attackingColor){
+        ChessBoard chessBoardWithoutKing = new ChessBoard(chessBoard);
+        int kingPosition = chessBoard.getKingPosition(attackingColor.getOpposite());
+        chessBoardWithoutKing.setPieceAt(kingPosition,null);
+        if(attackingColor == Piece.Color.WHITE){
+            return (getAllAttackedSquaresFor(chessBoardWithoutKing, Piece.Color.WHITE) & (1L << kingPosition)) != 0;
+
+        } else {
+            return (getAllAttackedSquaresFor(chessBoardWithoutKing, Piece.Color.BLACK) & (1L << kingPosition)) != 0;
+
+        }
+    }
+
 
 
     public ChessBoard movePiece(ChessBoard chessBoard,Move move){
@@ -1298,6 +1311,24 @@ public class MoveGenerator {
             return 4;
         } else {
             return 60;
+        }
+    }
+
+
+    public static int getInitialRookKingSide( Piece.Color rookColor) {
+        if (rookColor == Piece.Color.WHITE) {
+            return 7;
+        } else {
+            return 63;
+        }
+
+    }
+
+    public static int getInitialRookQueenSide( Piece.Color rookColor) {
+        if (rookColor == Piece.Color.WHITE) {
+            return 0;
+        } else {
+            return 56;
         }
     }
 

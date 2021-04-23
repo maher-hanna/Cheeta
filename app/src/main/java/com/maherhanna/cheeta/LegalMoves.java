@@ -5,9 +5,7 @@ import java.util.HashMap;
 
 public class LegalMoves {
     private ArrayList<Move> legalMoves;
-    public LegalMoves(LegalMoves copy){
-        this.legalMoves = new ArrayList<Move>(copy.legalMoves);
-    }
+
     public LegalMoves(){
         legalMoves = new ArrayList<>();
     }

@@ -39,9 +39,7 @@ public class ChessBoard {
     public static final int CASTLING_BOTH_SIDES = 3;
 
 
-    public static int Piece(int type, int color) {
-        return type | (color << 3);
-    }
+
     //----------------------------------------------------------------------------------
 
 
@@ -118,7 +116,7 @@ public class ChessBoard {
     }
 
 
-    public ChessBoard(Drawing drawing) {
+    public ChessBoard() {
         pieces = new Piece[64];
 
         for (int i = 0; i < 64; ++i) {
@@ -299,8 +297,8 @@ public class ChessBoard {
             setPieceAt(i, Piece.Type.values()[pieceType(i) - 1], Piece.Color.values()[pieceColor(i)]);
         }
         moves.initialEnPassantTarget = enPassantTarget;
-        updateWhiteLegalMoves(false);
-        updateBlackLegalMoves(false);
+        updateWhiteLegalMoves();
+        updateBlackLegalMoves();
 
     }
 
@@ -419,21 +417,21 @@ public class ChessBoard {
     }
 
 
-    public void updateBlackLegalMoves(boolean kingInCheck) {
+    public void updateBlackLegalMoves() {
         blackLegalMoves = Game.moveGenerator.getBlackLegalMoves(this);
     }
 
 
-    public void updateWhiteLegalMoves(boolean kingInCheck) {
+    public void updateWhiteLegalMoves() {
         whiteLegalMoves = Game.moveGenerator.getWhiteLegalMoves(this);
 
     }
 
     public void updateLegalMovesFor(Piece.Color playerColor, boolean kingInCheck) {
         if (playerColor == Piece.Color.WHITE) {
-            updateWhiteLegalMoves(kingInCheck);
+            updateWhiteLegalMoves();
         } else {
-            updateBlackLegalMoves(kingInCheck);
+            updateBlackLegalMoves();
         }
     }
 
@@ -455,13 +453,7 @@ public class ChessBoard {
         return whitePositions;
     }
 
-    public ArrayList<Integer> getPositionsFor(Piece.Color color) {
-        if (color == Piece.Color.WHITE) {
-            return getWhitePositions();
-        } else {
-            return getBlackPositions();
-        }
-    }
+
 
     public LegalMoves getLegalMovesFor(Piece.Color color) {
         if (color == Piece.Color.WHITE) {
@@ -482,7 +474,7 @@ public class ChessBoard {
 
 
     public boolean isKingInCheck(Piece.Color kingColor) {
-        return LegalMovesChecker.isSquareAttacked(this, getKingPosition(kingColor), kingColor.getOpposite());
+        return Game.moveGenerator.isKingAttacked(this,  kingColor.getOpposite());
     }
 
 
@@ -546,12 +538,12 @@ public class ChessBoard {
             }
 
             if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
-                rookPosition = LegalMovesChecker.getInitialRookKingSide(this,
+                rookPosition = Game.moveGenerator.getInitialRookKingSide(
                         moveColor);
                 rookCastlingTarget = move.getFrom() + 1;
 
             } else {
-                rookPosition = LegalMovesChecker.getInitialRookQueenSide(this,
+                rookPosition = Game.moveGenerator.getInitialRookQueenSide(
                         moveColor);
                 rookCastlingTarget = move.getFrom() - 1;
             }
@@ -561,7 +553,7 @@ public class ChessBoard {
         } else {
             if (move.getPieceType() == Piece.Type.ROOK) {
                 if (moveColor == Piece.Color.WHITE) {
-                    if (move.getFrom() == LegalMovesChecker.getInitialRookKingSide(this, Piece.Color.WHITE)) {
+                    if (move.getFrom() == Game.moveGenerator.getInitialRookKingSide(Piece.Color.WHITE)) {
                         //king side
                         whiteCastlingRights = BitMath.unSetBit(whiteCastlingRights, 0);
 
@@ -572,7 +564,7 @@ public class ChessBoard {
                     }
 
                 } else {
-                    if (move.getFrom() == LegalMovesChecker.getInitialRookKingSide(this, Piece.Color.BLACK)) {
+                    if (move.getFrom() == Game.moveGenerator.getInitialRookKingSide( Piece.Color.BLACK)) {
                         //king side
                         blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 0);
 
@@ -647,12 +639,12 @@ public class ChessBoard {
             Piece.Color moveColor = move.getColor();
 
             if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
-                rookPosition = LegalMovesChecker.getInitialRookKingSide(this,
+                rookPosition = Game.moveGenerator.getInitialRookKingSide(
                         moveColor);
                 currentRookPosition = move.getFrom() + 1;
 
             } else {
-                rookPosition = LegalMovesChecker.getInitialRookQueenSide(this,
+                rookPosition = Game.moveGenerator.getInitialRookQueenSide(
                         moveColor);
                 currentRookPosition = move.getFrom() - 1;
 
@@ -709,9 +701,7 @@ public class ChessBoard {
         return pieces[position];
     }
 
-    public Piece getPieceAt(int file, int rank) {
-        return pieces[GetPosition(file, rank)];
-    }
+
 
     public void setPieceAt(int position, Piece.Type pieceType, Piece.Color pieceColor) {
         Piece piece = new Piece(pieceType, pieceColor, position);
@@ -778,7 +768,7 @@ public class ChessBoard {
         Piece.Color lastPlayed = moves.getLastPlayed();
         Game.GameStatus gameStatus = Game.GameStatus.NOT_FINISHED;
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
-        boolean isKingInCheck = isKingInCheck(currentToPlayColor);
+        boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this,currentToPlayColor);
 
         if (isKingInCheck) {
             if (toPlayLegalMoves.size() == 0) {
@@ -814,18 +804,7 @@ public class ChessBoard {
         return gameStatus;
     }
 
-    public boolean checkGameFinished() {
-        boolean finished = false;
-        Piece.Color lastPlayed = moves.getLastPlayed();
-        Piece.Color currentToPlayColor = lastPlayed.getOpposite();
-        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(this,Game.moveGenerator,currentToPlayColor);
-        Game.GameStatus gameStatus = checkStatus(toPlayLegalMoves);
-        if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
-                || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
-            finished = true;
-        }
-        return finished;
-    }
+
 
     private boolean insufficientMaterial() {
         ArrayList<Integer> whitePieces = getWhitePositions();

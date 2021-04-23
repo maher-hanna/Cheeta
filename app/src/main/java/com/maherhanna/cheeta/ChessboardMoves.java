@@ -21,29 +21,11 @@ public class ChessboardMoves {
         moves.remove(moves.size() -1);
     }
 
-    public boolean hasPieceMoved(int initialPosition){
-        boolean hasMoved = false;
-        for(Move move : moves){
-            if(move.getFrom() == initialPosition){
-                hasMoved = true;
-                break;
-            }
-        }
-        return hasMoved;
-    }
 
     public Move getLastMove(){
         return moves.get(moves.size() -1);
     }
-    public Move getLastMoveFor(Piece.Color color){
-        Move lastMove;
-        lastMove = getLastMove();
-        if(lastMove.getColor() == color){
-            return lastMove;
-        } else {
-            return moves.get(moves.size() - 2);
-        }
-    }
+
     public Piece.Color getToPlayNow(){
         return getLastPlayed().getOpposite();
     }
