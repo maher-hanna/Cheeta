@@ -47,7 +47,7 @@ class MyRunnable implements Runnable {
     public void run() {
         long startTime = System.nanoTime();
 
-        LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard, Game.moveGenerator,
+        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard, Game.moveGenerator,
                 maxingPlayer);
         ArrayList<MoveScore> moveScores;
         ArrayList<MoveScore> moveScoresAfterSearch = new ArrayList<>();
@@ -134,7 +134,7 @@ class MyRunnable implements Runnable {
     public int miniMax(ChessBoard chessBoard, int alpha, int beta, float depth, boolean maxing) {
         Piece.Color toPlayColor = chessBoard.moves.getToPlayNow();
 
-        LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard, Game.moveGenerator,
+        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard, Game.moveGenerator,
                 toPlayColor);
         Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
         if (depth == 0) {
@@ -193,7 +193,7 @@ class MyRunnable implements Runnable {
     public int miniMax(ChessBoard chessBoard, int depth, boolean maxing) {
         Piece.Color toPlayColor = chessBoard.moves.getToPlayNow();
 
-        LegalMoves toPlayLegalMoves = LegalMovesChecker.getLegalMovesFor(chessBoard, Game.moveGenerator,
+        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard, Game.moveGenerator,
                 toPlayColor);
         Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
         if (depth == 0) {

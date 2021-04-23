@@ -1,6 +1,7 @@
 package com.maherhanna.cheeta;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class MoveGenerator {
     //move operations
@@ -1026,39 +1027,6 @@ public class MoveGenerator {
         return attackedSquares;
     }
 
-
-    boolean isSquareAttacked(ChessBoard chessBoard, int square,Piece.Color attackingColor){
-        if(attackingColor == Piece.Color.WHITE){
-            return (getAllAttackedSquaresFor(chessBoard, Piece.Color.WHITE) & (1L << square)) != 0;
-
-        } else {
-            return (getAllAttackedSquaresFor(chessBoard, Piece.Color.BLACK) & (1L << square)) != 0;
-
-        }
-    }
-
-
-
-    public ChessBoard movePiece(ChessBoard chessBoard,Move move){
-        ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-        int fromSquare = move.getFrom();
-        int toSquare = move.getTo();
-        chessBoardAfterMove.setPieceAt(toSquare, chessBoardAfterMove.getPieceAt(fromSquare));
-        chessBoardAfterMove.setPieceAt(fromSquare, null);
-        chessBoardAfterMove.getPieceAt(toSquare).setPosition(toSquare);
-
-        if (move.isEnPasant()) {
-            if (move.getColor() == Piece.Color.WHITE) {
-                chessBoardAfterMove.setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), null);
-            } else {
-                chessBoardAfterMove.setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), null);
-            }
-        }
-        return chessBoardAfterMove;
-
-    }
-
-
     public ArrayList<Move> getWhitePseudoLegalMoves(ChessBoard chessBoard) {
         ArrayList<Move> moves = new ArrayList<>();
 
@@ -1109,4 +1077,229 @@ public class MoveGenerator {
 
         return moves;
     }
+
+    boolean isSquareAttacked(ChessBoard chessBoard, int square,Piece.Color attackingColor){
+        if(attackingColor == Piece.Color.WHITE){
+            return (getAllAttackedSquaresFor(chessBoard, Piece.Color.WHITE) & (1L << square)) != 0;
+
+        } else {
+            return (getAllAttackedSquaresFor(chessBoard, Piece.Color.BLACK) & (1L << square)) != 0;
+
+        }
+    }
+
+
+
+    public ChessBoard movePiece(ChessBoard chessBoard,Move move){
+        ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+        int fromSquare = move.getFrom();
+        int toSquare = move.getTo();
+        chessBoardAfterMove.setPieceAt(toSquare, chessBoardAfterMove.getPieceAt(fromSquare));
+        chessBoardAfterMove.setPieceAt(fromSquare, null);
+        chessBoardAfterMove.getPieceAt(toSquare).setPosition(toSquare);
+
+        if (move.isEnPasant()) {
+            if (move.getColor() == Piece.Color.WHITE) {
+                chessBoardAfterMove.setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), null);
+            } else {
+                chessBoardAfterMove.setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), null);
+            }
+        }
+        return chessBoardAfterMove;
+
+    }
+
+    private void removeMovesThatExposeKing(ChessBoard chessBoard, ArrayList<Move> pieceLegalMoves, Piece.Color kingColor) {
+        Iterator<Move> itr = pieceLegalMoves.iterator();
+        ChessBoard chessBoardAfterMove;
+        while (itr.hasNext()) {
+
+            Move move = itr.next();
+
+            chessBoardAfterMove = movePiece(chessBoard,move);
+            int kingPosition = chessBoardAfterMove.getKingPosition(kingColor);
+            chessBoardAfterMove.setPieceAt(kingPosition,null);
+
+            if (Game.moveGenerator.isSquareAttacked(chessBoardAfterMove,
+                    kingPosition, kingColor.getOpposite())) {
+                itr.remove();
+            }
+
+
+        }
+
+    }
+
+    public LegalMoves getWhiteLegalMoves(ChessBoard chessBoard) {
+        ArrayList<Move> moves = new ArrayList<>();
+
+        //add pawns moves
+        moves.addAll(getWhitePawnsPushes(chessBoard.whitePawns, chessBoard.emptySquares));
+        moves.addAll(getWhitePawnsCaptures(chessBoard));
+
+        //add king moves
+        moves.addAll(getKingMoves(chessBoard, Piece.WHITE));
+
+        //add knights moves
+        moves.addAll(getKnightMoves(chessBoard, Piece.WHITE));
+
+        //add rooks moves
+        moves.addAll(getRooksMoves(chessBoard, chessBoard.whiteRooks, Piece.WHITE, Piece.ROOK));
+
+        //add bishops moves
+        moves.addAll(getBishopsMoves(chessBoard, chessBoard.whiteBishops, Piece.WHITE, Piece.BISHOP));
+
+        //add queens moves
+        moves.addAll(getQueensMoves(chessBoard, chessBoard.whiteQueens, Piece.WHITE, Piece.QUEEN));
+
+        removeMovesThatExposeKing(chessBoard,moves, Piece.Color.WHITE);
+        LegalMoves legalMoves = new LegalMoves();
+        legalMoves.addAll(moves);
+        checkCastling(chessBoard,legalMoves, Piece.Color.WHITE);
+
+        return legalMoves;
+    }
+
+
+    public LegalMoves getBlackLegalMoves(ChessBoard chessBoard) {
+        ArrayList<Move> moves = new ArrayList<>();
+
+        //add pawns moves
+        moves.addAll(getBlackPawnsPushes(chessBoard.blackPawns, chessBoard.emptySquares));
+        moves.addAll(getBlackPawnsCaptures(chessBoard));
+
+        //add king moves
+        moves.addAll(getKingMoves(chessBoard, Piece.BLACK));
+
+        //add knights moves
+        moves.addAll(getKnightMoves(chessBoard, Piece.BLACK));
+
+        //add rooks moves
+        moves.addAll(getRooksMoves(chessBoard, chessBoard.blackRooks, Piece.BLACK, Piece.ROOK));
+
+        //add bishops moves
+        moves.addAll(getBishopsMoves(chessBoard, chessBoard.blackBishops, Piece.BLACK, Piece.BISHOP));
+
+        //add queens moves
+        moves.addAll(getQueensMoves(chessBoard, chessBoard.blackQueens, Piece.BLACK, Piece.QUEEN));
+
+
+        removeMovesThatExposeKing(chessBoard,moves, Piece.Color.BLACK);
+        LegalMoves legalMoves = new LegalMoves();
+        legalMoves.addAll(moves);
+        checkCastling(chessBoard,legalMoves, Piece.Color.BLACK);
+
+
+        return legalMoves;
+    }
+    public LegalMoves getLegalMovesFor(ChessBoard chessBoard, MoveGenerator moveGenerator, Piece.Color color) {
+        if (color == Piece.Color.WHITE) {
+            return getWhiteLegalMoves(chessBoard);
+        } else {
+            return getBlackLegalMoves(chessBoard);
+        }
+    }
+
+    private void checkCastling(ChessBoard chessBoard, LegalMoves legalMoves,
+                                      Piece.Color color) {
+
+        int initialKingPosition = getInitialKingPosition(chessBoard, color);
+        int kingTarget = 0;
+        if (canCastleKingSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
+            kingTarget = initialKingPosition + 2;
+            Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
+            Move move = new Move(king, initialKingPosition, kingTarget);
+            move.setCastling(true, Move.CastlingType.CASTLING_kING_SIDE);
+
+            legalMoves.add(move);
+        }
+        if (canCastleQueenSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
+            kingTarget = initialKingPosition - 2;
+            Piece king = new Piece(Piece.Type.KING, color, initialKingPosition);
+            Move move = new Move(king, initialKingPosition, kingTarget);
+            move.setCastling(true, Move.CastlingType.CASTLING_QUEEN_SIDE);
+            legalMoves.add(move);
+
+        }
+
+    }
+
+    private boolean canCastleKingSide(ChessBoard chessBoard, Piece.Color color, boolean kingInCheck) {
+        if (kingInCheck) {
+            return false;
+        }
+        if (color == Piece.Color.WHITE) {
+            if (chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING) {
+                return false;
+            }
+            if (chessBoard.whiteCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE) {
+                return false;
+            }
+
+        } else {
+            if (chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING) {
+                return false;
+            }
+            if (chessBoard.blackCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE) {
+                return false;
+            }
+
+        }
+
+        int initialKingPosition = getInitialKingPosition(chessBoard, color);
+
+        if (!chessBoard.isSquareEmpty(initialKingPosition + 1) ||
+                !chessBoard.isSquareEmpty(initialKingPosition + 2)) {
+            return false;
+        }
+
+
+        return !isSquareAttacked(chessBoard, initialKingPosition + 1, color.getOpposite()) &&
+                !isSquareAttacked(chessBoard, initialKingPosition + 2, color.getOpposite());
+    }
+
+    private boolean canCastleQueenSide(ChessBoard chessBoard, Piece.Color color, boolean kingInCheck) {
+        if (kingInCheck) {
+            return false;
+        }
+        if (color == Piece.Color.WHITE) {
+            if (chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING) {
+                return false;
+            }
+            if (chessBoard.whiteCastlingRights == ChessBoard.CASTLING_KING_SIDE) {
+                return false;
+            }
+
+        } else {
+            if (chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING) {
+                return false;
+            }
+            if (chessBoard.blackCastlingRights == ChessBoard.CASTLING_KING_SIDE) {
+                return false;
+            }
+
+        }
+        int initialKingPosition = getInitialKingPosition(chessBoard, color);
+
+
+        if (!chessBoard.isSquareEmpty(initialKingPosition - 1) ||
+                !chessBoard.isSquareEmpty(initialKingPosition - 2) ||
+                !chessBoard.isSquareEmpty(initialKingPosition - 3)) {
+            return false;
+        }
+
+        return !isSquareAttacked(chessBoard, initialKingPosition - 1, color.getOpposite()) &&
+                !isSquareAttacked(chessBoard, initialKingPosition - 2, color.getOpposite());
+    }
+
+
+    public int getInitialKingPosition(ChessBoard chessBoard, Piece.Color kingColor) {
+        if (kingColor == Piece.Color.WHITE) {
+            return 4;
+        } else {
+            return 60;
+        }
+    }
+
+
 }
