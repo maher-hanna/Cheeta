@@ -940,6 +940,102 @@ public class MoveGenerator {
     }
     //*******************************************************************************
 
+    public long getAllAttackedSquaresFor(ChessBoard chessBoard, Piece.Color color){
+        long attackedSquares = 0;
+
+        long pawns = 0;
+        long rooks = 0;
+        long bishops = 0;
+        long knights = 0;
+        long queens = 0;
+        long king =  0;
+
+        if(color == Piece.Color.WHITE){
+            pawns = chessBoard.whitePawns;
+            rooks = chessBoard.whiteRooks;
+            bishops = chessBoard.whiteBishops;
+            knights = chessBoard.whiteKnights;
+            queens = chessBoard.whiteQueens;
+            king = chessBoard.whiteKing;
+
+            attackedSquares |= (northWest(pawns) | northEast(pawns)) & chessBoard.emptySquares;
+        } else {
+            pawns = chessBoard.blackPawns;
+            rooks = chessBoard.blackRooks;
+            bishops = chessBoard.blackBishops;
+            knights = chessBoard.blackKnights;
+            queens = chessBoard.blackQueens;
+            king = chessBoard.blackKing;
+
+            attackedSquares |= (southWest(pawns) | southEast(pawns)) & chessBoard.emptySquares;
+
+        }
+
+        //check rooks and queens
+        long rooksAndQueens = rooks | queens;
+        int rooksAndQueensCount = BitMath.countSetBits(rooksAndQueens);
+        int rookPosition = 0;
+        for (int rook = 0; rook < rooksAndQueensCount; rook++) {
+            rookPosition = BitMath.getLSBitIndex(rooksAndQueens);
+            rooksAndQueens = BitMath.popBit(rooksAndQueens, rookPosition);
+
+            long northTargets = rookAttacks(NORTH, rookPosition, chessBoard.allPieces) & chessBoard.emptySquares;
+            long southTargets = rookAttacks(SOUTH, rookPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
+            long eastTargets = rookAttacks(EAST, rookPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
+            long westTargets = rookAttacks(WEST, rookPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
+            attackedSquares |= northTargets | southTargets | eastTargets | westTargets;
+        }
+
+        //check bishops and queens
+        long bishopsAndQueens = bishops | queens;
+        int bishopsAndQueensCount = BitMath.countSetBits(bishopsAndQueens);
+        int bishopPosition = 0;
+        for (int bishop = 0; bishop < bishopsAndQueens; bishop++) {
+            bishopPosition = BitMath.getLSBitIndex(bishopsAndQueens);
+            bishopsAndQueens = BitMath.popBit(bishopsAndQueens, bishopPosition);
+
+            long northWestTargets = bishopAttacks(NORTH_WEST, bishopPosition, chessBoard.allPieces) & chessBoard.emptySquares;
+            long southWestTargets = bishopAttacks(SOUTH_WEST, bishopPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
+            long northEastTargets = bishopAttacks(NORTH_EAST, bishopPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
+            long southEastTargets = bishopAttacks(SOUTH_EAST, bishopPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
+            attackedSquares |= northWestTargets | southWestTargets | northEastTargets | southEastTargets;
+        }
+
+        //check knights
+        int knightsCount = BitMath.countSetBits(knights);
+        int knightPosition = 0;
+        for (int knight = 0; knight < knightsCount; knight++) {
+            knightPosition = BitMath.getLSBitIndex(knights);
+            knights = BitMath.popBit(knights, knightPosition);
+
+            attackedSquares |= knightAttacksMask[knightPosition] & chessBoard.emptySquares;
+
+        }
+
+        //check king
+        attackedSquares |= northWest(king) & chessBoard.emptySquares;
+        attackedSquares |= north(king) & chessBoard.emptySquares;
+        attackedSquares |= northEast(king) & chessBoard.emptySquares;
+        attackedSquares |= west(king) & chessBoard.emptySquares;
+        attackedSquares |= east(king) & chessBoard.emptySquares;
+        attackedSquares |= southWest(king) & chessBoard.emptySquares;
+        attackedSquares |= south(king) & chessBoard.emptySquares;
+        attackedSquares |= southEast(king) & chessBoard.emptySquares;
+
+
+        return attackedSquares;
+    }
+
+
+    boolean isSquareAttacked(ChessBoard chessBoard, int square,Piece.Color attackingColor){
+        if(attackingColor == Piece.Color.WHITE){
+            return (getAllAttackedSquaresFor(chessBoard, Piece.Color.WHITE) & (1L << square)) != 0;
+
+        } else {
+            return (getAllAttackedSquaresFor(chessBoard, Piece.Color.BLACK) & (1L << square)) != 0;
+
+        }
+    }
 
     public ArrayList<Move> getWhitePseudoLegalMoves(ChessBoard chessBoard) {
         ArrayList<Move> moves = new ArrayList<>();

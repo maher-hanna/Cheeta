@@ -25,6 +25,7 @@ public class LegalMoves {
 
 
 
+
     public boolean canMove(int from, int to){
         ArrayList<Integer> targetsForFrom = getLegalTargetsFor(from);
         if(targetsForFrom.isEmpty()) return false;
