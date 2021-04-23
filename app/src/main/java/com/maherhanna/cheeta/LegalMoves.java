@@ -29,11 +29,7 @@ public class LegalMoves {
     public boolean canMove(int from, int to){
         ArrayList<Integer> targetsForFrom = getLegalTargetsFor(from);
         if(targetsForFrom.isEmpty()) return false;
-        for(int target : targetsForFrom){
-            if(target == to){
-                return true;
-            }
-        }
+        if(targetsForFrom.contains(to)) return true;
         return false;
     }
 

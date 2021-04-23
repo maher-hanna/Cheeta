@@ -79,25 +79,25 @@ class MyRunnable implements Runnable {
                 bestMoveIndex);
         Log.d(Game.DEBUG, "Duration: " + (float) duration / 1000000 + " depth " + maxDepth);
 
-
-        evaluations = 0;
-        int maxIndex = 0;
-        int maxScore = Integer.MIN_VALUE;
-        startTime = System.nanoTime();
-        for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-            chessBoardAfterMove.move(toPlayLegalMoves.get(i));
-            int score = miniMax(chessBoardAfterMove, 2,false);
-            if (score > maxScore) {
-                maxScore = score;
-                maxIndex = i;
-            }
-        }
-        duration = System.nanoTime() - startTime;
-        duration = duration / 1000; // convert to milli second
-        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
-                maxIndex);
-        Log.d(Game.DEBUG,"Duration: " + (float)duration / 1000000);
+//
+//        evaluations = 0;
+//        int maxIndex = 0;
+//        int maxScore = Integer.MIN_VALUE;
+//        startTime = System.nanoTime();
+//        for (int i = 0; i < toPlayLegalMoves.size(); i++) {
+//            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+//            chessBoardAfterMove.move(toPlayLegalMoves.get(i));
+//            int score = miniMax(chessBoardAfterMove, 2,false);
+//            if (score > maxScore) {
+//                maxScore = score;
+//                maxIndex = i;
+//            }
+//        }
+//        duration = System.nanoTime() - startTime;
+//        duration = duration / 1000; // convert to milli second
+//        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
+//                maxIndex);
+//        Log.d(Game.DEBUG,"Duration: " + (float)duration / 1000000);
 
         this.move = toPlayLegalMoves.get(bestMoveIndex);
 

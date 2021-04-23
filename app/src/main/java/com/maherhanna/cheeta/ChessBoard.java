@@ -420,12 +420,12 @@ public class ChessBoard {
 
 
     public void updateBlackLegalMoves(boolean kingInCheck) {
-        blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this, Game.moveGenerator);
+        blackLegalMoves = LegalMovesChecker.getBlackLegalMoves(this);
     }
 
 
     public void updateWhiteLegalMoves(boolean kingInCheck) {
-        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this, Game.moveGenerator);
+        whiteLegalMoves = LegalMovesChecker.getWhiteLegalMoves(this);
 
     }
 

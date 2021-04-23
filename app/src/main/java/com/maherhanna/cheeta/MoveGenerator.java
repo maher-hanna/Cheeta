@@ -1037,6 +1037,7 @@ public class MoveGenerator {
         }
     }
 
+
     public ArrayList<Move> getWhitePseudoLegalMoves(ChessBoard chessBoard) {
         ArrayList<Move> moves = new ArrayList<>();
 

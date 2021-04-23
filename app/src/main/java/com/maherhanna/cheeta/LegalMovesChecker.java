@@ -1,15 +1,12 @@
 package com.maherhanna.cheeta;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 
 public class LegalMovesChecker {
 
-    public static LegalMoves getBlackLegalMoves(ChessBoard chessBoard, MoveGenerator moveGenerator) {
+    public static LegalMoves getBlackLegalMoves(ChessBoard chessBoard) {
         LegalMoves legalMoves = new LegalMoves();
-        ArrayList<Integer> blackPositions = chessBoard.getBlackPositions();
 
         ArrayList<Move> pseudoLegalMoves = Game.moveGenerator.getBlackPseudoLegalMoves(chessBoard);
         removeMovesThatExposeKing(chessBoard, pseudoLegalMoves, Piece.Color.BLACK);
@@ -20,9 +17,8 @@ public class LegalMovesChecker {
         return legalMoves;
     }
 
-    public static LegalMoves getWhiteLegalMoves(ChessBoard chessBoard, MoveGenerator moveGenerator) {
+    public static LegalMoves getWhiteLegalMoves(ChessBoard chessBoard) {
         LegalMoves legalMoves = new LegalMoves();
-        ArrayList<Integer> whitePositions = chessBoard.getWhitePositions();
 
         ArrayList<Move> pseudoLegalMoves = Game.moveGenerator.getWhitePseudoLegalMoves(chessBoard);
         removeMovesThatExposeKing(chessBoard, pseudoLegalMoves, Piece.Color.WHITE);
@@ -35,9 +31,9 @@ public class LegalMovesChecker {
 
     public static LegalMoves getLegalMovesFor(ChessBoard chessBoard, MoveGenerator moveGenerator, Piece.Color color){
         if(color == Piece.Color.WHITE){
-            return getWhiteLegalMoves(chessBoard, moveGenerator);
+            return getWhiteLegalMoves(chessBoard);
         } else{
-            return getBlackLegalMoves(chessBoard, moveGenerator);
+            return getBlackLegalMoves(chessBoard);
         }
     }
 
@@ -364,15 +360,27 @@ public class LegalMovesChecker {
     private static void removeMovesThatExposeKing(ChessBoard chessBoard, ArrayList<Move> pieceLegalMoves, Piece.Color kingColor) {
 
         Iterator<Move> itr = pieceLegalMoves.iterator();
+        ChessBoard chessBoardAfterMove;
+        int kingPosition = chessBoard.getKingPosition(kingColor);
         while (itr.hasNext()) {
-            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+            chessBoardAfterMove = new ChessBoard(chessBoard);
 
             Move move = itr.next();
-            chessBoardAfterMove.move(move);
-            if (isSquareAttacked(chessBoardAfterMove,
-                    chessBoardAfterMove.getKingPosition(kingColor), kingColor.getOpposite())) {
-                itr.remove();
+            if(move.getPieceType() == Piece.Type.KING){
+                if(Game.moveGenerator.isSquareAttacked(chessBoard,
+                        move.getTo(), kingColor.getOpposite())){
+                    itr.remove();
+
+                }
+            }else{
+                chessBoardAfterMove.move(move);
+
+                if (Game.moveGenerator.isSquareAttacked(chessBoardAfterMove,
+                        kingPosition, kingColor.getOpposite())) {
+                    itr.remove();
+                }
             }
+
         }
 
     }
