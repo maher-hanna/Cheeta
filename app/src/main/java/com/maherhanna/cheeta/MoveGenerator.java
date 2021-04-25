@@ -1179,7 +1179,26 @@ public class MoveGenerator {
     }
 
     public LegalMoves getWhiteLegalMoves(ChessBoard chessBoard) {
-        ArrayList<Move> moves =  getWhitePseudoLegalMoves(chessBoard);
+        ArrayList<Move> moves = new ArrayList<>();
+
+        //add pawns moves
+        moves.addAll(getWhitePawnsPushes(chessBoard.whitePawns, chessBoard.emptySquares));
+        moves.addAll(getWhitePawnsCaptures(chessBoard));
+
+        //add king moves
+        moves.addAll(getKingMoves(chessBoard, Piece.WHITE));
+
+        //add knights moves
+        moves.addAll(getKnightMoves(chessBoard, Piece.WHITE));
+
+        //add rooks moves
+        moves.addAll(getRooksMoves(chessBoard, chessBoard.whiteRooks, Piece.WHITE, Piece.ROOK));
+
+        //add bishops moves
+        moves.addAll(getBishopsMoves(chessBoard, chessBoard.whiteBishops, Piece.WHITE, Piece.BISHOP));
+
+        //add queens moves
+        moves.addAll(getQueensMoves(chessBoard, chessBoard.whiteQueens, Piece.WHITE, Piece.QUEEN));
 
         removeMovesThatExposeKing(chessBoard,moves, Piece.Color.WHITE);
         LegalMoves legalMoves = new LegalMoves();
@@ -1191,7 +1210,27 @@ public class MoveGenerator {
 
 
     public LegalMoves getBlackLegalMoves(ChessBoard chessBoard) {
-        ArrayList<Move> moves = getBlackPseudoLegalMoves(chessBoard);
+        ArrayList<Move> moves = new ArrayList<>();
+
+        //add pawns moves
+        moves.addAll(getBlackPawnsPushes(chessBoard.blackPawns, chessBoard.emptySquares));
+        moves.addAll(getBlackPawnsCaptures(chessBoard));
+
+        //add king moves
+        moves.addAll(getKingMoves(chessBoard, Piece.BLACK));
+
+        //add knights moves
+        moves.addAll(getKnightMoves(chessBoard, Piece.BLACK));
+
+        //add rooks moves
+        moves.addAll(getRooksMoves(chessBoard, chessBoard.blackRooks, Piece.BLACK, Piece.ROOK));
+
+        //add bishops moves
+        moves.addAll(getBishopsMoves(chessBoard, chessBoard.blackBishops, Piece.BLACK, Piece.BISHOP));
+
+        //add queens moves
+        moves.addAll(getQueensMoves(chessBoard, chessBoard.blackQueens, Piece.BLACK, Piece.QUEEN));
+
 
         removeMovesThatExposeKing(chessBoard,moves, Piece.Color.BLACK);
         LegalMoves legalMoves = new LegalMoves();
