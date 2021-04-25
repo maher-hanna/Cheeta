@@ -3,6 +3,7 @@ package com.maherhanna.cheeta;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ComputerAi {
     public Move getMove(ChessBoard chessBoard, Piece.Color toPlayNow, float maxSearchTime) {
@@ -54,6 +55,7 @@ class MyRunnable implements Runnable {
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(startChessBoard,
                 maxingPlayer);
         ArrayList<MoveScore> moveScores = sortMoves(toPlayLegalMoves);
+        Collections.sort(moveScores);
 
         int maxDepth = 0;
         boolean timeFinished = false;
@@ -163,6 +165,7 @@ class MyRunnable implements Runnable {
         }
 
         ArrayList<MoveScore> scores = sortMoves(toPlayLegalMoves);
+        Collections.sort(scores);
 
         if (maxing) {
             int maxScore = Integer.MIN_VALUE;
@@ -261,13 +264,13 @@ class MyRunnable implements Runnable {
                 int takenPieceValue = getPieceValue(currentMove.getTakenPieceType());
                 int movedPieceValue = getPieceValue(currentMove.getPieceType());
                 if(takenPieceValue > movedPieceValue){
-                    currentScore += 1;
+                    currentScore += 2;
                 }
                 if(currentMove.getTakenPieceType() == Piece.Type.KING) currentScore += 10;
 
             }
             if (currentMove.isPromote()) {
-                currentScore += 2;
+                currentScore += 3;
             }
 
             scores.add(new MoveScore(currentScore, i));
