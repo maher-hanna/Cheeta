@@ -1090,7 +1090,7 @@ public class MoveGenerator {
 
     boolean isKingAttacked(ChessBoard chessBoard, Piece.Color attackingColor){
         ChessBoard chessBoardWithoutKing = new ChessBoard(chessBoard);
-        int kingPosition = chessBoard.getKingPosition(attackingColor.getOpposite());
+        int kingPosition = getKingPosition(chessBoard, attackingColor.getOpposite());
         chessBoardWithoutKing.setPieceAt(kingPosition,null);
         if(attackingColor == Piece.Color.WHITE){
             return (getAllAttackedSquaresFor(chessBoardWithoutKing, Piece.Color.WHITE) & (1L << kingPosition)) != 0;
@@ -1099,6 +1099,24 @@ public class MoveGenerator {
             return (getAllAttackedSquaresFor(chessBoardWithoutKing, Piece.Color.BLACK) & (1L << kingPosition)) != 0;
 
         }
+    }
+    public int getKingPosition(ChessBoard chessBoard, Piece.Color kingColor) {
+        int kingPosition = ChessBoard.OUT;
+        if(kingColor == Piece.Color.WHITE){
+            kingPosition = BitMath.getLSBitIndex(chessBoard.whiteKing);
+        } else{
+            kingPosition = BitMath.getLSBitIndex(chessBoard.blackKing);
+
+        }
+        return kingPosition;
+    }
+
+    public ArrayList<Integer> getBlackPositions(ChessBoard chessBoard) {
+        ArrayList<Integer> blackPositions = new ArrayList<>();
+        long whitePieces = chessBoard.allWhitePieces;
+        int currentPiece;
+
+        return blackPositions;
     }
 
 

@@ -132,7 +132,7 @@ public class ChessBoard {
     }
 
     public void setUpBoard() {
-        setupFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        setupFromFen("3k4/Q6R/8/3K4/8/8/8/8 w - - 0 1");
 
     }
 
@@ -478,18 +478,6 @@ public class ChessBoard {
     }
 
 
-    public int getKingPosition(Piece.Color kingColor) {
-        int kingPosition = OUT;
-        for (int i = MIN_POSITION; i <= MAX_POSITION; i++) {
-            Piece piece = getPieceAt(i);
-            if (piece != null && piece.getType() == Piece.Type.KING && piece.getColor() == kingColor) {
-                kingPosition = i;
-                break;
-            }
-        }
-        return kingPosition;
-    }
-
     public boolean canMove(int fromSquare, int toSquare) {
         boolean isLegal = false;
         if (isPieceBlackAt(fromSquare)) {
@@ -770,7 +758,7 @@ public class ChessBoard {
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
 
         if(toPlayLegalMoves.size() == 0){
-            boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this,currentToPlayColor);
+            boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this,lastPlayed);
             if(isKingInCheck){
                 //win
                 if (lastPlayed == Piece.Color.WHITE) {
