@@ -3,7 +3,6 @@ package com.maherhanna.cheeta;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class ComputerAi {
     public Move getMove(ChessBoard chessBoard, Piece.Color toPlayNow, float maxSearchTime) {
@@ -346,7 +345,7 @@ class MyRunnable implements Runnable {
 
         for (int square : squares) {
             Piece piece = chessboard.getPieceAt(square);
-            value += getPositionalValue(piece);
+            value += getPositionalValue(chessboard, piece);
 
         }
         return value;
@@ -364,13 +363,13 @@ class MyRunnable implements Runnable {
         for (int square : squares) {
             Piece piece = chessboard.getPieceAt(square);
             if (piece.getType() == Piece.Type.KING) continue;
-            value += getPositionalValue(piece);
+            value += getPositionalValue(chessboard, piece);
 
         }
         return value;
     }
 
-    private int getPositionalValue(Piece piece) {
+    private int getPositionalValue(ChessBoard chessBoard, Piece piece) {
         int value = 0;
         int piecePositionOnTable = ChessBoard.OUT;
         int file = ChessBoard.GetFile(piece.getPosition());
@@ -398,7 +397,7 @@ class MyRunnable implements Runnable {
                 value += Piece.QUEEN_VALUE + QUEEN_SQUARES_TABLE[piecePositionOnTable];
                 break;
             case KING:
-                if (isEndGame(startChessBoard)) {
+                if (isEndGame(chessBoard)) {
                     value += Piece.KING_VALUE + KING_END_GAME_SQUARES_TABLE[piecePositionOnTable];
 
                 } else {
