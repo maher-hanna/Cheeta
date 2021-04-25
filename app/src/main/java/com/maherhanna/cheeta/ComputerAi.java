@@ -29,13 +29,15 @@ class MyRunnable implements Runnable {
     private Move move;
     private final long maxSearchTime;
     private int evaluations;
-
+    private boolean foundCheckMate;
     public MyRunnable(ChessBoard startChessBoard, Piece.Color maxingPlayer, float maxSearchTime) {
         this.startChessBoard = startChessBoard;
         this.maxingPlayer = maxingPlayer;
         //convert seconds to nano seconds
         this.maxSearchTime = (long) (maxSearchTime * 1000000000);
         this.evaluations = 0;
+        foundCheckMate = false;
+
     }
 
     public Move getMove() {
@@ -48,44 +50,28 @@ class MyRunnable implements Runnable {
         long startTime = System.nanoTime();
 
 
-        //------------------------------------------
-        //sort moves
+
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(startChessBoard,
                 maxingPlayer);
-        ArrayList<MoveScore> moveScores = new ArrayList<>();
-        int maxScore = Integer.MIN_VALUE;
-
-        for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-            ChessBoard chessBoardAfterMove = new ChessBoard(startChessBoard);
-            chessBoardAfterMove.move(toPlayLegalMoves.get(i));
-            int score = miniMax(chessBoardAfterMove, maxScore,
-                    Integer.MAX_VALUE, 1, false);
-            moveScores.add(new MoveScore(score,i));
-            if(score > maxScore){
-                maxScore = score;
-
-            }
-
-        }
-        Collections.sort(moveScores);
-        //******************************************
-
+        ArrayList<MoveScore> moveScores = sortMoves(toPlayLegalMoves);
 
         int maxDepth = 0;
         boolean timeFinished = false;
         long timeLeft;
         int moveIndex = 0;
+        boolean foundCheckMate = false;
         do {
             timeLeft = (startTime + maxSearchTime) - System.nanoTime();
             maxDepth++;
-            int currentDepthMoveIndex = search(startChessBoard, toPlayLegalMoves,moveScores,timeLeft, maxDepth);
+            int currentDepthMoveIndex = search(startChessBoard, toPlayLegalMoves, moveScores, timeLeft, maxDepth);
             if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
                 break;
-            } else{
+            } else {
                 moveIndex = currentDepthMoveIndex;
+
             }
 
-        } while (!timeFinished);
+        } while (!foundCheckMate);
 
 
         long duration = System.nanoTime() - startTime;
@@ -118,12 +104,12 @@ class MyRunnable implements Runnable {
     }
 
 
-    public int search(ChessBoard chessBoard, LegalMoves moves,ArrayList<MoveScore> moveScores, long timeLeft, int maxDepth) {
+    public int search(ChessBoard chessBoard, LegalMoves moves, ArrayList<MoveScore> moveScores, long timeLeft, int maxDepth) {
         int maxScore = Integer.MIN_VALUE;
         boolean timeFinished = false;
         long searchStart = System.nanoTime();
         int score = 0;
-        int maxIndex =  ChessBoard.NO_SQUARE;
+        int maxIndex = ChessBoard.NO_SQUARE;
         int currentMaxIndex = 0;
         float progress = 0;
         for (int i = 0; i < moves.size(); i++) {
@@ -131,11 +117,12 @@ class MyRunnable implements Runnable {
             chessBoardAfterMove.move(moves.get(moveScores.get(i).moveIndex));
             score = miniMax(chessBoardAfterMove, maxScore,
                     Integer.MAX_VALUE, maxDepth - 1, false);
-            if(score > maxScore){
+            if (score > maxScore) {
                 maxScore = score;
                 currentMaxIndex = moveScores.get(i).moveIndex;
             }
-            if(score == Integer.MAX_VALUE){
+            if (score == Integer.MAX_VALUE) {
+                foundCheckMate = true;
                 break;
             }
             progress = (float) i / moves.size();
@@ -175,12 +162,13 @@ class MyRunnable implements Runnable {
             return getGameFinishedScoreFor(gameStatus, maxingPlayer);
         }
 
+        ArrayList<MoveScore> scores = sortMoves(toPlayLegalMoves);
 
         if (maxing) {
             int maxScore = Integer.MIN_VALUE;
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayLegalMoves.get(i));
+                chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
                 int score = miniMax(chessBoardAfterMove, alpha, beta,
                         depth - 1, !maxing);
                 maxScore = Math.max(maxScore, score);
@@ -195,7 +183,7 @@ class MyRunnable implements Runnable {
             int minScore = Integer.MAX_VALUE;
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayLegalMoves.get(i));
+                chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
                 int score = miniMax(chessBoardAfterMove, alpha, beta,
                         depth - 1, !maxing);
                 minScore = Math.min(minScore, score);
@@ -209,7 +197,6 @@ class MyRunnable implements Runnable {
         }
 
     }
-
 
 
     public int miniMax(ChessBoard chessBoard, int depth, boolean maxing) {
@@ -262,6 +249,31 @@ class MyRunnable implements Runnable {
     }
 
 
+    public ArrayList<MoveScore> sortMoves(LegalMoves moves) {
+        ArrayList<MoveScore> scores = new ArrayList<>();
+        int currentScore = 0;
+        Move currentMove;
+        for (int i = 0; i < moves.size(); i++) {
+            currentMove = moves.get(i);
+            currentScore = 0;
+            if (currentMove.isTake()) {
+                currentScore += 1;
+                int takenPieceValue = getPieceValue(currentMove.getTakenPieceType());
+                int movedPieceValue = getPieceValue(currentMove.getPieceType());
+                if(takenPieceValue > movedPieceValue){
+                    currentScore += 1;
+                }
+                if(currentMove.getTakenPieceType() == Piece.Type.KING) currentScore += 10;
+
+            }
+            if (currentMove.isPromote()) {
+                currentScore += 2;
+            }
+
+            scores.add(new MoveScore(currentScore, i));
+        }
+        return scores;
+    }
 
     int getGameFinishedWhiteScore(Game.GameStatus gameStatus) {
         int value = 0;
@@ -412,6 +424,31 @@ class MyRunnable implements Runnable {
     private int getInitialPiecesValue() {
         return Piece.KING_VALUE + Piece.QUEEN_VALUE + Piece.ROOK_VALUE + Piece.BISHOP_VALUE +
                 Piece.KNIGHT_VALUE + Piece.PAWN_VALUE;
+    }
+
+    private int getPieceValue(Piece.Type pieceType) {
+        int value = 0;
+        switch (pieceType) {
+            case PAWN:
+                value += Piece.PAWN_VALUE;
+                break;
+            case ROOK:
+                value += Piece.ROOK_VALUE;
+                break;
+            case KNIGHT:
+                value += Piece.KNIGHT_VALUE;
+                break;
+            case BISHOP:
+                value += Piece.BISHOP_VALUE;
+                break;
+            case QUEEN:
+                value += Piece.QUEEN_VALUE;
+                break;
+            case KING:
+                value += Piece.KING_VALUE;
+                break;
+        }
+        return value;
     }
 
     public static int[] PAWN_SQUARES_TABLE = {
