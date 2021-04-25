@@ -44,18 +44,10 @@ class Game {
 
         this.chessBoard = new ChessBoard();
 
-        chessBoard.setUpBoard();
+        chessBoard.setUpBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
 
         drawing.chessBoard = this.chessBoard;
-
-
-        //test move generator
-        //------------------------------------------------------------------------------
-//        ChessBoard test = new ChessBoard(drawing);
-//        test.setupFromFen("r6r/1b2k1bq/8/8/7B/8/8/R3K2R b QK - 3 2");
-//        Log.d(Game.DEBUG, "is attacked : " + Game.moveGenerator.isSquareAttacked(test,17, Piece.Color.BLACK));
-        //**********************************************************************************
 
     }
 

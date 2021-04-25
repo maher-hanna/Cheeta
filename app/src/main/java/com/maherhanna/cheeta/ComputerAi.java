@@ -94,15 +94,14 @@ class MyRunnable implements Runnable {
                 moveIndex);
         Log.d(Game.DEBUG, "Duration: " + (float) duration / 1000000 + " depth " + maxDepth);
 
-
 //        evaluations = 0;
 //        int maxIndex = 0;
 //        maxScore = Integer.MIN_VALUE;
 //        startTime = System.nanoTime();
 //        for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-//            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+//            ChessBoard chessBoardAfterMove = new ChessBoard(startChessBoard);
 //            chessBoardAfterMove.move(toPlayLegalMoves.get(i));
-//            int score = miniMax(chessBoardAfterMove, 2,false);
+//            int score = miniMax(chessBoardAfterMove, maxDepth,false);
 //            if (score > maxScore) {
 //                maxScore = score;
 //                maxIndex = i;
@@ -113,7 +112,7 @@ class MyRunnable implements Runnable {
 //        Log.d(Game.DEBUG, "minimax evaluations: " + evaluations + " move " +
 //                maxIndex);
 //        Log.d(Game.DEBUG,"Duration: " + (float)duration / 1000000);
-
+//
         this.move = toPlayLegalMoves.get(moveIndex);
 
     }
@@ -135,6 +134,9 @@ class MyRunnable implements Runnable {
             if(score > maxScore){
                 maxScore = score;
                 currentMaxIndex = moveScores.get(i).moveIndex;
+            }
+            if(score == Integer.MAX_VALUE){
+                break;
             }
             progress = (float) i / moves.size();
             if ((System.nanoTime() - searchStart) > timeLeft) {
@@ -207,6 +209,7 @@ class MyRunnable implements Runnable {
         }
 
     }
+
 
 
     public int miniMax(ChessBoard chessBoard, int depth, boolean maxing) {
