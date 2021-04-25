@@ -127,6 +127,7 @@ class Game {
 
     public void computerPlayed(Move computerMove, Piece.Color color) {
         drawing.drawAllPieces(computerMove);
+        drawing.show();
         currentPlayer = color.getOpposite();
         GameStatus gameStatus = checkGameFinished(color);
         if (gameStatus == GameStatus.NOT_FINISHED) {

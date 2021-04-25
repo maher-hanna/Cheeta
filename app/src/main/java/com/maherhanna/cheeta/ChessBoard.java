@@ -790,8 +790,8 @@ public class ChessBoard {
 
 
     private boolean insufficientMaterial() {
-        ArrayList<Integer> whitePieces = getWhitePositions();
-        ArrayList<Integer> blackPieces = getBlackPositions();
+        ArrayList<Integer> whitePieces = Game.moveGenerator.getWhitePositions(this);
+        ArrayList<Integer> blackPieces = Game.moveGenerator.getBlackPositions(this);
         int whitePiecesNumber = whitePieces.size();
         int blackPiecesNumber = blackPieces.size();
 

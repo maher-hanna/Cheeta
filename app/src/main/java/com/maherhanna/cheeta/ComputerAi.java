@@ -24,14 +24,14 @@ public class ComputerAi {
 
 
 class MyRunnable implements Runnable {
-    ChessBoard chessBoard;
+    ChessBoard startChessBoard;
     Piece.Color maxingPlayer;
     private Move move;
     private final long maxSearchTime;
     private int evaluations;
 
-    public MyRunnable(ChessBoard chessBoard, Piece.Color maxingPlayer, float maxSearchTime) {
-        this.chessBoard = chessBoard;
+    public MyRunnable(ChessBoard startChessBoard, Piece.Color maxingPlayer, float maxSearchTime) {
+        this.startChessBoard = startChessBoard;
         this.maxingPlayer = maxingPlayer;
         //convert seconds to nano seconds
         this.maxSearchTime = (long) (maxSearchTime * 1000000000);
@@ -50,13 +50,13 @@ class MyRunnable implements Runnable {
 
         //------------------------------------------
         //sort moves
-        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
+        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(startChessBoard,
                 maxingPlayer);
         ArrayList<MoveScore> moveScores = new ArrayList<>();
         int maxScore = Integer.MIN_VALUE;
 
         for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+            ChessBoard chessBoardAfterMove = new ChessBoard(startChessBoard);
             chessBoardAfterMove.move(toPlayLegalMoves.get(i));
             int score = miniMax(chessBoardAfterMove, maxScore,
                     Integer.MAX_VALUE, 1, false);
@@ -78,7 +78,7 @@ class MyRunnable implements Runnable {
         do {
             timeLeft = (startTime + maxSearchTime) - System.nanoTime();
             maxDepth++;
-            int currentDepthMoveIndex = search(chessBoard, toPlayLegalMoves,moveScores,timeLeft, maxDepth);
+            int currentDepthMoveIndex = search(startChessBoard, toPlayLegalMoves,moveScores,timeLeft, maxDepth);
             if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
                 break;
             } else{
@@ -323,9 +323,9 @@ class MyRunnable implements Runnable {
         int value = 0;
         ArrayList<Integer> squares;
         if (color == Piece.Color.WHITE) {
-            squares = chessboard.getWhitePositions();
+            squares = Game.moveGenerator.getWhitePositions(chessboard);
         } else {
-            squares = chessboard.getBlackPositions();
+            squares = Game.moveGenerator.getBlackPositions(chessboard);
         }
 
         for (int square : squares) {
@@ -340,9 +340,9 @@ class MyRunnable implements Runnable {
         int value = 0;
         ArrayList<Integer> squares;
         if (color == Piece.Color.WHITE) {
-            squares = chessboard.getWhitePositions();
+            squares = Game.moveGenerator.getWhitePositions(chessboard);
         } else {
-            squares = chessboard.getBlackPositions();
+            squares = Game.moveGenerator.getBlackPositions(chessboard);
         }
 
         for (int square : squares) {
@@ -382,7 +382,7 @@ class MyRunnable implements Runnable {
                 value += Piece.QUEEN_VALUE + QUEEN_SQUARES_TABLE[piecePositionOnTable];
                 break;
             case KING:
-                if (isEndGame(chessBoard)) {
+                if (isEndGame(startChessBoard)) {
                     value += Piece.KING_VALUE + KING_END_GAME_SQUARES_TABLE[piecePositionOnTable];
 
                 } else {

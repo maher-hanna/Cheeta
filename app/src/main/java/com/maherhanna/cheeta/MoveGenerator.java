@@ -1113,10 +1113,32 @@ public class MoveGenerator {
 
     public ArrayList<Integer> getBlackPositions(ChessBoard chessBoard) {
         ArrayList<Integer> blackPositions = new ArrayList<>();
-        long whitePieces = chessBoard.allWhitePieces;
-        int currentPiece;
+        long blackPieces = chessBoard.allBlackPieces;
+        int blackPiecesCount = BitMath.countSetBits(blackPieces);
+        int currentPiecePosition = 0;
+        for (int i = 0; i < blackPiecesCount; i++) {
+            currentPiecePosition = BitMath.getLSBitIndex(blackPieces);
+            blackPositions.add(currentPiecePosition);
+            blackPieces = BitMath.popBit(blackPieces, currentPiecePosition);
+
+        }
 
         return blackPositions;
+    }
+
+    public ArrayList<Integer> getWhitePositions(ChessBoard chessBoard) {
+        ArrayList<Integer> whitePositions = new ArrayList<>();
+        long whitePieces = chessBoard.allWhitePieces;
+        int whitePiecesCount = BitMath.countSetBits(whitePieces);
+        int currentPiecePosition = 0;
+        for (int i = 0; i < whitePiecesCount; i++) {
+            currentPiecePosition = BitMath.getLSBitIndex(whitePieces);
+            whitePositions.add(currentPiecePosition);
+            whitePieces = BitMath.popBit(whitePieces, currentPiecePosition);
+
+        }
+
+        return whitePositions;
     }
 
 
