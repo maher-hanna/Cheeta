@@ -71,7 +71,7 @@ public class Move {
     }
 
     public boolean isPawnDoubleMove(){
-        return BitMath.isBitSet(bitValue,PAWN_DOUBLE_PUSH_START);
+        return BitMath.getBitsValue(bitValue,PAWN_DOUBLE_PUSH_START,PAWN_DOUBLE_PUSH_MASK) == 1;
     }
 
     public int getPreviousFiftyMoves(){return (int)BitMath.getBitsValue(bitValue, PREVIOUS_FIFTY_MOVES_START,
@@ -218,10 +218,10 @@ public class Move {
     private static final long ENPASSANT_MASK = 67108864;
     private static final long ENPASSANT_START = 26;
 
-    private static final long PAWN_DOUBLE_PUSH_MASK = 67108864;
+    private static final long PAWN_DOUBLE_PUSH_MASK = 134217728;
     private static final long PAWN_DOUBLE_PUSH_START = 27;
 
-    private static final long PREVIOUS_FIFTY_MOVES_MASK = 4227858432L;
+    private static final long PREVIOUS_FIFTY_MOVES_MASK = 16911433728L;
     private static final long PREVIOUS_FIFTY_MOVES_START = 28;
 
     private static final long PREVIOUS_BCASTLING_RIGHTS_MASK = 51539607552L;

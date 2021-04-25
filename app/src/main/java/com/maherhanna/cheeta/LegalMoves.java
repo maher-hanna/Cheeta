@@ -54,6 +54,7 @@ public class LegalMoves {
             if((move.getFrom() == basicMove.getFrom()) &&
                     (move.getTo() == basicMove.getTo())){
                 legalMove = new Move(move);
+                break;
 
             }
         }
