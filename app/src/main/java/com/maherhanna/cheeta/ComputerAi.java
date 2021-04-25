@@ -58,10 +58,8 @@ class MyRunnable implements Runnable {
         Collections.sort(moveScores);
 
         int maxDepth = 0;
-        boolean timeFinished = false;
         long timeLeft;
         int moveIndex = 0;
-        boolean foundCheckMate = false;
         do {
             timeLeft = (startTime + maxSearchTime) - System.nanoTime();
             maxDepth++;
