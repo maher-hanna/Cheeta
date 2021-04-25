@@ -29,6 +29,7 @@ class MyRunnable implements Runnable {
     private Move move;
     private final long maxSearchTime;
     private int evaluations;
+    private boolean foundCheckMate;
 
     public MyRunnable(ChessBoard startChessBoard, Piece.Color maxingPlayer, float maxSearchTime) {
         this.startChessBoard = startChessBoard;
@@ -36,6 +37,7 @@ class MyRunnable implements Runnable {
         //convert seconds to nano seconds
         this.maxSearchTime = (long) (maxSearchTime * 1000000000);
         this.evaluations = 0;
+        foundCheckMate = false;
     }
 
     public Move getMove() {
@@ -85,7 +87,7 @@ class MyRunnable implements Runnable {
                 moveIndex = currentDepthMoveIndex;
             }
 
-        } while (!timeFinished);
+        } while (!foundCheckMate);
 
 
         long duration = System.nanoTime() - startTime;
