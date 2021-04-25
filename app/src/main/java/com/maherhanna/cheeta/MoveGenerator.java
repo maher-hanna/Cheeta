@@ -991,7 +991,7 @@ public class MoveGenerator {
         long bishopsAndQueens = bishops | queens;
         int bishopsAndQueensCount = BitMath.countSetBits(bishopsAndQueens);
         int bishopPosition = 0;
-        for (int bishop = 0; bishop < bishopsAndQueens; bishop++) {
+        for (int bishop = 0; bishop < bishopsAndQueensCount; bishop++) {
             bishopPosition = BitMath.getLSBitIndex(bishopsAndQueens);
             bishopsAndQueens = BitMath.popBit(bishopsAndQueens, bishopPosition);
 
@@ -1128,13 +1128,8 @@ public class MoveGenerator {
         while (itr.hasNext()) {
 
             Move move = itr.next();
-
             chessBoardAfterMove = movePiece(chessBoard,move);
-            int kingPosition = chessBoardAfterMove.getKingPosition(kingColor);
-            chessBoardAfterMove.setPieceAt(kingPosition,null);
-
-            if (Game.moveGenerator.isSquareAttacked(chessBoardAfterMove,
-                    kingPosition, kingColor.getOpposite())) {
+            if(Game.moveGenerator.isKingAttacked(chessBoardAfterMove,kingColor.getOpposite())){
                 itr.remove();
             }
 
@@ -1205,7 +1200,7 @@ public class MoveGenerator {
 
         return legalMoves;
     }
-    public LegalMoves getLegalMovesFor(ChessBoard chessBoard, MoveGenerator moveGenerator, Piece.Color color) {
+    public LegalMoves getLegalMovesFor(ChessBoard chessBoard,  Piece.Color color) {
         if (color == Piece.Color.WHITE) {
             return getWhiteLegalMoves(chessBoard);
         } else {

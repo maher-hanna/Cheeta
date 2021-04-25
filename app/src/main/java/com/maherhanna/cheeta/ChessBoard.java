@@ -768,10 +768,10 @@ public class ChessBoard {
         Piece.Color lastPlayed = moves.getLastPlayed();
         Game.GameStatus gameStatus = Game.GameStatus.NOT_FINISHED;
         Piece.Color currentToPlayColor = lastPlayed.getOpposite();
-        boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this,currentToPlayColor);
 
-        if (isKingInCheck) {
-            if (toPlayLegalMoves.size() == 0) {
+        if(toPlayLegalMoves.size() == 0){
+            boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this,currentToPlayColor);
+            if(isKingInCheck){
                 //win
                 if (lastPlayed == Piece.Color.WHITE) {
                     gameStatus = Game.GameStatus.FINISHED_WIN_WHITE;
@@ -779,25 +779,20 @@ public class ChessBoard {
                     gameStatus = Game.GameStatus.FINISHED_WIN_BLACK;
 
                 }
-            }
-        } else {
-
-            if (toPlayLegalMoves.size() == 0) {
-
+            } else{
                 //draw stalemate
                 gameStatus = Game.GameStatus.FINISHED_DRAW;
-            } else{
-                if (insufficientMaterial()) {
-                    gameStatus = Game.GameStatus.FINISHED_DRAW;
-                    return gameStatus;
-                }
-                if (fiftyMovesDrawCount == 50) {
-                    gameStatus = Game.GameStatus.FINISHED_DRAW;
-                    return gameStatus;
-                }
+
             }
 
-
+        }
+        if (insufficientMaterial()) {
+            gameStatus = Game.GameStatus.FINISHED_DRAW;
+            return gameStatus;
+        }
+        if (fiftyMovesDrawCount == 50) {
+            gameStatus = Game.GameStatus.FINISHED_DRAW;
+            return gameStatus;
         }
 
 

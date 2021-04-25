@@ -50,7 +50,7 @@ class MyRunnable implements Runnable {
 
         //------------------------------------------
         //sort moves
-        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard, Game.moveGenerator,
+        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
                 maxingPlayer);
         ArrayList<MoveScore> moveScores = new ArrayList<>();
         int maxScore = Integer.MIN_VALUE;
@@ -73,8 +73,8 @@ class MyRunnable implements Runnable {
 
         int maxDepth = 0;
         boolean timeFinished = false;
-        long timeLeft = maxSearchTime;
-        int moveIndex = moveScores.get(0).moveIndex;
+        long timeLeft;
+        int moveIndex = 0;
         do {
             timeLeft = (startTime + maxSearchTime) - System.nanoTime();
             maxDepth++;
@@ -153,7 +153,7 @@ class MyRunnable implements Runnable {
     public int miniMax(ChessBoard chessBoard, int alpha, int beta, float depth, boolean maxing) {
         Piece.Color toPlayColor = chessBoard.moves.getToPlayNow();
 
-        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard, Game.moveGenerator,
+        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
                 toPlayColor);
         Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
         if (depth == 0) {
@@ -212,7 +212,7 @@ class MyRunnable implements Runnable {
     public int miniMax(ChessBoard chessBoard, int depth, boolean maxing) {
         Piece.Color toPlayColor = chessBoard.moves.getToPlayNow();
 
-        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard, Game.moveGenerator,
+        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
                 toPlayColor);
         Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
         if (depth == 0) {
@@ -258,16 +258,7 @@ class MyRunnable implements Runnable {
         }
     }
 
-    private int getMaxScore(ArrayList<Integer> moveScores) {
-        int maxScore = Integer.MIN_VALUE;
-        for (int i = 0; i < moveScores.size(); i++) {
-            if (moveScores.get(i) >= maxScore) {
-                maxScore = moveScores.get(i);
-            }
-        }
-        return maxScore;
 
-    }
 
     int getGameFinishedWhiteScore(Game.GameStatus gameStatus) {
         int value = 0;

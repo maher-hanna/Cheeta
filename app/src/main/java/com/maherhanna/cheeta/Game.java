@@ -89,7 +89,7 @@ class Game {
 
 
     public GameStatus checkGameFinished(Piece.Color lastPlayed) {
-        return chessBoard.checkStatus(chessBoard.getLegalMovesFor(lastPlayed));
+        return chessBoard.checkStatus(chessBoard.getLegalMovesFor(lastPlayed.getOpposite()));
 
     }
 
