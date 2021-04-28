@@ -24,11 +24,11 @@ public class GameActivity extends AppCompatActivity {
         setContentView(R.layout.activity_game);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        int gameType =  getIntent().getIntExtra("game_type",Game.COMPUTER_HUMAN);
+        int humanPlayerColor =  getIntent().getIntExtra("humanPlayerColor",Piece.WHITE);
 
         drawing = new Drawing(this);
 
-        game = new Game(drawing,gameType,500);
+        game = new Game(drawing,humanPlayerColor);
         drawing.game = game;
 
     }

@@ -221,7 +221,9 @@ public class Drawing {
 
 
     public boolean canMove(int from, int to) {
-        if(!isWaitingHumanToPlay()){return false;}
+        if (!isWaitingHumanToPlay()) {
+            return false;
+        }
         return chessBoard.canMove(from, to);
     }
 
@@ -328,28 +330,23 @@ public class Drawing {
     }
 
 
-    public void finishGame(Game.GameStatus gameStatus, int gameType) {
+    public void finishGame(Game.GameStatus gameStatus) {
         int message_id;
         if (gameStatus == Game.GameStatus.FINISHED_DRAW) {
             message_id = R.string.message_draw;
         } else {
-            if (gameType == Game.COMPUTER_COMPUTER) {
-                if (gameStatus == Game.GameStatus.FINISHED_WIN_WHITE)
-                    message_id = R.string.message_white_won;
-                else message_id = R.string.message_black_won;
-            } else {
-                if (game.bottomScreenPlayerColor == Piece.Color.WHITE) {
-                    if (gameStatus == Game.GameStatus.FINISHED_WIN_WHITE) {
-                        message_id = R.string.message_you_won;
-                    } else {
-                        message_id = R.string.message_computer_won;
-                    }
+
+            if (game.humanPlayerColor == Piece.Color.WHITE) {
+                if (gameStatus == Game.GameStatus.FINISHED_WIN_WHITE) {
+                    message_id = R.string.message_you_won;
                 } else {
-                    if (gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
-                        message_id = R.string.message_you_won;
-                    } else {
-                        message_id = R.string.message_computer_won;
-                    }
+                    message_id = R.string.message_computer_won;
+                }
+            } else {
+                if (gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
+                    message_id = R.string.message_you_won;
+                } else {
+                    message_id = R.string.message_computer_won;
                 }
             }
 
@@ -368,11 +365,10 @@ public class Drawing {
 
     }
 
-    public boolean isWaitingHumanToPlay(){return waitingForHuman;}
-
-    public int getGameType() {
-        return game.gameType;
+    public boolean isWaitingHumanToPlay() {
+        return waitingForHuman;
     }
+
 
     public boolean isGameFinished() {
         return game.isGameFinished();
@@ -386,7 +382,7 @@ public class Drawing {
         Piece targetPiece = chessBoard.getPieceAt(position);
 
         return targetPiece != null &&
-                chessBoard.getPieceColor(position) == game.bottomScreenPlayerColor;
+                chessBoard.getPieceColor(position) == game.humanPlayerColor;
 
     }
 
@@ -402,11 +398,11 @@ public class Drawing {
     }
 
     public boolean isChessBoardFlipped() {
-        return game.bottomScreenPlayerColor == Piece.Color.BLACK;
+        return game.humanPlayerColor == Piece.Color.BLACK;
     }
 
     public Piece.Color getBottomScreenPlayerColor() {
-        return game.bottomScreenPlayerColor;
+        return game.humanPlayerColor;
     }
 
 }

@@ -11,18 +11,39 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:padding="10dp"
+        android:paddingHorizontal="20dp"
         app:layout_constraintBottom_toTopOf="@+id/btn_start"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:text="@string/game_between"></TextView>
-        <Spinner
-            android:id="@+id/spinner_gameType"
+            android:gravity="center"
+            android:layout_marginRight="30dp"
+            android:text="@string/play_as"></TextView>
+
+        <RadioGroup
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"></Spinner>
+            android:layout_height="wrap_content"
+            >
+
+            <RadioButton
+                android:id="@+id/rb_white"
+                android:checked="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/play_as_white"></RadioButton>
+
+            <RadioButton
+                android:id="@+id/rb_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/play_as_black"></RadioButton>
+        </RadioGroup>
+
     </LinearLayout>
 
 
