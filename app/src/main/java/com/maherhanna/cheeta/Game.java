@@ -1,7 +1,6 @@
 package com.maherhanna.cheeta;
 
 import android.os.Handler;
-import android.util.Log;
 
 import java.util.Random;
 
@@ -44,7 +43,7 @@ class Game {
 
         this.chessBoard = new ChessBoard();
 
-        chessBoard.setUpBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        chessBoard.setUpBoard("6K1/6P1/8/7q/8/8/3k4/8 b - - 0 1");
 
 
         drawing.chessBoard = this.chessBoard;
@@ -54,7 +53,7 @@ class Game {
 
     public void start() {
         if (gameType == COMPUTER_HUMAN) {
-            if (bottomScreenPlayerColor == Piece.Color.values()[chessBoard.activeColor]) {
+            if (bottomScreenPlayerColor == Piece.Color.values()[chessBoard.toPlayColor]) {
                 currentPlayer = bottomScreenPlayerColor;
                 drawing.waitHumanToPlay();
             } else {
@@ -69,12 +68,12 @@ class Game {
 
     public void resume() {
         if (gameType == COMPUTER_HUMAN) {
-            if (Piece.Color.values()[chessBoard.activeColor] == bottomScreenPlayerColor) {
+            if (Piece.Color.values()[chessBoard.toPlayColor] == bottomScreenPlayerColor) {
                 drawing.waitHumanToPlay();
                 return;
             }
         }
-        playComputer(Piece.Color.values()[chessBoard.activeColor]);
+        playComputer(Piece.Color.values()[chessBoard.toPlayColor]);
 
 
     }

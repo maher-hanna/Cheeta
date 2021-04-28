@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 public class ChessboardMoves {
     private final ArrayList<Move> moves;
-    public int initialEnPassantTarget = ChessBoard.NO_SQUARE;
 
     public ChessboardMoves(){
         moves = new ArrayList<>();
@@ -23,6 +22,7 @@ public class ChessboardMoves {
 
 
     public Move getLastMove(){
+        if(moves.size() == 0){return null;}
         return moves.get(moves.size() -1);
     }
 
@@ -42,4 +42,6 @@ public class ChessboardMoves {
     public boolean notEmpty() {
         return moves.size() != 0;
     }
+    public int size(){return moves.size();}
+    public Move get(int index){return moves.get(index);}
 }

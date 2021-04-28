@@ -47,6 +47,7 @@ public class ChessBoard {
     //-----------------------------------------------------------------------------------
     private final Piece[] pieces;
     public ChessboardMoves moves;
+    public ArrayList<State> states;
 
     LegalMoves blackLegalMoves;
     LegalMoves whiteLegalMoves;
@@ -72,10 +73,7 @@ public class ChessBoard {
     long allPieces = 0;
 
     //state
-    int activeColor = Piece.WHITE;
-    int whiteCastlingRights = CASTLING_BOTH_SIDES;
-    int blackCastlingRights = CASTLING_BOTH_SIDES;
-    int enPassantTarget = NO_SQUARE;
+    int toPlayColor = Piece.WHITE;
     int fiftyMovesDrawCount = 0;
     int fullMovesCount = 1;
 
@@ -86,6 +84,7 @@ public class ChessBoard {
     public ChessBoard(ChessBoard copy) {
         this.pieces = copy.pieces.clone();
         this.moves = new ChessboardMoves(copy.moves);
+        this.states = new ArrayList<>(copy.states);
 
         whitePawns = copy.whitePawns;
         whiteRooks = copy.whiteRooks;
@@ -107,10 +106,8 @@ public class ChessBoard {
         emptySquares = copy.emptySquares;
         allPieces = copy.allPieces;
 
-        activeColor = copy.activeColor;
-        whiteCastlingRights = copy.whiteCastlingRights;
-        blackCastlingRights = copy.blackCastlingRights;
-        enPassantTarget = copy.enPassantTarget;
+        toPlayColor = copy.toPlayColor;
+
         fiftyMovesDrawCount = copy.fiftyMovesDrawCount;
         fullMovesCount = copy.fullMovesCount;
     }
@@ -124,6 +121,7 @@ public class ChessBoard {
         }
 
         moves = new ChessboardMoves();
+        states = new ArrayList<>();
 
         blackLegalMoves = new LegalMoves();
         whiteLegalMoves = new LegalMoves();
@@ -140,6 +138,10 @@ public class ChessBoard {
         int currentFile = FILE_A;
         int currentRank = RANK_8;
         int currentChar = 0;
+        int blackCastlingRights = 0;
+        int whiteCastlingRights = 0;
+        int enPassantTarget = NO_SQUARE;
+
 
         //parse piece placement
         //------------------------------------------------------------------------------
@@ -233,8 +235,8 @@ public class ChessBoard {
 
 
         //parse active color
-        if (fenString.charAt(currentChar) == 'w') activeColor = Piece.WHITE;
-        else activeColor = Piece.BLACK;
+        if (fenString.charAt(currentChar) == 'w') toPlayColor = Piece.WHITE;
+        else toPlayColor = Piece.BLACK;
         currentChar++;
 
 
@@ -251,19 +253,19 @@ public class ChessBoard {
                     currentChar++;
                     break;
                 case 'K':
-                    whiteCastlingRights |= CASTLING_KING_SIDE;
+                    whiteCastlingRights = getWhiteCastlingRights() | CASTLING_KING_SIDE;
                     currentChar++;
                     break;
                 case 'Q':
-                    whiteCastlingRights |= CASTLING_QUEEN_SIDE;
+                    whiteCastlingRights = getWhiteCastlingRights() | CASTLING_QUEEN_SIDE;
                     currentChar++;
                     break;
                 case 'k':
-                    blackCastlingRights |= CASTLING_KING_SIDE;
+                    blackCastlingRights = getBlackCastlingRights() | CASTLING_KING_SIDE;
                     currentChar++;
                     break;
                 case 'q':
-                    blackCastlingRights |= CASTLING_QUEEN_SIDE;
+                    blackCastlingRights = getBlackCastlingRights() | CASTLING_QUEEN_SIDE;
                     currentChar++;
                     break;
             }
@@ -296,7 +298,8 @@ public class ChessBoard {
 
             setPieceAt(i, Piece.Type.values()[pieceType(i) - 1], Piece.Color.values()[pieceColor(i)]);
         }
-        moves.initialEnPassantTarget = enPassantTarget;
+        State startState = new State(allPieces, enPassantTarget, blackCastlingRights, whiteCastlingRights);
+        states.add(startState);
         updateWhiteLegalMoves();
         updateBlackLegalMoves();
 
@@ -503,7 +506,7 @@ public class ChessBoard {
 
 
         //set enPassant target
-        enPassantTarget = NO_SQUARE;
+        int enPassantTarget = NO_SQUARE;
 
         if (move.isPawnDoubleMove()) {
             if (moveColor == Piece.Color.WHITE) {
@@ -513,9 +516,9 @@ public class ChessBoard {
             }
         }
 
-        move.setPreviousWCastlingRights(whiteCastlingRights);
-        move.setPreviousBCastlingRights(blackCastlingRights);
 
+        int blackCastlingRights = 0;
+        int whiteCastlingRights = 0;
         if (move.isCastling()) {
             int rookPosition;
             int rookCastlingTarget;
@@ -543,22 +546,22 @@ public class ChessBoard {
                 if (moveColor == Piece.Color.WHITE) {
                     if (move.getFrom() == Game.moveGenerator.getInitialRookKingSide(Piece.Color.WHITE)) {
                         //king side
-                        whiteCastlingRights = BitMath.unSetBit(whiteCastlingRights, 0);
+                        whiteCastlingRights = BitMath.unSetBit(getWhiteCastlingRights(), 0);
 
                     } else {
                         //queen side
-                        whiteCastlingRights = BitMath.unSetBit(whiteCastlingRights, 1);
+                        whiteCastlingRights = BitMath.unSetBit(getWhiteCastlingRights(), 1);
 
                     }
 
                 } else {
                     if (move.getFrom() == Game.moveGenerator.getInitialRookKingSide( Piece.Color.BLACK)) {
                         //king side
-                        blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 0);
+                        blackCastlingRights = BitMath.unSetBit(getBlackCastlingRights(), 0);
 
                     } else {
                         //queen side
-                        blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 1);
+                        blackCastlingRights = BitMath.unSetBit(getBlackCastlingRights(), 1);
 
                     }
 
@@ -592,49 +595,54 @@ public class ChessBoard {
             fiftyMovesDrawCount = 0;
         }
 
+        State state = new State(allPieces, enPassantTarget, blackCastlingRights, whiteCastlingRights);
+        states.add(state);
         moves.add(move);
-        if (activeColor == Piece.WHITE) activeColor = Piece.BLACK;
-        else activeColor = Piece.WHITE;
+        if (toPlayColor == Piece.WHITE) toPlayColor = Piece.BLACK;
+        else toPlayColor = Piece.WHITE;
 
     }
 
-    public void unMove(Move move) {
-        int fromSquare = move.getFrom();
-        int toSquare = move.getTo();
+    public void unMove() {
+        Move lastMove = moves.getLastMove();
+        if(lastMove == null) return;
+
+        int fromSquare = lastMove.getFrom();
+        int toSquare = lastMove.getTo();
         setPieceAt(fromSquare, getPieceAt(toSquare));
 
         getPieceAt(fromSquare).setPosition(fromSquare);
         setPieceAt(toSquare, null);
 
-        if (move.isTake()) {
-            setPieceAt(toSquare, move.getTakenPieceType(), move.getColor().getOpposite());
+        if (lastMove.isTake()) {
+            setPieceAt(toSquare, lastMove.getTakenPieceType(), lastMove.getColor().getOpposite());
             getPieceAt(toSquare).setPosition(toSquare);
         }
 
-        if (move.isPromote()) {
-            setPieceAt(fromSquare, Piece.Type.PAWN, move.getColor());
+        if (lastMove.isPromote()) {
+            setPieceAt(fromSquare, Piece.Type.PAWN, lastMove.getColor());
         }
 
-        if (move.getColor() == Piece.Color.WHITE) {
+        if (lastMove.getColor() == Piece.Color.WHITE) {
             fullMovesCount--;
         }
 
 
-        if (move.isCastling()) {
+        if (lastMove.isCastling()) {
             int rookPosition;
             int currentRookPosition;
 
-            Piece.Color moveColor = move.getColor();
+            Piece.Color moveColor = lastMove.getColor();
 
-            if (move.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
+            if (lastMove.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
                 rookPosition = Game.moveGenerator.getInitialRookKingSide(
                         moveColor);
-                currentRookPosition = move.getFrom() + 1;
+                currentRookPosition = lastMove.getFrom() + 1;
 
             } else {
                 rookPosition = Game.moveGenerator.getInitialRookQueenSide(
                         moveColor);
-                currentRookPosition = move.getFrom() - 1;
+                currentRookPosition = lastMove.getFrom() - 1;
 
             }
             setPieceAt(rookPosition, Piece.Type.ROOK, moveColor);
@@ -642,46 +650,33 @@ public class ChessBoard {
         }
 
 
-        if (move.isEnPasant()) {
-            if (move.getColor() == Piece.Color.WHITE) {
-                setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), Piece.Type.PAWN, Piece.Color.BLACK);
+        if (lastMove.isEnPasant()) {
+            if (lastMove.getColor() == Piece.Color.WHITE) {
+                setPieceAt(ChessBoard.offsetRank(lastMove.getTo(), -1), Piece.Type.PAWN, Piece.Color.BLACK);
             } else {
-                setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), Piece.Type.PAWN, Piece.Color.WHITE);
+                setPieceAt(ChessBoard.offsetRank(lastMove.getTo(), 1), Piece.Type.PAWN, Piece.Color.WHITE);
             }
         }
 
 
-        if (activeColor == Piece.WHITE) activeColor = Piece.BLACK;
-        else activeColor = Piece.WHITE;
+        if (toPlayColor == Piece.WHITE) toPlayColor = Piece.BLACK;
+        else toPlayColor = Piece.WHITE;
 
 
         //restore previous fifty moves count
-        fiftyMovesDrawCount = move.getPreviousFiftyMoves();
+        fiftyMovesDrawCount = lastMove.getPreviousFiftyMoves();
 
 
-        //restore prvious castling rights
-        whiteCastlingRights = move.getPreviousWCastlingRights();
-        blackCastlingRights = move.getPreviousBCastlingRights();
-
+        states.remove(states.size() - 1);
         moves.removeLastMove();
-
-        //restore previous en passant target
-        if(moves.notEmpty()){
-            Move previousMove = moves.getLastMove();
-            if (previousMove.isPawnDoubleMove()) {
-                if (previousMove.getColor() == Piece.Color.WHITE) {
-                    enPassantTarget = previousMove.getTo() - 8;
-                } else {
-                    enPassantTarget = previousMove.getTo() + 8;
-                }
-
-            }
-        } else {
-            enPassantTarget = moves.initialEnPassantTarget;
-        }
 
     }
 
+    public void unMove(int numberOfSteps){
+        for(int i =0; i < numberOfSteps;i++){
+            unMove();
+        }
+    }
 
     //get and set a square info
     public Piece getPieceAt(int position) {
@@ -782,6 +777,21 @@ public class ChessBoard {
             gameStatus = Game.GameStatus.FINISHED_DRAW;
             return gameStatus;
         }
+
+        //check for third repetition draw
+        int repeatedPositionCount = 1;
+        State lastState = states.get(states.size() - 1);
+        for(int i = 0;i < (states.size() - 1) ; i++){
+            if(lastState.equals(states.get(i))){
+                repeatedPositionCount++;
+                if(repeatedPositionCount == 3){
+                    gameStatus = Game.GameStatus.FINISHED_DRAW;
+                    break;
+                }
+            }
+        }
+
+
 
 
         return gameStatus;
@@ -1040,4 +1050,15 @@ public class ChessBoard {
     }
 
 
+    public int getWhiteCastlingRights() {
+        return states.get(states.size() -1).whiteCastlingRights;
+    }
+
+    public int getBlackCastlingRights() {
+        return states.get(states.size() -1).blackCastlingRights;
+    }
+
+    public int getEnPassantTarget() {
+        return states.get(states.size() -1).enPassantTarget;
+    }
 }

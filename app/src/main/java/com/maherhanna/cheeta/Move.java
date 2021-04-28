@@ -77,11 +77,7 @@ public class Move {
     public int getPreviousFiftyMoves(){return (int)BitMath.getBitsValue(bitValue, PREVIOUS_FIFTY_MOVES_START,
             PREVIOUS_FIFTY_MOVES_MASK);}
 
-    public int getPreviousWCastlingRights(){return (int) BitMath.getBitsValue(bitValue, PREVIOUS_WCASTLING_RIGHTS_START,
-            PREVIOUS_WCASTLING_RIGHTS_MASK);}
 
-    public int getPreviousBCastlingRights(){return (int) BitMath.getBitsValue(bitValue, PREVIOUS_BCASTLING_RIGHTS_START,
-            PREVIOUS_BCASTLING_RIGHTS_MASK);}
 
     public int getFrom(){
         return (int)BitMath.getBitsValue(bitValue,FROM_START,FROM_MASK);
@@ -174,12 +170,6 @@ public class Move {
         bitValue = BitMath.setBitsValue(bitValue, PREVIOUS_FIFTY_MOVES_START, PREVIOUS_FIFTY_MOVES_MASK,fiftyMoves);
     }
 
-    public void setPreviousWCastlingRights(int whiteCastlingRights){bitValue =  BitMath.setBitsValue(bitValue, PREVIOUS_WCASTLING_RIGHTS_START,
-            PREVIOUS_WCASTLING_RIGHTS_MASK,whiteCastlingRights);}
-    public void setPreviousBCastlingRights(int blackCastlingRights){bitValue =  BitMath.setBitsValue(bitValue, PREVIOUS_BCASTLING_RIGHTS_START,
-            PREVIOUS_BCASTLING_RIGHTS_MASK,blackCastlingRights);}
-
-
 
     public enum CastlingType {CASTLING_kING_SIDE,CASTLING_QUEEN_SIDE}
 
@@ -224,11 +214,6 @@ public class Move {
     private static final long PREVIOUS_FIFTY_MOVES_MASK = 16911433728L;
     private static final long PREVIOUS_FIFTY_MOVES_START = 28;
 
-    private static final long PREVIOUS_BCASTLING_RIGHTS_MASK = 51539607552L;
-    private static final long PREVIOUS_BCASTLING_RIGHTS_START = 34;
-
-    private static final long PREVIOUS_WCASTLING_RIGHTS_MASK = 206158430208L;
-    private static final long PREVIOUS_WCASTLING_RIGHTS_START = 36;
 
 
 

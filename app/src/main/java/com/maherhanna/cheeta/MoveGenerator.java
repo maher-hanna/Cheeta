@@ -263,14 +263,14 @@ public class MoveGenerator {
             attacks.add(attack);
 
         }
-        if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE &&
-                ChessBoard.GetRank(chessBoard.enPassantTarget) == ChessBoard.RANK_6) {
-            long enPassantWest = whitePawnsAttackWest(chessBoard.whitePawns, 1L << chessBoard.enPassantTarget);
-            long enPassantEast = whitePawnsAttackEast(chessBoard.whitePawns, 1L << chessBoard.enPassantTarget);
+        if (chessBoard.getEnPassantTarget() != ChessBoard.NO_SQUARE &&
+                ChessBoard.GetRank(chessBoard.getEnPassantTarget()) == ChessBoard.RANK_6) {
+            long enPassantWest = whitePawnsAttackWest(chessBoard.whitePawns, 1L << chessBoard.getEnPassantTarget());
+            long enPassantEast = whitePawnsAttackEast(chessBoard.whitePawns, 1L << chessBoard.getEnPassantTarget());
 
             //en passant west
             if (enPassantWest != 0) {
-                int index = chessBoard.enPassantTarget;
+                int index = chessBoard.getEnPassantTarget();
                 Move enPassantWestMove = new Move(new Piece(Piece.Type.PAWN, Piece.Color.WHITE, index - 7),
                         index - 7, index);
                 enPassantWestMove.setTakes(true, Piece.Type.PAWN);
@@ -281,7 +281,7 @@ public class MoveGenerator {
 
             if (enPassantEast != 0) {
                 //en passant east
-                int index = chessBoard.enPassantTarget;
+                int index = chessBoard.getEnPassantTarget();
                 Move enPassantEastMove = new Move(new Piece(Piece.Type.PAWN, Piece.Color.WHITE, index - 9),
                         index - 9, index);
                 enPassantEastMove.setTakes(true, Piece.Type.PAWN);
@@ -383,14 +383,14 @@ public class MoveGenerator {
 
         }
 
-        if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE &&
-                ChessBoard.GetRank(chessBoard.enPassantTarget) == ChessBoard.RANK_3) {
-            long enPassantWest = blackPawnsAttackWest(chessBoard.blackPawns, 1L << chessBoard.enPassantTarget);
-            long enPassantEast = blackPawnsAttackEast(chessBoard.blackPawns, 1L << chessBoard.enPassantTarget);
+        if (chessBoard.getEnPassantTarget() != ChessBoard.NO_SQUARE &&
+                ChessBoard.GetRank(chessBoard.getEnPassantTarget()) == ChessBoard.RANK_3) {
+            long enPassantWest = blackPawnsAttackWest(chessBoard.blackPawns, 1L << chessBoard.getEnPassantTarget());
+            long enPassantEast = blackPawnsAttackEast(chessBoard.blackPawns, 1L << chessBoard.getEnPassantTarget());
             if (enPassantWest != 0) {
 
                 //en passant west
-                int index = chessBoard.enPassantTarget;
+                int index = chessBoard.getEnPassantTarget();
                 Move enPassantWestMove = new Move(new Piece(Piece.Type.PAWN, Piece.Color.BLACK, index + 9),
                         index + 9, index);
                 enPassantWestMove.setTakes(true, Piece.Type.PAWN);
@@ -400,7 +400,7 @@ public class MoveGenerator {
             if (enPassantEast != 0) {
 
                 //en passant east
-                int index = chessBoard.enPassantTarget;
+                int index = chessBoard.getEnPassantTarget();
                 Move enPassantEastMove = new Move(new Piece(Piece.Type.PAWN, Piece.Color.BLACK, index + 7),
                         index + 7, index);
                 enPassantEastMove.setTakes(true, Piece.Type.PAWN);
@@ -1238,18 +1238,18 @@ public class MoveGenerator {
             return false;
         }
         if (color == Piece.Color.WHITE) {
-            if (chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING) {
+            if (chessBoard.getWhiteCastlingRights() == ChessBoard.NO_CASTLING) {
                 return false;
             }
-            if (chessBoard.whiteCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE) {
+            if (chessBoard.getWhiteCastlingRights() == ChessBoard.CASTLING_QUEEN_SIDE) {
                 return false;
             }
 
         } else {
-            if (chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING) {
+            if (chessBoard.getBlackCastlingRights() == ChessBoard.NO_CASTLING) {
                 return false;
             }
-            if (chessBoard.blackCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE) {
+            if (chessBoard.getBlackCastlingRights() == ChessBoard.CASTLING_QUEEN_SIDE) {
                 return false;
             }
 
@@ -1272,18 +1272,18 @@ public class MoveGenerator {
             return false;
         }
         if (color == Piece.Color.WHITE) {
-            if (chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING) {
+            if (chessBoard.getWhiteCastlingRights() == ChessBoard.NO_CASTLING) {
                 return false;
             }
-            if (chessBoard.whiteCastlingRights == ChessBoard.CASTLING_KING_SIDE) {
+            if (chessBoard.getWhiteCastlingRights() == ChessBoard.CASTLING_KING_SIDE) {
                 return false;
             }
 
         } else {
-            if (chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING) {
+            if (chessBoard.getBlackCastlingRights() == ChessBoard.NO_CASTLING) {
                 return false;
             }
-            if (chessBoard.blackCastlingRights == ChessBoard.CASTLING_KING_SIDE) {
+            if (chessBoard.getBlackCastlingRights() == ChessBoard.CASTLING_KING_SIDE) {
                 return false;
             }
 
