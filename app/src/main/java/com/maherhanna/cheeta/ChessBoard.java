@@ -253,19 +253,19 @@ public class ChessBoard {
                     currentChar++;
                     break;
                 case 'K':
-                    whiteCastlingRights = getWhiteCastlingRights() | CASTLING_KING_SIDE;
+                    whiteCastlingRights = whiteCastlingRights | CASTLING_KING_SIDE;
                     currentChar++;
                     break;
                 case 'Q':
-                    whiteCastlingRights = getWhiteCastlingRights() | CASTLING_QUEEN_SIDE;
+                    whiteCastlingRights = whiteCastlingRights | CASTLING_QUEEN_SIDE;
                     currentChar++;
                     break;
                 case 'k':
-                    blackCastlingRights = getBlackCastlingRights() | CASTLING_KING_SIDE;
+                    blackCastlingRights = blackCastlingRights | CASTLING_KING_SIDE;
                     currentChar++;
                     break;
                 case 'q':
-                    blackCastlingRights = getBlackCastlingRights() | CASTLING_QUEEN_SIDE;
+                    blackCastlingRights = blackCastlingRights | CASTLING_QUEEN_SIDE;
                     currentChar++;
                     break;
             }

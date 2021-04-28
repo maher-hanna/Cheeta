@@ -1,56 +1,25 @@
 package com.maherhanna.cheeta;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class ComputerAi {
-    public Move getMove(ChessBoard chessBoard, Piece.Color toPlayNow, float maxSearchTime) {
-        MyRunnable myRunnable = new MyRunnable(chessBoard, toPlayNow, maxSearchTime);
-        Thread thread = new Thread(myRunnable);
-        thread.start();
-
-        try {
-            thread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return myRunnable.getMove();
-
-
-    }
-}
-
-
-class MyRunnable implements Runnable {
-    ChessBoard startChessBoard;
-    Piece.Color maxingPlayer;
-    private Move move;
-    private final long maxSearchTime;
-    private int evaluations;
+public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
     private boolean foundCheckMate;
-
-    public MyRunnable(ChessBoard startChessBoard, Piece.Color maxingPlayer, float maxSearchTime) {
-        this.startChessBoard = startChessBoard;
-        this.maxingPlayer = maxingPlayer;
-        //convert seconds to nano seconds
-        this.maxSearchTime = (long) (maxSearchTime * 1000000000);
-        this.evaluations = 0;
-        foundCheckMate = false;
-
-    }
-
-    public Move getMove() {
-        return this.move;
-    }
-
+    long evaluations;
+    Piece.Color maxingPlayer;
 
     @Override
-    public void run() {
+    protected Move doInBackground(ChessBoard... chessBoards) {
         long startTime = System.nanoTime();
-
-
+        //convert maximum search time from seconds to nano seconds
+        long maxSearchTime = Game.COMPUTER_MAX_SEARCH_TIME * 1000000000;
+        foundCheckMate = false;
+        evaluations = 0;
+        ChessBoard startChessBoard = new ChessBoard(chessBoards[0]);
+        maxingPlayer = Piece.Color.values()[startChessBoard.toPlayColor];
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(startChessBoard,
                 maxingPlayer);
@@ -99,10 +68,9 @@ class MyRunnable implements Runnable {
 //                maxIndex);
 //        Log.d(Game.DEBUG,"Duration: " + (float)duration / 1000000);
 //
-        this.move = toPlayLegalMoves.get(moveIndex);
+        return toPlayLegalMoves.get(moveIndex);
 
     }
-
 
     public int search(ChessBoard chessBoard, LegalMoves moves, ArrayList<MoveScore> moveScores, long timeLeft, int maxDepth) {
         int maxScore = Integer.MIN_VALUE;
@@ -422,11 +390,6 @@ class MyRunnable implements Runnable {
 
     }
 
-    private int getInitialPiecesValue() {
-        return Piece.KING_VALUE + Piece.QUEEN_VALUE + Piece.ROOK_VALUE + Piece.BISHOP_VALUE +
-                Piece.KNIGHT_VALUE + Piece.PAWN_VALUE;
-    }
-
     private int getPieceValue(Piece.Type pieceType) {
         int value = 0;
         switch (pieceType) {
@@ -524,9 +487,10 @@ class MyRunnable implements Runnable {
             -30, -30, 0, 0, 0, 0, -30, -30,
             -50, -30, -30, -30, -30, -30, -30, -50
     };
-
-
 }
+
+
+
 
 class MoveScore implements Comparable<MoveScore> {
     private int score;

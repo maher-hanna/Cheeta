@@ -39,7 +39,7 @@ public class Drawing {
     private static final float SCALE_PIECES_DOWN = 0.8f;
     //----------------
 
-    boolean waitingForHuman = false;
+    private boolean waitingForHuman = false;
 
 
     public Drawing(GameActivity activity) {
@@ -221,6 +221,7 @@ public class Drawing {
 
 
     public boolean canMove(int from, int to) {
+        if(!isWaitingHumanToPlay()){return false;}
         return chessBoard.canMove(from, to);
     }
 
@@ -363,8 +364,11 @@ public class Drawing {
 
     public void humanPlayed(Move humanMove) {
         game.humanPlayed(humanMove);
+        waitingForHuman = false;
 
     }
+
+    public boolean isWaitingHumanToPlay(){return waitingForHuman;}
 
     public int getGameType() {
         return game.gameType;
@@ -404,7 +408,5 @@ public class Drawing {
     public Piece.Color getBottomScreenPlayerColor() {
         return game.bottomScreenPlayerColor;
     }
-    public boolean canHumanPlay(){
-        return Piece.Color.values()[chessBoard.toPlayColor] == game.bottomScreenPlayerColor;
-    }
+
 }

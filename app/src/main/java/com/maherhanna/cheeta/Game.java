@@ -1,15 +1,16 @@
 package com.maherhanna.cheeta;
 
+import android.os.AsyncTask;
 import android.os.Handler;
 
 import java.util.Random;
 
 class Game {
     public static final String DEBUG = "Cheeta_Debug";
-    private static final long COMPUTER_MAX_SEARCH_TIME = 4;
+    public static final long COMPUTER_MAX_SEARCH_TIME = 4;
     private final Drawing drawing;
     private final ChessBoard chessBoard;
-    private final ComputerAi computerAi;
+    private ComputerAiThread computerAi;
     public static MoveGenerator moveGenerator = new MoveGenerator();
     public int gameType;
     private final int computerPlayDelayMilli;
@@ -43,7 +44,7 @@ class Game {
 
         this.chessBoard = new ChessBoard();
 
-        chessBoard.setUpBoard("6K1/6P1/8/7q/8/8/3k4/8 b - - 0 1");
+        chessBoard.setUpBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
 
         drawing.chessBoard = this.chessBoard;
@@ -85,7 +86,6 @@ class Game {
     }
 
 
-
     public void humanPlayed(Move humanMove) {
         humanMove = chessBoard.getLegalMovesFor(bottomScreenPlayerColor).getMove(humanMove);
         chessBoard.move(humanMove);
@@ -95,16 +95,10 @@ class Game {
         chessBoard.updateLegalMovesFor(bottomScreenPlayerColor, false);
         Piece.Color opponentColor = currentPlayer;
         chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));
-
         GameStatus gameStatus = checkGameFinished(bottomScreenPlayerColor);
         if (gameStatus == GameStatus.NOT_FINISHED) {
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    playComputer(opponentColor);
-                }
-            },100);
 
+            playComputer(opponentColor);
 
 
         } else {
@@ -116,13 +110,17 @@ class Game {
 
     }
 
-    public void computerPlayed(Move computerMove, Piece.Color color) {
+    public void computerPlayed(Move computerMove) {
+        chessBoard.move(computerMove);
+        Piece.Color color = computerMove.getColor();
+        chessBoard.updateLegalMovesFor(color, false);
+        Piece.Color opponentColor = color.getOpposite();
+        chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));
         drawing.drawAllPieces(computerMove);
         drawing.show();
         currentPlayer = color.getOpposite();
         GameStatus gameStatus = checkGameFinished(color);
         if (gameStatus == GameStatus.NOT_FINISHED) {
-            Piece.Color opponentColor = color.getOpposite();
             if (gameType == COMPUTER_COMPUTER) {
                 new Handler().postDelayed(new Runnable() {
                     @Override
@@ -147,12 +145,17 @@ class Game {
 
     public void playComputer(Piece.Color color) {
         if (paused) return;
-        Move computerMove = computerAi.getMove(chessBoard, color,COMPUTER_MAX_SEARCH_TIME);
-        chessBoard.move(computerMove);
-        chessBoard.updateLegalMovesFor(color, false);
-        Piece.Color opponentColor = color.getOpposite();
-        chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));
-        computerPlayed(computerMove, color);
+
+        computerAi = new ComputerAi();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                computerAi.execute(chessBoard);
+
+            }
+        },100);
+
     }
 
     public boolean isGameFinished() {
@@ -164,6 +167,13 @@ class Game {
     }
 
     public enum GameStatus {NOT_FINISHED, FINISHED_DRAW, FINISHED_WIN_WHITE, FINISHED_WIN_BLACK}
+
+    private final class ComputerAi extends ComputerAiThread {
+        @Override
+        protected void onPostExecute(Move move) {
+            computerPlayed(move);
+        }
+    }
 
 
 }
