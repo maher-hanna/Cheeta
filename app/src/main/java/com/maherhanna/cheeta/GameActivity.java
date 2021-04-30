@@ -25,7 +25,7 @@ public class GameActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_game);
 
-        int humanPlayerColor =  getIntent().getIntExtra("humanPlayerColor",Piece.WHITE);
+        int humanPlayerColor =  getIntent().getIntExtra("humanPiecesColor",Piece.WHITE);
 
         drawing = new Drawing(this);
 
