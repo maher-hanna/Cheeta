@@ -517,8 +517,8 @@ public class ChessBoard {
         }
 
 
-        int blackCastlingRights = 0;
-        int whiteCastlingRights = 0;
+        int blackCastlingRights = getBlackCastlingRights();
+        int whiteCastlingRights = getWhiteCastlingRights();
         if (move.isCastling()) {
             int rookPosition;
             int rookCastlingTarget;
@@ -546,22 +546,22 @@ public class ChessBoard {
                 if (moveColor == Piece.Color.WHITE) {
                     if (move.getFrom() == Game.moveGenerator.getInitialRookKingSide(Piece.Color.WHITE)) {
                         //king side
-                        whiteCastlingRights = BitMath.unSetBit(getWhiteCastlingRights(), 0);
+                        whiteCastlingRights = BitMath.unSetBit(whiteCastlingRights, 0);
 
                     } else {
                         //queen side
-                        whiteCastlingRights = BitMath.unSetBit(getWhiteCastlingRights(), 1);
+                        whiteCastlingRights = BitMath.unSetBit(whiteCastlingRights, 1);
 
                     }
 
                 } else {
                     if (move.getFrom() == Game.moveGenerator.getInitialRookKingSide( Piece.Color.BLACK)) {
                         //king side
-                        blackCastlingRights = BitMath.unSetBit(getBlackCastlingRights(), 0);
+                        blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 0);
 
                     } else {
                         //queen side
-                        blackCastlingRights = BitMath.unSetBit(getBlackCastlingRights(), 1);
+                        blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 1);
 
                     }
 
