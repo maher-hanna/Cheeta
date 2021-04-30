@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent gameIntent = new Intent(MainActivity.this,GameActivity.class);
                 int humanPiecesColor = Piece.WHITE;
-                if(rb_black.isSelected())humanPiecesColor = Piece.BLACK;
+                if(rb_black.isChecked())humanPiecesColor = Piece.BLACK;
                 gameIntent.putExtra("humanPiecesColor",humanPiecesColor);
                 startActivity(gameIntent);
             }
