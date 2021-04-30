@@ -21,8 +21,9 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_game);
+        getSupportActionBar().hide();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setContentView(R.layout.activity_game);
 
         int humanPlayerColor =  getIntent().getIntExtra("humanPlayerColor",Piece.WHITE);
 

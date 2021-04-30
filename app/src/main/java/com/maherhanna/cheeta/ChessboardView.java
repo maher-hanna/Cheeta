@@ -176,7 +176,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                 if (selectedSquare != ChessBoard.OUT) {
                     if (selectedSquare == targetPosition) break;
                     //check for selecting other piece
-                    if (drawing.chessBoard.canMove(selectedSquare, targetPosition)) {
+                    if (drawing.canMove(selectedSquare, targetPosition)) {
                         humanPlayed = true;
                         humanMove = new Move(drawing.chessBoard.getPieceAt(selectedSquare),
                                 selectedSquare, targetPosition);
