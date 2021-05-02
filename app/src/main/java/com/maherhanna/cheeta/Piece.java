@@ -29,22 +29,11 @@ public class Piece {
     private static final int OUT_OF_BOARD_BITS_END = 11;
 
     private int position;
-    private Color color;
-    private Type type;
 
-    public Piece(Type type, Color color, int position) {
-        this.setType(type);
-        this.setColor(color);
-        this.setPosition(position);
-
-
-    }
 
 
     public Piece(Piece p) {
         this.position = p.position;
-        this.color = p.color;
-        this.type = p.type;
 
     }
 
@@ -68,6 +57,7 @@ public class Piece {
         return (newRank * 8) + newFile;
     }
 
+
     public int offsetFile(int file) {
         return offset(file, 0);
     }
@@ -76,53 +66,12 @@ public class Piece {
         return offset(0, rank);
     }
 
-    public Type getType() {
-        return type;
-    }
-
-    public void setType(Type type) {
-        this.type = type;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
     public void setPosition(int position) {
         this.position = position;
     }
 
     public int getPosition() {
         return position;
-    }
-
-
-    public enum Type {PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING}
-
-
-    public enum Color {
-        WHITE(0),
-        BLACK(1);
-
-
-        private final int color;
-
-        Color(final int color) {
-            this.color = color;
-        }
-
-        public Color getOpposite() {
-            if (color == 1) {
-                return WHITE;
-            } else {
-                return BLACK;
-            }
-        }
-
     }
 
 
@@ -136,24 +85,10 @@ public class Piece {
 
 
 
-    public static int GetValueOf(Type type){
-        switch (type){
-            case PAWN:
-                return Piece.PAWN_VALUE;
-            case ROOK:
-                return Piece.ROOK_VALUE;
-            case KNIGHT:
-                return Piece.KNIGHT_VALUE;
-            case BISHOP:
-                return Piece.BISHOP_VALUE;
-            case QUEEN:
-                return Piece.QUEEN_VALUE;
-            case KING:
-                return Piece.KING_VALUE;
-            default:
-                return 0;
-        }
+    public static int GetOppositeColor(int color){
+        return color ^= 1;
     }
+
 
 
 }

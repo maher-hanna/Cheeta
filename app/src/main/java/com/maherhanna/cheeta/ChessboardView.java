@@ -111,8 +111,6 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         int targetPosition = touchSquare;
         if (drawing.isChessBoardFlipped()) targetPosition = drawing.flip(touchSquare);
 
-        Piece targetPiece = drawing.chessBoard.getPieceAt(targetPosition);
-
         switch (action) {
 
             case MotionEvent.ACTION_DOWN:
@@ -158,8 +156,8 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
                     if (drawing.canMove(draggedSquare, targetPosition)) {
                         humanPlayed = true;
-                        humanMove = new Move(drawing.chessBoard.getPieceAt(draggedSquare),
-                                draggedSquare, targetPosition);
+                        humanMove = new Move(drawing.chessBoard.pieceType(draggedSquare),
+                                drawing.chessBoard.pieceColor(draggedSquare), draggedSquare, targetPosition);
                         drawing.drawAllPieces(humanMove);
                         draggedSquare = -1;
                         selectedSquare = -1;
@@ -178,15 +176,15 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                     //check for selecting other piece
                     if (drawing.canMove(selectedSquare, targetPosition)) {
                         humanPlayed = true;
-                        humanMove = new Move(drawing.chessBoard.getPieceAt(selectedSquare),
-                                selectedSquare, targetPosition);
+                        humanMove = new Move(drawing.chessBoard.pieceType(selectedSquare),
+                                drawing.chessBoard.pieceColor(selectedSquare), selectedSquare, targetPosition);
                         drawing.drawAllPieces(humanMove);
                         selectedSquare = -1;
                         break;
 
                     } else {
-                        if (targetPiece == null) break;
-                        if (targetPiece.getColor() == drawing.getBottomScreenPlayerColor()) {
+                        if (drawing.chessBoard.isSquareEmpty(targetPosition)) break;
+                        if (drawing.chessBoard.pieceColor(targetPosition) == drawing.getBottomScreenPlayerColor()) {
                             selectedSquare = targetPosition;
                             drawing.drawAllPieces(selectedSquare);
                             break;

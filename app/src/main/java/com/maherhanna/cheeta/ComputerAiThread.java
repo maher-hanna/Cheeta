@@ -9,7 +9,7 @@ import java.util.Collections;
 public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
     private boolean foundCheckMate;
     long evaluations;
-    Piece.Color maxingPlayer;
+    int maxingPlayer;
 
     @Override
     protected Move doInBackground(ChessBoard... chessBoards) {
@@ -19,7 +19,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
         foundCheckMate = false;
         evaluations = 0;
         ChessBoard startChessBoard = new ChessBoard(chessBoards[0]);
-        maxingPlayer = Piece.Color.values()[startChessBoard.toPlayColor];
+        maxingPlayer = startChessBoard.toPlayColor;
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(startChessBoard,
                 maxingPlayer);
@@ -108,7 +108,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
 
 
     public int miniMax(ChessBoard chessBoard, int alpha, int beta, float depth, boolean maxing) {
-        Piece.Color toPlayColor = chessBoard.moves.getToPlayNow();
+        int toPlayColor = chessBoard.moves.getToPlayNow();
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
                 toPlayColor);
@@ -169,7 +169,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
 
 
     public int miniMax(ChessBoard chessBoard, int depth, boolean maxing) {
-        Piece.Color toPlayColor = chessBoard.moves.getToPlayNow();
+        int toPlayColor = chessBoard.moves.getToPlayNow();
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
                 toPlayColor);
@@ -232,7 +232,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
                 if(takenPieceValue > movedPieceValue){
                     currentScore += 2;
                 }
-                if(currentMove.getTakenPieceType() == Piece.Type.KING) currentScore += 10;
+                if(currentMove.getTakenPieceType() == Piece.KING) currentScore += 10;
 
             }
             if (currentMove.isPromote()) {
@@ -276,8 +276,8 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
         return value;
     }
 
-    private int getGameFinishedScoreFor(Game.GameStatus gameStatus, Piece.Color maxingPlayer) {
-        if (maxingPlayer == Piece.Color.WHITE) {
+    private int getGameFinishedScoreFor(Game.GameStatus gameStatus, int maxingPlayer) {
+        if (maxingPlayer == Piece.WHITE) {
             return getGameFinishedWhiteScore(gameStatus);
         } else {
             return getGameFinishedBlackScore(gameStatus);
@@ -285,87 +285,85 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
     }
 
     int getWhiteScore(ChessBoard chessBoard) {
-        int value = getPiecesValueFor(chessBoard, Piece.Color.WHITE);
+        int value = getPiecesValueFor(chessBoard, Piece.WHITE);
         return value;
     }
 
 
     int getBlackScore(ChessBoard chessBoard) {
-        int value = getPiecesValueFor(chessBoard, Piece.Color.BLACK);
+        int value = getPiecesValueFor(chessBoard, Piece.BLACK);
         return value;
     }
 
-    int getScoreFor(ChessBoard chessBoard, Piece.Color color) {
-        if (color == Piece.Color.WHITE) {
+    int getScoreFor(ChessBoard chessBoard, int color) {
+        if (color == Piece.WHITE) {
             return getWhiteScore(chessBoard) - getBlackScore(chessBoard);
         } else {
             return getBlackScore(chessBoard) - getWhiteScore(chessBoard);
         }
     }
 
-    public int getPiecesValueFor(ChessBoard chessboard, Piece.Color color) {
+    public int getPiecesValueFor(ChessBoard chessboard, int color) {
         int value = 0;
         ArrayList<Integer> squares;
-        if (color == Piece.Color.WHITE) {
+        if (color == Piece.WHITE) {
             squares = Game.moveGenerator.getWhitePositions(chessboard);
         } else {
             squares = Game.moveGenerator.getBlackPositions(chessboard);
         }
 
         for (int square : squares) {
-            Piece piece = chessboard.getPieceAt(square);
-            value += getPositionalValue(chessboard, piece);
+            value += getPositionalValue(chessboard, square);
 
         }
         return value;
     }
 
-    public int getPiecesValueMinusKingFor(ChessBoard chessboard, Piece.Color color) {
+    public int getPiecesValueMinusKingFor(ChessBoard chessboard, int color) {
         int value = 0;
         ArrayList<Integer> squares;
-        if (color == Piece.Color.WHITE) {
+        if (color == Piece.WHITE) {
             squares = Game.moveGenerator.getWhitePositions(chessboard);
         } else {
             squares = Game.moveGenerator.getBlackPositions(chessboard);
         }
 
         for (int square : squares) {
-            Piece piece = chessboard.getPieceAt(square);
-            if (piece.getType() == Piece.Type.KING) continue;
-            value += getPositionalValue(chessboard, piece);
+            if (chessboard.pieceType(square) == Piece.KING) continue;
+            value += getPositionalValue(chessboard, square);
 
         }
         return value;
     }
 
-    private int getPositionalValue(ChessBoard chessBoard, Piece piece) {
+    private int getPositionalValue(ChessBoard chessBoard, int square) {
         int value = 0;
         int piecePositionOnTable = ChessBoard.OUT;
-        int file = ChessBoard.GetFile(piece.getPosition());
-        int rank = ChessBoard.GetRank(piece.getPosition());
-        if (piece.getColor() == Piece.Color.WHITE) {
+        int file = ChessBoard.GetFile(square);
+        int rank = ChessBoard.GetRank(square);
+        if (chessBoard.pieceColor(square) == Piece.WHITE) {
             rank = 7 - rank;
         } else {
             file = 7 - file;
         }
         piecePositionOnTable = ChessBoard.GetPosition(file, rank);
-        switch (piece.getType()) {
-            case PAWN:
+        switch (chessBoard.pieceType(square)) {
+            case Piece.PAWN:
                 value += Piece.PAWN_VALUE + PAWN_SQUARES_TABLE[piecePositionOnTable];
                 break;
-            case ROOK:
+            case Piece.ROOK:
                 value += Piece.ROOK_VALUE + ROOK_SQUARES_TABLE[piecePositionOnTable];
                 break;
-            case KNIGHT:
+            case Piece.KNIGHT:
                 value += Piece.KNIGHT_VALUE + KNIGHT_SQUARES_TABLE[piecePositionOnTable];
                 break;
-            case BISHOP:
+            case Piece.BISHOP:
                 value += Piece.BISHOP_VALUE + BISHOP_SQUARES_TABLE[piecePositionOnTable];
                 break;
-            case QUEEN:
+            case Piece.QUEEN:
                 value += Piece.QUEEN_VALUE + QUEEN_SQUARES_TABLE[piecePositionOnTable];
                 break;
-            case KING:
+            case Piece.KING:
                 if (isEndGame(chessBoard)) {
                     value += Piece.KING_VALUE + KING_END_GAME_SQUARES_TABLE[piecePositionOnTable];
 
@@ -379,8 +377,8 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
 
     boolean isEndGame(ChessBoard chessBoard) {
         boolean endGame = false;
-        int whitePiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.Color.WHITE);
-        int blackPiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.Color.BLACK);
+        int whitePiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.WHITE);
+        int blackPiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.BLACK);
         if (Math.abs(whitePiecesValue - blackPiecesValue) >= Piece.QUEEN_VALUE) {
             if (whitePiecesValue < Piece.QUEEN_VALUE) endGame = true;
             if (blackPiecesValue < Piece.QUEEN_VALUE) endGame = true;
@@ -390,25 +388,25 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
 
     }
 
-    private int getPieceValue(Piece.Type pieceType) {
+    private int getPieceValue(int pieceType) {
         int value = 0;
         switch (pieceType) {
-            case PAWN:
+            case Piece.PAWN:
                 value += Piece.PAWN_VALUE;
                 break;
-            case ROOK:
+            case Piece.ROOK:
                 value += Piece.ROOK_VALUE;
                 break;
-            case KNIGHT:
+            case Piece.KNIGHT:
                 value += Piece.KNIGHT_VALUE;
                 break;
-            case BISHOP:
+            case Piece.BISHOP:
                 value += Piece.BISHOP_VALUE;
                 break;
-            case QUEEN:
+            case Piece.QUEEN:
                 value += Piece.QUEEN_VALUE;
                 break;
-            case KING:
+            case Piece.KING:
                 value += Piece.KING_VALUE;
                 break;
         }

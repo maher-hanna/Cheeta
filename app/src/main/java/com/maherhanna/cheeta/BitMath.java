@@ -1,5 +1,7 @@
 package com.maherhanna.cheeta;
 
+import java.util.ArrayList;
+
 public class BitMath {
     //-----------------------------------------------------------------------------------
     //magic table for bit scanning (finding least and most significant set bit)
@@ -75,6 +77,20 @@ public class BitMath {
         } else {
             return ChessBoard.OUT;
         }
+    }
+
+    public static ArrayList<Integer> getPositionsOf(long bitboard){
+        ArrayList<Integer> positions = new ArrayList<>();
+        int setBitsCount = BitMath.countSetBits(bitboard);
+        int currentPiecePosition = 0;
+        for (int i = 0; i < setBitsCount; i++) {
+            currentPiecePosition = BitMath.getLSBitIndex(bitboard);
+            positions.add(currentPiecePosition);
+            bitboard = BitMath.popBit(bitboard, currentPiecePosition);
+
+        }
+
+        return positions;
     }
 
     //get most significant bit index

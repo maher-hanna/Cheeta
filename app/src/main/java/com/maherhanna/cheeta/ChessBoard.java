@@ -39,13 +39,11 @@ public class ChessBoard {
     public static final int CASTLING_BOTH_SIDES = 3;
 
 
-
     //----------------------------------------------------------------------------------
 
 
     //data
     //-----------------------------------------------------------------------------------
-    private final Piece[] pieces;
     public ChessboardMoves moves;
     public ArrayList<State> states;
 
@@ -82,7 +80,6 @@ public class ChessBoard {
 
 
     public ChessBoard(ChessBoard copy) {
-        this.pieces = copy.pieces.clone();
         this.moves = new ChessboardMoves(copy.moves);
         this.states = new ArrayList<>(copy.states);
 
@@ -114,18 +111,11 @@ public class ChessBoard {
 
 
     public ChessBoard() {
-        pieces = new Piece[64];
-
-        for (int i = 0; i < 64; ++i) {
-            pieces[i] = null;
-        }
-
         moves = new ChessboardMoves();
         states = new ArrayList<>();
 
         blackLegalMoves = new LegalMoves();
         whiteLegalMoves = new LegalMoves();
-
 
     }
 
@@ -293,11 +283,7 @@ public class ChessBoard {
         //parse full move count since start of game
         fullMovesCount = scanner.nextInt();
 
-        for (int i = MIN_POSITION; i <= MAX_POSITION; i++) {
-            if (pieceType(i) == Piece.NONE) continue;
 
-            setPieceAt(i, Piece.Type.values()[pieceType(i) - 1], Piece.Color.values()[pieceColor(i)]);
-        }
         State startState = new State(allPieces, enPassantTarget, blackCastlingRights, whiteCastlingRights);
         states.add(startState);
         updateWhiteLegalMoves();
@@ -396,7 +382,7 @@ public class ChessBoard {
 
     }
 
-    private void removePiece(int square) {
+    public void removePiece(int square) {
 
         allPieces = BitMath.popBit(allPieces, square);
         allWhitePieces = allPieces & allWhitePieces;
@@ -430,8 +416,8 @@ public class ChessBoard {
 
     }
 
-    public void updateLegalMovesFor(Piece.Color playerColor, boolean kingInCheck) {
-        if (playerColor == Piece.Color.WHITE) {
+    public void updateLegalMovesFor(int playerColor, boolean kingInCheck) {
+        if (playerColor == Piece.WHITE) {
             updateWhiteLegalMoves();
         } else {
             updateBlackLegalMoves();
@@ -457,9 +443,8 @@ public class ChessBoard {
     }
 
 
-
-    public LegalMoves getLegalMovesFor(Piece.Color color) {
-        if (color == Piece.Color.WHITE) {
+    public LegalMoves getLegalMovesFor(int color) {
+        if (color == Piece.WHITE) {
             return whiteLegalMoves;
         } else {
             return blackLegalMoves;
@@ -468,7 +453,7 @@ public class ChessBoard {
 
 
     public ArrayList<Integer> getLegalTargetsFor(int position) {
-        if (getPieceAt(position).getColor() == Piece.Color.WHITE) {
+        if (isPieceWhiteAt(position)) {
             return whiteLegalMoves.getLegalTargetsFor(position);
         } else {
             return blackLegalMoves.getLegalTargetsFor(position);
@@ -476,8 +461,8 @@ public class ChessBoard {
     }
 
 
-    public boolean isKingInCheck(Piece.Color kingColor) {
-        return Game.moveGenerator.isKingAttacked(this,  kingColor.getOpposite());
+    public boolean isKingInCheck(int kingColor) {
+        return Game.moveGenerator.isKingAttacked(this,Piece.GetOppositeColor(kingColor) );
     }
 
 
@@ -497,19 +482,21 @@ public class ChessBoard {
     public void move(Move move) {
         int fromSquare = move.getFrom();
         int toSquare = move.getTo();
-        setPieceAt(toSquare, getPieceAt(fromSquare));
-        setPieceAt(fromSquare, null);
-        getPieceAt(toSquare).setPosition(toSquare);
-        Piece.Color moveColor = move.getColor();
+        int moveColor = move.getColor();
+        int movedPieceType = move.getPieceType();
 
-        if (moveColor == Piece.Color.WHITE) fullMovesCount++;
+
+        setPieceAt(toSquare, move.getPieceType(),moveColor);
+        removePiece(fromSquare);
+
+        if (moveColor == Piece.WHITE) fullMovesCount++;
 
 
         //set enPassant target
         int enPassantTarget = NO_SQUARE;
 
         if (move.isPawnDoubleMove()) {
-            if (moveColor == Piece.Color.WHITE) {
+            if (moveColor == Piece.WHITE) {
                 enPassantTarget = move.getTo() - 8;
             } else {
                 enPassantTarget = move.getTo() + 8;
@@ -522,9 +509,9 @@ public class ChessBoard {
         if (move.isCastling()) {
             int rookPosition;
             int rookCastlingTarget;
-            if (moveColor == Piece.Color.WHITE){
+            if (moveColor == Piece.WHITE) {
                 whiteCastlingRights = NO_CASTLING;
-            } else{
+            } else {
                 blackCastlingRights = NO_CASTLING;
             }
 
@@ -538,13 +525,12 @@ public class ChessBoard {
                         moveColor);
                 rookCastlingTarget = move.getFrom() - 1;
             }
-            setPieceAt(rookCastlingTarget, getPieceAt(rookPosition));
-            setPieceAt(rookPosition, null);
-            getPieceAt(rookCastlingTarget).setPosition(rookCastlingTarget);
+            setPieceAt(rookCastlingTarget, Piece.ROOK,moveColor);
+            removePiece(rookPosition);
         } else {
-            if (move.getPieceType() == Piece.Type.ROOK) {
-                if (moveColor == Piece.Color.WHITE) {
-                    if (move.getFrom() == Game.moveGenerator.getInitialRookKingSide(Piece.Color.WHITE)) {
+            if (movedPieceType == Piece.ROOK) {
+                if (moveColor == Piece.WHITE) {
+                    if (fromSquare == Game.moveGenerator.getInitialRookKingSide(Piece.WHITE)) {
                         //king side
                         whiteCastlingRights = BitMath.unSetBit(whiteCastlingRights, 0);
 
@@ -555,7 +541,7 @@ public class ChessBoard {
                     }
 
                 } else {
-                    if (move.getFrom() == Game.moveGenerator.getInitialRookKingSide( Piece.Color.BLACK)) {
+                    if (fromSquare == Game.moveGenerator.getInitialRookKingSide(Piece.BLACK)) {
                         //king side
                         blackCastlingRights = BitMath.unSetBit(blackCastlingRights, 0);
 
@@ -567,8 +553,8 @@ public class ChessBoard {
 
                 }
             }
-            if(move.getPieceType() == Piece.Type.KING){
-                if(moveColor == Piece.Color.WHITE){
+            if (movedPieceType == Piece.KING) {
+                if (moveColor == Piece.WHITE) {
                     whiteCastlingRights = NO_CASTLING;
                 } else {
                     blackCastlingRights = NO_CASTLING;
@@ -578,20 +564,21 @@ public class ChessBoard {
 
 
         if (move.isPromote()) {
-            setPieceAt(toSquare, move.getPromotionPieceType(), move.getColor());
+            setPieceAt(toSquare, move.getPromotionPieceType(), moveColor);
         }
         if (move.isEnPasant()) {
-            if (move.getColor() == Piece.Color.WHITE) {
-                setPieceAt(ChessBoard.offsetRank(move.getTo(), -1), null);
+            if (moveColor == Piece.WHITE) {
+                removePiece(toSquare - 8);
             } else {
-                setPieceAt(ChessBoard.offsetRank(move.getTo(), 1), null);
+                removePiece(toSquare + 8);
+
             }
         }
 
         move.setPreviousFiftyMoves(fiftyMovesDrawCount);
         //increase fifty moves if no capture or pawn push
         fiftyMovesDrawCount++;
-        if (move.isTake() || move.getPieceType() == Piece.Type.PAWN) {
+        if (move.isTake() || movedPieceType == Piece.PAWN) {
             fiftyMovesDrawCount = 0;
         }
 
@@ -605,25 +592,27 @@ public class ChessBoard {
 
     public void unMove() {
         Move lastMove = moves.getLastMove();
-        if(lastMove == null) return;
+        if (lastMove == null) return;
 
         int fromSquare = lastMove.getFrom();
         int toSquare = lastMove.getTo();
-        setPieceAt(fromSquare, getPieceAt(toSquare));
+        int moveColor = lastMove.getColor();
+        int movedPieceType = lastMove.getPieceType();
 
-        getPieceAt(fromSquare).setPosition(fromSquare);
-        setPieceAt(toSquare, null);
+        setPieceAt(fromSquare, movedPieceType,moveColor);
+        removePiece(toSquare);
+
 
         if (lastMove.isTake()) {
-            setPieceAt(toSquare, lastMove.getTakenPieceType(), lastMove.getColor().getOpposite());
-            getPieceAt(toSquare).setPosition(toSquare);
+            setPieceAt(toSquare, lastMove.getTakenPieceType(), Piece.GetOppositeColor(moveColor));
+
         }
 
         if (lastMove.isPromote()) {
-            setPieceAt(fromSquare, Piece.Type.PAWN, lastMove.getColor());
+            setPieceAt(fromSquare, Piece.PAWN, moveColor);
         }
 
-        if (lastMove.getColor() == Piece.Color.WHITE) {
+        if (moveColor == Piece.WHITE) {
             fullMovesCount--;
         }
 
@@ -632,7 +621,6 @@ public class ChessBoard {
             int rookPosition;
             int currentRookPosition;
 
-            Piece.Color moveColor = lastMove.getColor();
 
             if (lastMove.getCastlingType() == Move.CastlingType.CASTLING_kING_SIDE) {
                 rookPosition = Game.moveGenerator.getInitialRookKingSide(
@@ -645,16 +633,17 @@ public class ChessBoard {
                 currentRookPosition = lastMove.getFrom() - 1;
 
             }
-            setPieceAt(rookPosition, Piece.Type.ROOK, moveColor);
-            setPieceAt(currentRookPosition, null);
+            setPieceAt(rookPosition, Piece.ROOK, moveColor);
+            removePiece(currentRookPosition);
         }
 
 
         if (lastMove.isEnPasant()) {
-            if (lastMove.getColor() == Piece.Color.WHITE) {
-                setPieceAt(ChessBoard.offsetRank(lastMove.getTo(), -1), Piece.Type.PAWN, Piece.Color.BLACK);
+            if (moveColor == Piece.WHITE) {
+                setPieceAt(toSquare - 8,Piece.PAWN,Piece.BLACK);
             } else {
-                setPieceAt(ChessBoard.offsetRank(lastMove.getTo(), 1), Piece.Type.PAWN, Piece.Color.WHITE);
+                setPieceAt(toSquare + 8,Piece.PAWN,Piece.WHITE);
+
             }
         }
 
@@ -672,72 +661,58 @@ public class ChessBoard {
 
     }
 
-    public void unMove(int numberOfSteps){
-        for(int i =0; i < numberOfSteps;i++){
+    public void unMove(int numberOfSteps) {
+        for (int i = 0; i < numberOfSteps; i++) {
             unMove();
         }
     }
 
     //get and set a square info
-    public Piece getPieceAt(int position) {
-
-        return pieces[position];
-    }
 
 
 
-    public void setPieceAt(int position, Piece.Type pieceType, Piece.Color pieceColor) {
-        Piece piece = new Piece(pieceType, pieceColor, position);
-        setPieceAt(position, piece);
-    }
-
-    public void setPieceAt(int position, Piece piece) {
+    public void setPieceAt(int position, int pieceType,int pieceColor) {
         removePiece(position);
 
-        if (piece == null) {
-            pieces[position] = null;
-            return;
-        }
-        pieces[position] = new Piece(piece);
-        if (piece.getColor() == Piece.Color.WHITE) {
-            switch (piece.getType()) {
-                case PAWN:
+        if (pieceColor == Piece.WHITE) {
+            switch (pieceType) {
+                case Piece.PAWN:
                     addWhitePawn(position);
                     break;
-                case ROOK:
+                case Piece.ROOK:
                     addWhiteRook(position);
                     break;
-                case KNIGHT:
+                case Piece.KNIGHT:
                     addWhiteKnight(position);
                     break;
-                case BISHOP:
+                case Piece.BISHOP:
                     addWhiteBishop(position);
                     break;
-                case QUEEN:
+                case Piece.QUEEN:
                     addWhiteQueen(position);
                     break;
-                case KING:
+                case Piece.KING:
                     addWhiteKing(position);
                     break;
             }
         } else {
-            switch (piece.getType()) {
-                case PAWN:
+            switch (pieceType) {
+                case Piece.PAWN:
                     addBlackPawn(position);
                     break;
-                case ROOK:
+                case Piece.ROOK:
                     addBlackRook(position);
                     break;
-                case KNIGHT:
+                case Piece.KNIGHT:
                     addBlackKnight(position);
                     break;
-                case BISHOP:
+                case Piece.BISHOP:
                     addBlackBishop(position);
                     break;
-                case QUEEN:
+                case Piece.QUEEN:
                     addBlackQueen(position);
                     break;
-                case KING:
+                case Piece.KING:
                     addBlackKing(position);
                     break;
             }
@@ -748,21 +723,21 @@ public class ChessBoard {
 
 
     public Game.GameStatus checkStatus(LegalMoves toPlayLegalMoves) {
-        Piece.Color lastPlayed = moves.getLastPlayed();
+        int lastPlayed = moves.getLastPlayed();
         Game.GameStatus gameStatus = Game.GameStatus.NOT_FINISHED;
-        Piece.Color currentToPlayColor = lastPlayed.getOpposite();
+        int currentToPlayColor = Piece.GetOppositeColor(lastPlayed);
 
-        if(toPlayLegalMoves.size() == 0){
-            boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this,lastPlayed);
-            if(isKingInCheck){
+        if (toPlayLegalMoves.size() == 0) {
+            boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this, lastPlayed);
+            if (isKingInCheck) {
                 //win
-                if (lastPlayed == Piece.Color.WHITE) {
+                if (lastPlayed == Piece.WHITE) {
                     gameStatus = Game.GameStatus.FINISHED_WIN_WHITE;
                 } else {
                     gameStatus = Game.GameStatus.FINISHED_WIN_BLACK;
 
                 }
-            } else{
+            } else {
                 //draw stalemate
                 gameStatus = Game.GameStatus.FINISHED_DRAW;
 
@@ -781,10 +756,10 @@ public class ChessBoard {
         //check for third repetition draw
         int repeatedPositionCount = 1;
         State lastState = states.get(states.size() - 1);
-        for(int i = 0;i < (states.size() - 1) ; i++){
-            if(lastState.equals(states.get(i))){
+        for (int i = 0; i < (states.size() - 1); i++) {
+            if (lastState.equals(states.get(i))) {
                 repeatedPositionCount++;
-                if(repeatedPositionCount == 3){
+                if (repeatedPositionCount == 3) {
                     gameStatus = Game.GameStatus.FINISHED_DRAW;
                     break;
                 }
@@ -792,58 +767,60 @@ public class ChessBoard {
         }
 
 
-
-
         return gameStatus;
     }
 
+    public int getAllPiecesCount() {
+        return BitMath.countSetBits(allPieces);
+    }
+
+    public int getWhitePiecesCount() {
+        return BitMath.countSetBits(allWhitePieces);
+    }
+
+    public int getBlackPiecesCount() {
+        return BitMath.countSetBits(allBlackPieces);
+    }
+
+    public int getWhiteBishopsCount() {
+        return BitMath.countSetBits(whiteBishops);
+    }
+
+    public int getBlackBishopsCount() {
+        return BitMath.countSetBits(blackBishops);
+
+    }
 
 
     private boolean insufficientMaterial() {
-        ArrayList<Integer> whitePieces = Game.moveGenerator.getWhitePositions(this);
-        ArrayList<Integer> blackPieces = Game.moveGenerator.getBlackPositions(this);
-        int whitePiecesNumber = whitePieces.size();
-        int blackPiecesNumber = blackPieces.size();
+        int allPiecesCount = getAllPiecesCount();
+
 
         // tow kings remaining
-        if (whitePiecesNumber + blackPiecesNumber == 2) {
+        if (allPiecesCount == 2) {
             return true;
         }
 
-        if (whitePiecesNumber + blackPiecesNumber == 3) {
-
-            Piece.Type remainingPieceType = Piece.Type.PAWN;
-            for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-                if (getPieceAt(i) != null && getPieceAt(i).getType() != Piece.Type.KING) {
-                    remainingPieceType = getPieceType(i);
-                }
-            }
+        if (allPiecesCount == 3) {
 
             // tow kings and a bishop or knight
-            if (remainingPieceType == Piece.Type.BISHOP || remainingPieceType == Piece.Type.KNIGHT) {
+
+            if ((whiteBishops | blackBishops | whiteKnights | blackKnights) != 0) {
                 return true;
             }
 
         }
 
-        if (whitePiecesNumber + blackPiecesNumber == 4) {
+        if (allPiecesCount == 4) {
 
-            ArrayList<Piece> remainingPieces = new ArrayList<>();
-            for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-                if (getPieceAt(i) != null && getPieceAt(i).getType() != Piece.Type.KING) {
-                    remainingPieces.add(getPieceAt(i));
-                }
+            if (getWhiteBishopsCount() == 1 && getBlackBishopsCount() == 1) {
+                int whiteBishopPosition = BitMath.getPositionsOf(whiteBishops).get(0);
+                int blackBishopPosition = BitMath.getPositionsOf(blackBishops).get(0);
+                // tow king and tow bishops of the same square color
+                return ChessBoard.GetSquareColor(whiteBishopPosition) ==
+                        ChessBoard.GetSquareColor(blackBishopPosition);
             }
-            Piece firstPiece = remainingPieces.get(0);
-            Piece secondPiece = remainingPieces.get(1);
 
-            // tow king and tow bishops of the same square color
-            if (firstPiece.getType() == Piece.Type.BISHOP && secondPiece.getType() == Piece.Type.BISHOP) {
-                if (firstPiece.getColor() != secondPiece.getColor()) {
-                    return ChessBoard.GetSquareColor(firstPiece.getPosition()) ==
-                            ChessBoard.GetSquareColor(secondPiece.getPosition());
-                }
-            }
 
 
         }
@@ -852,17 +829,24 @@ public class ChessBoard {
         return false;
     }
 
+    public void removeKing(int kingToRemoveColor){
+        if(kingToRemoveColor == Piece.WHITE){
+            whiteKing = 0;
+        } else {
+            blackKing = 0;
+        }
+    }
 
     public boolean isSquareEmpty(int position) {
-        return getPieceAt(position) == null;
+        return BitMath.isBitSet(emptySquares,position);
     }
 
     public boolean isPieceBlackAt(int position) {
-        return pieces[position].getColor() == Piece.Color.BLACK;
+        return BitMath.isBitSet(allBlackPieces,position);
     }
 
     public boolean isPieceWhiteAt(int position) {
-        return pieces[position].getColor() == Piece.Color.WHITE;
+        return BitMath.isBitSet(allWhitePieces,position);
     }
 
     public int pieceColor(int position) {
@@ -883,19 +867,8 @@ public class ChessBoard {
         );
     }
 
-    public Piece.Color getPieceColor(int position) {
-        return pieces[position].getColor();
-    }
 
-    public Piece.Type getPieceType(int position) {
-        return pieces[position].getType();
-    }
 
-    public boolean isPieceAt(int square, Piece.Type type, Piece.Color color) {
-        if (square == OUT) return false;
-        if (isSquareEmpty(square)) return false;
-        return getPieceColor(square) == color && getPieceType(square) == type;
-    }
 
     public static int GetPosition(int file, int rank) {
         if (file < FILE_A || file > FILE_H) return OUT;
@@ -995,11 +968,11 @@ public class ChessBoard {
         return offset(square, 0, rank);
     }
 
-    public static Piece.Color GetSquareColor(int square) {
+    public static int GetSquareColor(int square) {
         if ((square % 2) == 0) {
-            return Piece.Color.BLACK;
+            return Piece.BLACK;
         } else {
-            return Piece.Color.WHITE;
+            return Piece.WHITE;
         }
     }
 
@@ -1051,14 +1024,14 @@ public class ChessBoard {
 
 
     public int getWhiteCastlingRights() {
-        return states.get(states.size() -1).whiteCastlingRights;
+        return states.get(states.size() - 1).whiteCastlingRights;
     }
 
     public int getBlackCastlingRights() {
-        return states.get(states.size() -1).blackCastlingRights;
+        return states.get(states.size() - 1).blackCastlingRights;
     }
 
     public int getEnPassantTarget() {
-        return states.get(states.size() -1).enPassantTarget;
+        return states.get(states.size() - 1).enPassantTarget;
     }
 }

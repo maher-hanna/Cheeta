@@ -26,12 +26,12 @@ public class ChessboardMoves {
         return moves.get(moves.size() -1);
     }
 
-    public Piece.Color getToPlayNow(){
-        return getLastPlayed().getOpposite();
+    public int getToPlayNow(){
+        return Piece.GetOppositeColor(getLastPlayed());
     }
-    public Piece.Color getLastPlayed(){
+    public int getLastPlayed(){
         if(moves.size() == 0){
-            return Piece.Color.BLACK;
+            return Piece.BLACK;
         } else{
             return getLastMove().getColor();
 
