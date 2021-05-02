@@ -462,7 +462,7 @@ public class ChessBoard {
 
 
     public boolean isKingInCheck(int kingColor) {
-        return Game.moveGenerator.isKingAttacked(this,Piece.GetOppositeColor(kingColor) );
+        return Game.moveGenerator.isKingAttacked(this,kingColor);
     }
 
 
@@ -728,7 +728,7 @@ public class ChessBoard {
         int currentToPlayColor = Piece.GetOppositeColor(lastPlayed);
 
         if (toPlayLegalMoves.size() == 0) {
-            boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this, lastPlayed);
+            boolean isKingInCheck = Game.moveGenerator.isKingAttacked(this, currentToPlayColor);
             if (isKingInCheck) {
                 //win
                 if (lastPlayed == Piece.WHITE) {
@@ -831,8 +831,17 @@ public class ChessBoard {
 
     public void removeKing(int kingToRemoveColor){
         if(kingToRemoveColor == Piece.WHITE){
+            long whiteKingMask = ~whiteKing;
+            allWhitePieces &= whiteKingMask;
+            allPieces &= whiteKingMask;
+            emptySquares = ~allPieces;
             whiteKing = 0;
+
         } else {
+            long blackKingMask = ~blackKing;
+            allBlackPieces &= blackKingMask;
+            allPieces &= blackKingMask;
+            emptySquares = ~allPieces;
             blackKing = 0;
         }
     }

@@ -206,7 +206,7 @@ public class MoveGenerator {
             Move move = new Move(Piece.PAWN, Piece.WHITE,
                     index - 8, index);
             if (ChessBoard.GetRank(index) == ChessBoard.RANK_8) {
-                move.setPromotes( Piece.QUEEN);
+                move.setPromotes(Piece.QUEEN);
             }
             moves.add(move);
         }
@@ -243,7 +243,7 @@ public class MoveGenerator {
 
             attack.setTakes(chessBoard.pieceType(index));
             if (ChessBoard.GetRank(index) == ChessBoard.RANK_8) {
-                attack.setPromotes( Piece.QUEEN);
+                attack.setPromotes(Piece.QUEEN);
             }
             attacks.add(attack);
 
@@ -273,7 +273,7 @@ public class MoveGenerator {
                 int index = chessBoard.getEnPassantTarget();
                 Move enPassantWestMove = new Move(Piece.PAWN, Piece.WHITE,
                         index - 7, index);
-                enPassantWestMove.setTakes( Piece.PAWN);
+                enPassantWestMove.setTakes(Piece.PAWN);
                 enPassantWestMove.setEnPasant();
                 attacks.add(enPassantWestMove);
 
@@ -543,7 +543,7 @@ public class MoveGenerator {
             for (int index = 0; index < count; index++) {
                 int captureTarget = BitMath.getLSBitIndex(captureTargetsCopy);
                 captureTargetsCopy = BitMath.popBit(captureTargetsCopy, captureTarget);
-                Move move = new Move(Piece.KNIGHT,color,currentKnightPosition, captureTarget);
+                Move move = new Move(Piece.KNIGHT, color, currentKnightPosition, captureTarget);
                 move.setTakes(chessBoard.pieceType(captureTarget));
 
                 moves.add(move);
@@ -716,7 +716,7 @@ public class MoveGenerator {
             for (int i = 0; i < quietTargetsCount; i++) {
                 int target = BitMath.getLSBitIndex(quietTargets);
                 quietTargets = BitMath.popBit(quietTargets, target);
-                move = new Move(pieceType,color, rookPosition, target);
+                move = new Move(pieceType, color, rookPosition, target);
 
                 moves.add(move);
             }
@@ -852,7 +852,7 @@ public class MoveGenerator {
 
             if (captureTarget != 0) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget);
-                move = new Move(pieceType,color, bishopPosition, captureTargetIndex);
+                move = new Move(pieceType, color, bishopPosition, captureTargetIndex);
                 move.setTakes(chessBoard.pieceType(captureTargetIndex));
                 moves.add(move);
             }
@@ -913,7 +913,7 @@ public class MoveGenerator {
     }
     //*******************************************************************************
 
-    public long getAllAttackedSquaresFor(ChessBoard chessBoard, int color){
+    public long getAllAttackedSquaresFor(ChessBoard chessBoard, int color) {
         long attackedSquares = 0;
 
         long pawns = 0;
@@ -921,9 +921,9 @@ public class MoveGenerator {
         long bishops = 0;
         long knights = 0;
         long queens = 0;
-        long king =  0;
+        long king = 0;
 
-        if(color == Piece.WHITE){
+        if (color == Piece.WHITE) {
             pawns = chessBoard.whitePawns;
             rooks = chessBoard.whiteRooks;
             bishops = chessBoard.whiteBishops;
@@ -953,9 +953,12 @@ public class MoveGenerator {
             rooksAndQueens = BitMath.popBit(rooksAndQueens, rookPosition);
 
             long northTargets = rookAttacks(NORTH, rookPosition, chessBoard.allPieces) & chessBoard.emptySquares;
-            long southTargets = rookAttacks(SOUTH, rookPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
-            long eastTargets = rookAttacks(EAST, rookPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
-            long westTargets = rookAttacks(WEST, rookPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
+            long southTargets = rookAttacks(SOUTH, rookPosition, chessBoard.allPieces) & chessBoard.emptySquares;
+            ;
+            long eastTargets = rookAttacks(EAST, rookPosition, chessBoard.allPieces) & chessBoard.emptySquares;
+            ;
+            long westTargets = rookAttacks(WEST, rookPosition, chessBoard.allPieces) & chessBoard.emptySquares;
+            ;
             attackedSquares |= northTargets | southTargets | eastTargets | westTargets;
         }
 
@@ -968,9 +971,12 @@ public class MoveGenerator {
             bishopsAndQueens = BitMath.popBit(bishopsAndQueens, bishopPosition);
 
             long northWestTargets = bishopAttacks(NORTH_WEST, bishopPosition, chessBoard.allPieces) & chessBoard.emptySquares;
-            long southWestTargets = bishopAttacks(SOUTH_WEST, bishopPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
-            long northEastTargets = bishopAttacks(NORTH_EAST, bishopPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
-            long southEastTargets = bishopAttacks(SOUTH_EAST, bishopPosition, chessBoard.allPieces)& chessBoard.emptySquares;;
+            long southWestTargets = bishopAttacks(SOUTH_WEST, bishopPosition, chessBoard.allPieces) & chessBoard.emptySquares;
+            ;
+            long northEastTargets = bishopAttacks(NORTH_EAST, bishopPosition, chessBoard.allPieces) & chessBoard.emptySquares;
+            ;
+            long southEastTargets = bishopAttacks(SOUTH_EAST, bishopPosition, chessBoard.allPieces) & chessBoard.emptySquares;
+            ;
             attackedSquares |= northWestTargets | southWestTargets | northEastTargets | southEastTargets;
         }
 
@@ -1050,8 +1056,8 @@ public class MoveGenerator {
         return moves;
     }
 
-    boolean isSquareAttacked(ChessBoard chessBoard, int square,int attackingColor){
-        if(attackingColor == Piece.WHITE){
+    boolean isSquareAttacked(ChessBoard chessBoard, int square, int attackingColor) {
+        if (attackingColor == Piece.WHITE) {
             return (getAllAttackedSquaresFor(chessBoard, Piece.WHITE) & (1L << square)) != 0;
 
         } else {
@@ -1060,19 +1066,21 @@ public class MoveGenerator {
         }
     }
 
-    boolean isKingAttacked(ChessBoard chessBoard, int attackingColor){
+    boolean isKingAttacked(ChessBoard chessBoard, int kingColor) {
         ChessBoard chessBoardWithoutKing = new ChessBoard(chessBoard);
-        int kingPosition = getKingPosition(chessBoard,Piece.GetOppositeColor(attackingColor));
-        chessBoardWithoutKing.removeKing(Piece.GetOppositeColor(attackingColor));
+        int kingPosition = getKingPosition(chessBoard, kingColor);
+        chessBoardWithoutKing.removeKing(kingColor);
 
-            return (getAllAttackedSquaresFor(chessBoardWithoutKing, attackingColor) & (1L << kingPosition)) != 0;
+        return (getAllAttackedSquaresFor(chessBoardWithoutKing, Piece.GetOppositeColor(kingColor))
+                & (1L << kingPosition)) != 0;
 
     }
+
     public int getKingPosition(ChessBoard chessBoard, int kingColor) {
         int kingPosition = ChessBoard.OUT;
-        if(kingColor == Piece.WHITE){
+        if (kingColor == Piece.WHITE) {
             kingPosition = BitMath.getLSBitIndex(chessBoard.whiteKing);
-        } else{
+        } else {
             kingPosition = BitMath.getLSBitIndex(chessBoard.blackKing);
 
         }
@@ -1110,9 +1118,7 @@ public class MoveGenerator {
     }
 
 
-
-
-    public ChessBoard movePiece(ChessBoard chessBoard,Move move){
+    public ChessBoard movePiece(ChessBoard chessBoard, Move move) {
         ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
         int fromSquare = move.getFrom();
         int toSquare = move.getTo();
@@ -1139,8 +1145,8 @@ public class MoveGenerator {
         while (itr.hasNext()) {
 
             Move move = itr.next();
-            chessBoardAfterMove = movePiece(chessBoard,move);
-            if(Game.moveGenerator.isKingAttacked(chessBoardAfterMove,Piece.GetOppositeColor(kingColor))){
+            chessBoardAfterMove = movePiece(chessBoard, move);
+            if (Game.moveGenerator.isKingAttacked(chessBoardAfterMove, kingColor)) {
                 itr.remove();
             }
 
@@ -1150,12 +1156,12 @@ public class MoveGenerator {
     }
 
     public LegalMoves getWhiteLegalMoves(ChessBoard chessBoard) {
-        ArrayList<Move> moves =  getWhitePseudoLegalMoves(chessBoard);
+        ArrayList<Move> moves = getWhitePseudoLegalMoves(chessBoard);
 
-        removeMovesThatExposeKing(chessBoard,moves, Piece.WHITE);
+        removeMovesThatExposeKing(chessBoard, moves, Piece.WHITE);
         LegalMoves legalMoves = new LegalMoves();
         legalMoves.addAll(moves);
-        checkCastling(chessBoard,legalMoves, Piece.WHITE);
+        checkCastling(chessBoard, legalMoves, Piece.WHITE);
 
         return legalMoves;
     }
@@ -1164,14 +1170,15 @@ public class MoveGenerator {
     public LegalMoves getBlackLegalMoves(ChessBoard chessBoard) {
         ArrayList<Move> moves = getBlackPseudoLegalMoves(chessBoard);
 
-        removeMovesThatExposeKing(chessBoard,moves, Piece.BLACK);
+        removeMovesThatExposeKing(chessBoard, moves, Piece.BLACK);
         LegalMoves legalMoves = new LegalMoves();
         legalMoves.addAll(moves);
-        checkCastling(chessBoard,legalMoves, Piece.BLACK);
+        checkCastling(chessBoard, legalMoves, Piece.BLACK);
 
 
         return legalMoves;
     }
+
     public LegalMoves getLegalMovesFor(ChessBoard chessBoard, int color) {
         if (color == Piece.WHITE) {
             return getWhiteLegalMoves(chessBoard);
@@ -1181,20 +1188,20 @@ public class MoveGenerator {
     }
 
     private void checkCastling(ChessBoard chessBoard, LegalMoves legalMoves,
-                                      int color) {
+                               int color) {
 
         int initialKingPosition = getInitialKingPosition(chessBoard, color);
         int kingTarget = 0;
         if (canCastleKingSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
             kingTarget = initialKingPosition + 2;
-            Move move = new Move(Piece.KING,color, initialKingPosition, kingTarget);
+            Move move = new Move(Piece.KING, color, initialKingPosition, kingTarget);
             move.setCastling(Move.CastlingType.CASTLING_kING_SIDE);
 
             legalMoves.add(move);
         }
         if (canCastleQueenSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
             kingTarget = initialKingPosition - 2;
-            Move move = new Move(Piece.KING,color, initialKingPosition, kingTarget);
+            Move move = new Move(Piece.KING, color, initialKingPosition, kingTarget);
             move.setCastling(Move.CastlingType.CASTLING_QUEEN_SIDE);
             legalMoves.add(move);
 
@@ -1232,7 +1239,7 @@ public class MoveGenerator {
         }
 
 
-        return !isSquareAttacked(chessBoard, initialKingPosition + 1,Piece.GetOppositeColor(color)) &&
+        return !isSquareAttacked(chessBoard, initialKingPosition + 1, Piece.GetOppositeColor(color)) &&
                 !isSquareAttacked(chessBoard, initialKingPosition + 2, Piece.GetOppositeColor(color));
     }
 
@@ -1266,8 +1273,8 @@ public class MoveGenerator {
             return false;
         }
 
-        return !isSquareAttacked(chessBoard, initialKingPosition - 1,Piece.GetOppositeColor(color)) &&
-                !isSquareAttacked(chessBoard, initialKingPosition - 2,Piece.GetOppositeColor(color));
+        return !isSquareAttacked(chessBoard, initialKingPosition - 1, Piece.GetOppositeColor(color)) &&
+                !isSquareAttacked(chessBoard, initialKingPosition - 2, Piece.GetOppositeColor(color));
     }
 
 
