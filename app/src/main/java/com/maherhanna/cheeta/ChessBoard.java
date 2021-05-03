@@ -116,6 +116,16 @@ public class ChessBoard {
 
         blackLegalMoves = new LegalMoves();
         whiteLegalMoves = new LegalMoves();
+        setupFromFen(Game.startPosition);
+
+    }
+    public ChessBoard(String fenString) {
+        moves = new ChessboardMoves();
+        states = new ArrayList<>();
+
+        blackLegalMoves = new LegalMoves();
+        whiteLegalMoves = new LegalMoves();
+        setupFromFen(fenString);
 
     }
 
