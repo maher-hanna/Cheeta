@@ -85,7 +85,7 @@ public class GameActivity extends AppCompatActivity {
         };
         AlertDialog.Builder builder = new AlertDialog.Builder(GameActivity.this);
         builder.setMessage(alertMessage)
-                .setPositiveButton("Yes",dialogClickListner)
-                .setNegativeButton("No" ,dialogClickListner).show();
+                .setPositiveButton(R.string.finish_game_yes,dialogClickListner)
+                .setNegativeButton(R.string.finish_game_no ,dialogClickListner).show();
     }
 }
