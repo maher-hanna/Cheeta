@@ -2,6 +2,7 @@ package com.maherhanna.cheeta;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class LegalMoves {
     private ArrayList<Move> legalMoves;
@@ -59,5 +60,19 @@ public class LegalMoves {
             }
         }
         return legalMove;
+    }
+
+    public void removeNonTake() {
+        Iterator<Move> itr = legalMoves.iterator();
+        while (itr.hasNext()) {
+
+            Move move = itr.next();
+            if (!move.isTake()) {
+                itr.remove();
+            }
+
+
+        }
+
     }
 }

@@ -6,7 +6,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
+public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
     private boolean foundCheckMate;
     long evaluations;
     int maxingPlayer;
@@ -24,7 +24,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(startChessBoard,
                 maxingPlayer);
         ArrayList<MoveScore> moveScores = sortMoves(toPlayLegalMoves);
-        Collections.sort(moveScores);
+
 
         int maxDepth = 0;
         long timeLeft;
@@ -34,9 +34,11 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
             maxDepth++;
             int currentDepthMoveIndex = search(startChessBoard, toPlayLegalMoves, moveScores, timeLeft, maxDepth);
             if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
+                maxDepth--;
                 break;
             } else {
                 moveIndex = currentDepthMoveIndex;
+
 
             }
 
@@ -80,15 +82,19 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
         int maxIndex = ChessBoard.NO_SQUARE;
         int currentMaxIndex = 0;
         float progress = 0;
+
+
         for (int i = 0; i < moves.size(); i++) {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
             chessBoardAfterMove.move(moves.get(moveScores.get(i).moveIndex));
-            score = miniMax(chessBoardAfterMove, maxScore,
+            score = alphaBeta(chessBoardAfterMove, maxScore,
                     Integer.MAX_VALUE, maxDepth - 1, false);
             if (score > maxScore) {
                 maxScore = score;
                 currentMaxIndex = moveScores.get(i).moveIndex;
             }
+
+
             if (score == Integer.MAX_VALUE) {
                 foundCheckMate = true;
                 break;
@@ -102,12 +108,88 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
 
             }
         }
-        if (!timeFinished) maxIndex = currentMaxIndex;
+        if (!timeFinished) {
+            maxIndex = currentMaxIndex;
+        }
         return maxIndex;
     }
 
+    private int quiescence(ChessBoard chessBoard, int alpha, int beta, boolean maxing) {
+        int eval = getScoreFor(chessBoard, maxingPlayer);
+        if(maxing){
+            if(eval > alpha){
+                alpha = eval;
+            }
 
-    public int miniMax(ChessBoard chessBoard, int alpha, int beta, float depth, boolean maxing) {
+        }else {
+            if(eval < beta){
+                beta = eval;
+            }
+
+        }
+
+        if(alpha >= beta){
+            return eval;
+        }
+
+        int toPlayColor = chessBoard.moves.getToPlayNow();
+
+        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
+                toPlayColor);
+        Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
+        if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
+                || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
+            return getGameFinishedScoreFor(gameStatus, maxingPlayer);
+        } else {
+                toPlayLegalMoves.removeNonTake();
+        }
+
+
+        if (toPlayLegalMoves.size() == 0) {
+            evaluations++;
+
+            return getScoreFor(chessBoard, maxingPlayer);
+
+        }
+
+
+        ArrayList<MoveScore> scores = sortMoves(toPlayLegalMoves);
+
+
+        if (maxing) {
+            int maxScore = Integer.MIN_VALUE;
+            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
+                ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+                chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
+                int score = quiescence(chessBoardAfterMove, alpha, beta,
+                        !maxing);
+                maxScore = Math.max(maxScore, score);
+                alpha = Math.max(alpha, score);
+
+                if (alpha >= beta) {
+                    break;
+                }
+            }
+            return maxScore;
+        } else {
+            int minScore = Integer.MAX_VALUE;
+            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
+                ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+                chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
+                int score = quiescence(chessBoardAfterMove, alpha, beta,
+                        !maxing);
+                minScore = Math.min(minScore, score);
+                beta = Math.min(beta, score);
+
+                if (alpha >= beta) {
+                    break;
+                }
+            }
+            return minScore;
+        }
+    }
+
+    public int alphaBeta(ChessBoard chessBoard, int alpha, int beta, float depth, boolean maxing) {
         int toPlayColor = chessBoard.moves.getToPlayNow();
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
@@ -119,7 +201,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
                     || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
                 return getGameFinishedScoreFor(gameStatus, maxingPlayer);
             } else {
-                return getScoreFor(chessBoard, maxingPlayer);
+                return quiescence(chessBoard,alpha,beta,maxing);
             }
         }
 
@@ -131,14 +213,14 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
         }
 
         ArrayList<MoveScore> scores = sortMoves(toPlayLegalMoves);
-        Collections.sort(scores);
+
 
         if (maxing) {
             int maxScore = Integer.MIN_VALUE;
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                 chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
-                int score = miniMax(chessBoardAfterMove, alpha, beta,
+                int score = alphaBeta(chessBoardAfterMove, alpha, beta,
                         depth - 1, !maxing);
                 maxScore = Math.max(maxScore, score);
                 alpha = Math.max(alpha, score);
@@ -153,7 +235,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                 chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
-                int score = miniMax(chessBoardAfterMove, alpha, beta,
+                int score = alphaBeta(chessBoardAfterMove, alpha, beta,
                         depth - 1, !maxing);
                 minScore = Math.min(minScore, score);
                 beta = Math.min(beta, score);
@@ -168,56 +250,6 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
     }
 
 
-    public int miniMax(ChessBoard chessBoard, int depth, boolean maxing) {
-        int toPlayColor = chessBoard.moves.getToPlayNow();
-
-        LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
-                toPlayColor);
-        Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
-        if (depth == 0) {
-            evaluations++;
-            if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
-                    || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
-                return getGameFinishedScoreFor(gameStatus, maxingPlayer);
-            } else {
-                return getScoreFor(chessBoard, maxingPlayer);
-            }
-        }
-
-        if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
-                || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
-            evaluations++;
-
-            return getGameFinishedScoreFor(gameStatus, maxingPlayer);
-        }
-
-
-        if (maxing) {
-            int maxScore = Integer.MIN_VALUE;
-            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-                ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayLegalMoves.get(i));
-                int score = miniMax(chessBoardAfterMove,
-                        depth - 1, !maxing);
-                maxScore = Math.max(maxScore, score);
-
-            }
-            return maxScore;
-        } else {
-            int minScore = Integer.MAX_VALUE;
-            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-                ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayLegalMoves.get(i));
-                int score = miniMax(chessBoardAfterMove,
-                        depth - 1, !maxing);
-                minScore = Math.min(minScore, score);
-
-            }
-            return minScore;
-        }
-    }
-
-
     public ArrayList<MoveScore> sortMoves(LegalMoves moves) {
         ArrayList<MoveScore> scores = new ArrayList<>();
         int currentScore = 0;
@@ -229,10 +261,10 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
                 currentScore += 1;
                 int takenPieceValue = getPieceValue(currentMove.getTakenPieceType());
                 int movedPieceValue = getPieceValue(currentMove.getPieceType());
-                if(takenPieceValue > movedPieceValue){
+                if (takenPieceValue > movedPieceValue) {
                     currentScore += 2;
                 }
-                if(currentMove.getTakenPieceType() == Piece.KING) currentScore += 10;
+                if (currentMove.getTakenPieceType() == Piece.KING) currentScore += 10;
 
             }
             if (currentMove.isPromote()) {
@@ -241,6 +273,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard,Void,Move> {
 
             scores.add(new MoveScore(currentScore, i));
         }
+        Collections.sort(scores);
         return scores;
     }
 
