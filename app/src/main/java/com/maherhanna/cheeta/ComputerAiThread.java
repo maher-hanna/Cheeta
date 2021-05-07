@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
+    private static int LOSE_SCORE = -1000000;
+    private static int WIN_SCORE = 1000000;
     private boolean foundCheckMate;
     long evaluations;
     int maxingPlayer;
@@ -53,7 +55,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
 
 //        evaluations = 0;
 //        int maxIndex = 0;
-//        maxScore = Integer.MIN_VALUE;
+//        maxScore = LOSE_SCORE;
 //        startTime = System.nanoTime();
 //        for (int i = 0; i < toPlayLegalMoves.size(); i++) {
 //            ChessBoard chessBoardAfterMove = new ChessBoard(startChessBoard);
@@ -75,7 +77,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
     }
 
     public int search(ChessBoard chessBoard, LegalMoves moves, ArrayList<MoveScore> moveScores, long timeLeft, int maxDepth) {
-        int maxScore = Integer.MIN_VALUE;
+        int maxScore = LOSE_SCORE;
         boolean timeFinished = false;
         long searchStart = System.nanoTime();
         int score = 0;
@@ -88,14 +90,14 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
             chessBoardAfterMove.move(moves.get(moveScores.get(i).moveIndex));
             score = alphaBeta(chessBoardAfterMove, maxScore,
-                    Integer.MAX_VALUE, maxDepth - 1, false);
+                    WIN_SCORE, maxDepth - 1, false);
             if (score > maxScore) {
                 maxScore = score;
                 currentMaxIndex = moveScores.get(i).moveIndex;
             }
 
 
-            if (score == Integer.MAX_VALUE) {
+            if (score == WIN_SCORE) {
                 foundCheckMate = true;
                 break;
             }
@@ -115,6 +117,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
     }
 
     private int quiescence(ChessBoard chessBoard, int alpha, int beta, boolean maxing) {
+        evaluations++;
         int eval = getScoreFor(chessBoard, maxingPlayer);
         if(maxing){
             if(eval > alpha){
@@ -157,7 +160,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
 
 
         if (maxing) {
-            int maxScore = Integer.MIN_VALUE;
+            int maxScore = LOSE_SCORE;
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                 chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
@@ -172,7 +175,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
             }
             return maxScore;
         } else {
-            int minScore = Integer.MAX_VALUE;
+            int minScore = WIN_SCORE;
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                 chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
@@ -214,9 +217,10 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
 
         ArrayList<MoveScore> scores = sortMoves(toPlayLegalMoves);
 
+        evaluations++;
 
         if (maxing) {
-            int maxScore = Integer.MIN_VALUE;
+            int maxScore = LOSE_SCORE;
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                 chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
@@ -231,7 +235,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
             }
             return maxScore;
         } else {
-            int minScore = Integer.MAX_VALUE;
+            int minScore = WIN_SCORE;
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                 chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
@@ -281,10 +285,10 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         int value = 0;
         switch (gameStatus) {
             case FINISHED_WIN_WHITE:
-                value = Integer.MAX_VALUE;
+                value = WIN_SCORE;
                 break;
             case FINISHED_WIN_BLACK:
-                value = Integer.MIN_VALUE;
+                value = LOSE_SCORE;
                 break;
             case FINISHED_DRAW:
                 value = 0;
@@ -297,10 +301,10 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         int value = 0;
         switch (gameStatus) {
             case FINISHED_WIN_WHITE:
-                value = Integer.MIN_VALUE;
+                value = LOSE_SCORE;
                 break;
             case FINISHED_WIN_BLACK:
-                value = Integer.MAX_VALUE;
+                value = WIN_SCORE;
                 break;
             case FINISHED_DRAW:
                 value = 0;
