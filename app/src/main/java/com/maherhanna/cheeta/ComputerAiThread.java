@@ -32,11 +32,14 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         long timeLeft;
         int moveIndex = 0;
         do {
+            long previousEvaluations = evaluations;
+            evaluations = 0;
             timeLeft = (startTime + maxSearchTime) - System.nanoTime();
             maxDepth++;
             int currentDepthMoveIndex = search(startChessBoard, toPlayLegalMoves, moveScores, timeLeft, maxDepth);
             if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
                 maxDepth--;
+                evaluations = previousEvaluations;
                 break;
             } else {
                 moveIndex = currentDepthMoveIndex;
@@ -94,19 +97,18 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
             chessBoardAfterMove.move(moves.get(moveScores.get(i).moveIndex));
             score = -negaMax(chessBoardAfterMove, -beta,
                     -alpha, maxDepth - 1, false);
-            if (score > maxScore) {
-                maxScore = score;
+
+            if( score >= beta )
+            {
                 currentMaxIndex = moveScores.get(i).moveIndex;
-            }
-
-
-            if (score == WIN_SCORE) {
-                foundCheckMate = true;
                 break;
+
             }
-            alpha = Math.max(score, alpha);
-            if (alpha >= beta) {
-                break;
+            else if( score > alpha )
+            {
+                alpha = score;
+                currentMaxIndex = moveScores.get(i).moveIndex;
+
             }
 
             progress = (float) i / moves.size();
@@ -141,9 +143,8 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
                 toPlayColor);
         Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
-        if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
-                || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
-            return getGameFinishedScoreFor(gameStatus, chessBoard.toPlayColor);
+        if (isGameFinished(gameStatus)) {
+            return getScoreFor(chessBoard, chessBoard.toPlayColor,gameStatus);
         } else {
             toPlayLegalMoves.removeNonTake();
         }
@@ -188,16 +189,14 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
         if (depth == 0) {
             evaluations++;
-            if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
-                    || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
+            if (isGameFinished(gameStatus)) {
                 return getGameFinishedScoreFor(gameStatus, toPlayColor);
             } else {
                 return quiescence(chessBoard, alpha, beta, maxing);
             }
         }
 
-        if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
-                || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
+        if (isGameFinished(gameStatus)) {
             evaluations++;
 
             return getGameFinishedScoreFor(gameStatus, toPlayColor);
@@ -258,6 +257,10 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         return scores;
     }
 
+    private boolean isGameFinished(Game.GameStatus gameStatus){
+        return gameStatus != Game.GameStatus.NOT_FINISHED;
+    }
+
     int getGameFinishedWhiteScore(Game.GameStatus gameStatus) {
         int value = 0;
         switch (gameStatus) {
@@ -315,6 +318,18 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         } else {
             return getBlackScore(chessBoard) - getWhiteScore(chessBoard);
         }
+    }
+    int getScoreFor(ChessBoard chessBoard, int color, Game.GameStatus gameStatus) {
+        if(isGameFinished(gameStatus)){
+            return getGameFinishedScoreFor(gameStatus,color);
+        } else{
+            if (color == Piece.WHITE) {
+                return getWhiteScore(chessBoard) - getBlackScore(chessBoard);
+            } else {
+                return getBlackScore(chessBoard) - getWhiteScore(chessBoard);
+            }
+        }
+
     }
 
     public int getPiecesValueFor(ChessBoard chessboard, int color) {

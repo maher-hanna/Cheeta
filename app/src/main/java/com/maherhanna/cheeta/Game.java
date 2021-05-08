@@ -29,7 +29,7 @@ class Game {
         this.humanPlayerColor = humanPlayerColor;
 
 
-        this.chessBoard = new ChessBoard(startPosition);
+        this.chessBoard = new ChessBoard(trickyPosition);
 
         drawing.chessBoard = this.chessBoard;
 
