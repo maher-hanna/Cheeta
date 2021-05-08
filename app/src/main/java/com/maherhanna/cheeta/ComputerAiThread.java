@@ -85,12 +85,15 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         int currentMaxIndex = 0;
         float progress = 0;
 
+        int alpha = LOSE_SCORE;
+        int beta = WIN_SCORE;
+
 
         for (int i = 0; i < moves.size(); i++) {
             ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
             chessBoardAfterMove.move(moves.get(moveScores.get(i).moveIndex));
-            score = alphaBeta(chessBoardAfterMove, maxScore,
-                    WIN_SCORE, maxDepth - 1, false);
+            score = -negaMax(chessBoardAfterMove, -beta,
+                    -alpha, maxDepth - 1, false);
             if (score > maxScore) {
                 maxScore = score;
                 currentMaxIndex = moveScores.get(i).moveIndex;
@@ -101,6 +104,11 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
                 foundCheckMate = true;
                 break;
             }
+            alpha = Math.max(score, alpha);
+            if (alpha >= beta) {
+                break;
+            }
+
             progress = (float) i / moves.size();
             if ((System.nanoTime() - searchStart) > timeLeft) {
                 if (progress < 0.75) {
@@ -118,21 +126,14 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
 
     private int quiescence(ChessBoard chessBoard, int alpha, int beta, boolean maxing) {
         evaluations++;
-        int eval = getScoreFor(chessBoard, maxingPlayer);
-        if(maxing){
-            if(eval > alpha){
-                alpha = eval;
-            }
-
-        }else {
-            if(eval < beta){
-                beta = eval;
-            }
-
+        int eval = getScoreFor(chessBoard, chessBoard.toPlayColor);
+        if( eval >= beta )
+        {
+            return beta;
         }
-
-        if(alpha >= beta){
-            return eval;
+        else if( alpha < eval )
+        {
+            alpha = eval;
         }
 
         int toPlayColor = chessBoard.moves.getToPlayNow();
@@ -142,16 +143,16 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
         if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
                 || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
-            return getGameFinishedScoreFor(gameStatus, maxingPlayer);
+            return getGameFinishedScoreFor(gameStatus, chessBoard.toPlayColor);
         } else {
-                toPlayLegalMoves.removeNonTake();
+            toPlayLegalMoves.removeNonTake();
         }
 
 
         if (toPlayLegalMoves.size() == 0) {
             evaluations++;
 
-            return getScoreFor(chessBoard, maxingPlayer);
+            return getScoreFor(chessBoard, chessBoard.toPlayColor);
 
         }
 
@@ -159,40 +160,27 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         ArrayList<MoveScore> scores = sortMoves(toPlayLegalMoves);
 
 
-        if (maxing) {
-            int maxScore = LOSE_SCORE;
+
             for (int i = 0; i < toPlayLegalMoves.size(); i++) {
                 ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
                 chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
-                int score = quiescence(chessBoardAfterMove, alpha, beta,
+                int score = -quiescence(chessBoardAfterMove, -beta, -alpha,
                         !maxing);
-                maxScore = Math.max(maxScore, score);
-                alpha = Math.max(alpha, score);
-
-                if (alpha >= beta) {
-                    break;
+                if( score >= beta )
+                {
+                    return beta;
+                }
+                else if( score > alpha )
+                {
+                    alpha = score;
                 }
             }
-            return maxScore;
-        } else {
-            int minScore = WIN_SCORE;
-            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-                ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
-                int score = quiescence(chessBoardAfterMove, alpha, beta,
-                        !maxing);
-                minScore = Math.min(minScore, score);
-                beta = Math.min(beta, score);
+            return alpha;
 
-                if (alpha >= beta) {
-                    break;
-                }
-            }
-            return minScore;
-        }
+
     }
 
-    public int alphaBeta(ChessBoard chessBoard, int alpha, int beta, float depth, boolean maxing) {
+    public int negaMax(ChessBoard chessBoard, int alpha, int beta, float depth, boolean maxing) {
         int toPlayColor = chessBoard.moves.getToPlayNow();
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
@@ -202,9 +190,9 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
             evaluations++;
             if (gameStatus == Game.GameStatus.FINISHED_DRAW || gameStatus == Game.GameStatus.FINISHED_WIN_WHITE
                     || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
-                return getGameFinishedScoreFor(gameStatus, maxingPlayer);
+                return getGameFinishedScoreFor(gameStatus, toPlayColor);
             } else {
-                return quiescence(chessBoard,alpha,beta,maxing);
+                return quiescence(chessBoard, alpha, beta, maxing);
             }
         }
 
@@ -212,44 +200,33 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
                 || gameStatus == Game.GameStatus.FINISHED_WIN_BLACK) {
             evaluations++;
 
-            return getGameFinishedScoreFor(gameStatus, maxingPlayer);
+            return getGameFinishedScoreFor(gameStatus, toPlayColor);
         }
 
         ArrayList<MoveScore> scores = sortMoves(toPlayLegalMoves);
 
         evaluations++;
 
-        if (maxing) {
-            int maxScore = LOSE_SCORE;
-            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-                ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
-                int score = alphaBeta(chessBoardAfterMove, alpha, beta,
-                        depth - 1, !maxing);
-                maxScore = Math.max(maxScore, score);
-                alpha = Math.max(alpha, score);
 
-                if (alpha >= beta) {
-                    break;
-                }
-            }
-            return maxScore;
-        } else {
-            int minScore = WIN_SCORE;
-            for (int i = 0; i < toPlayLegalMoves.size(); i++) {
-                ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
-                chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
-                int score = alphaBeta(chessBoardAfterMove, alpha, beta,
-                        depth - 1, !maxing);
-                minScore = Math.min(minScore, score);
-                beta = Math.min(beta, score);
+        int maxScore = LOSE_SCORE;
+        for (int i = 0; i < toPlayLegalMoves.size(); i++) {
+            ChessBoard chessBoardAfterMove = new ChessBoard(chessBoard);
+            chessBoardAfterMove.move(toPlayLegalMoves.get(scores.get(i).moveIndex));
+            int score = -negaMax(chessBoardAfterMove, -beta, -alpha,
+                    depth - 1, !maxing);
+            maxScore = Math.max(maxScore, score);
+            alpha = Math.max(alpha, score);
 
-                if (alpha >= beta) {
-                    break;
-                }
+            if( score >= beta )
+            {
+                return beta;
             }
-            return minScore;
+            else if( score > alpha )
+            {
+                alpha = score;
+            }
         }
+        return alpha;
 
     }
 
