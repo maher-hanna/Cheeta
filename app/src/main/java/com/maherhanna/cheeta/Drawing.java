@@ -211,14 +211,14 @@ public class Drawing {
             if (!chessBoard.isSquareEmpty(i)) {
                 if (i == dragFrom) continue;
 
-                drawPiece(chessBoard.pieceType(i), chessBoard.pieceColor(i), index, 0f, 0f);
+                drawPiece(chessBoard.pieceType(i), chessBoard.pieceColor(i), index, 0f, 0f,1);
             }
         }
 
         if (dragFrom != ChessBoard.NO_SQUARE) {
 
             drawPiece(chessBoard.pieceType(dragFrom), chessBoard.pieceColor(dragFrom),
-                    dragFromHighlight, x - xTouchStart, y - yTouchStart);
+                    dragFromHighlight, x - xTouchStart, y - yTouchStart,2);
 
         }
         if (legalTargetsSquare != ChessBoard.OUT ) {
@@ -255,9 +255,11 @@ public class Drawing {
     }
 
 
-    private void drawPiece(int pieceType, int pieceColor, int position, float xOffset, float yOffset) {
+    private void drawPiece(int pieceType, int pieceColor, int position, float xOffset, float yOffset,float scaleFactor) {
 
         RectF pieceRect = getPieceDrawingRect(pieceType, pieceColor, position);
+
+        pieceRect = scaleRect(pieceRect,scaleFactor);
         pieceRect.offset(xOffset, yOffset);
 
         //limit the piece drawing rect inside the board
@@ -314,6 +316,20 @@ public class Drawing {
                     chessboardView.drawPiece(blackKingBitmap, pieceRect);
                 break;
         }
+    }
+
+    private RectF scaleRect(RectF rect, float scaleFactor) {
+        RectF scaledRect = new RectF(rect);
+        float diffHorizontal = rect.width() * (scaleFactor - 1f);
+        float diffVertical = rect.height() * (scaleFactor - 1f);
+
+        scaledRect.top -= (diffVertical / 2f);
+        scaledRect.bottom += (diffVertical / 2f);
+
+        scaledRect.left -= (diffHorizontal / 2f);
+        scaledRect.right += (diffHorizontal / 2f);
+
+        return scaledRect;
     }
 
 
