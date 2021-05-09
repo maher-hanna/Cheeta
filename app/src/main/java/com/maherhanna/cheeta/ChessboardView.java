@@ -12,20 +12,25 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     private Canvas piecesCanvas;
     private Bitmap piecesBitmap;
     private final Paint highlightPaint;
+    private final Paint checkHighlightPaint;
     private final Paint legalSquarePaint;
     private final Paint legalSquarePaintHasPiece;
-
-
+    private RadialGradient kingCheckHighlight;
 
     public ChessboardView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-
-        //-1 means no dragging or selection
-
         highlightPaint = new Paint();
         highlightPaint.setColor(Color.YELLOW);
         highlightPaint.setAlpha(100);
+
+
+
+        //king highlight
+        checkHighlightPaint = new Paint();
+        checkHighlightPaint.setColor(Color.RED);
+        checkHighlightPaint.setDither(true);
+
 
         legalSquarePaint = new Paint();
         legalSquarePaint.setColor(Color.GRAY);
@@ -53,6 +58,7 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
             this.drawing.updateDrawingRects(new RectF(0, 0, drawingWidth, drawingHeight));
 
         }
+
 
     }
 
@@ -245,6 +251,16 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
                         squareRect.width() / 4, legalSquarePaint);
 
             }
+        }
+    }
+
+    public void drawCheckHighlight(RectF highlightRect) {
+        if (piecesCanvas != null) {
+            kingCheckHighlight = new RadialGradient(highlightRect.centerX(),highlightRect.centerY(),
+                    highlightRect.width() ,Color.RED,0,Shader.TileMode.CLAMP);
+            checkHighlightPaint.setShader(kingCheckHighlight);
+            piecesCanvas.drawRect(highlightRect,checkHighlightPaint);
+
         }
     }
 }

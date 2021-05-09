@@ -71,13 +71,17 @@ class Game {
         currentPlayer = Piece.GetOppositeColor(humanPlayerColor);
         chessBoard.updateLegalMovesFor(humanPlayerColor, false);
         int opponentColor = currentPlayer;
-        chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));
+        boolean isOpponentKingInCheck = chessBoard.isKingInCheck(opponentColor);
+        if(isOpponentKingInCheck){
+            drawing.kingInCheck = moveGenerator.getKingPosition(chessBoard,opponentColor);
+        } else{
+            drawing.kingInCheck = ChessBoard.NO_SQUARE;
+        }
+        drawing.drawAllPieces();
+        chessBoard.updateLegalMovesFor(opponentColor, isOpponentKingInCheck);
         GameStatus gameStatus = checkGameFinished(humanPlayerColor);
         if (gameStatus == GameStatus.NOT_FINISHED) {
-
             playComputer(opponentColor);
-
-
         } else {
             setGameFinished();
             drawing.finishGame(gameStatus);
@@ -91,12 +95,19 @@ class Game {
         drawing.currentMove = computerMove;
         computerAi.cancel(true);
         chessBoard.move(computerMove);
-        drawing.drawAllPieces();
 
         int color = computerMove.getColor();
         chessBoard.updateLegalMovesFor(color, false);
         int opponentColor = Piece.GetOppositeColor(color);
-        chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));
+        boolean isOpponentKingInCheck = chessBoard.isKingInCheck(opponentColor);
+        if(isOpponentKingInCheck){
+            drawing.kingInCheck = moveGenerator.getKingPosition(chessBoard,opponentColor);
+        } else{
+            drawing.kingInCheck = ChessBoard.NO_SQUARE;
+        }
+        drawing.drawAllPieces();
+
+        chessBoard.updateLegalMovesFor(opponentColor, isOpponentKingInCheck);
 
         currentPlayer = Piece.GetOppositeColor(color);
         GameStatus gameStatus = checkGameFinished(color);

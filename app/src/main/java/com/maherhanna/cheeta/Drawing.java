@@ -22,6 +22,7 @@ public class Drawing {
     public int touchSquare = ChessBoard.NO_SQUARE;
     public float x = 0;
     public float y = 0;
+    public int kingInCheck = ChessBoard.NO_SQUARE;
     //---------------------
 
 
@@ -156,9 +157,12 @@ public class Drawing {
         int legalTargetsSquare = ChessBoard.NO_SQUARE;
         dragFromHighlight = dragFrom;
         selectedSquareHighlight = selectedSquare;
+        int kingInCheckHighlight = kingInCheck;
+
         if(fliped){
             dragFromHighlight = flip(dragFromHighlight);
             selectedSquareHighlight = flip(selectedSquareHighlight);
+            kingInCheckHighlight = flip(kingInCheckHighlight);
         }
 
         if (currentMove != null) {
@@ -185,6 +189,9 @@ public class Drawing {
             drawHighlight(dragFromHighlight);
             drawHighlight(touchSquare);
 
+        }
+        if(kingInCheck != ChessBoard.NO_SQUARE){
+            drawCheckHighlight(kingInCheckHighlight);
         }
 
 
@@ -229,6 +236,10 @@ public class Drawing {
         show();
     }
 
+    private void drawCheckHighlight(int kingInCheckHighlight) {
+        RectF highlightRect = getSquareRect(kingInCheckHighlight);
+        chessboardView.drawCheckHighlight(highlightRect);
+    }
 
 
     public void show() {
