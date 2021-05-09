@@ -7,8 +7,6 @@ import android.graphics.*;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
-import java.util.ArrayList;
-
 class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     public Drawing drawing;
     private Canvas piecesCanvas;
@@ -17,21 +15,13 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
     private final Paint legalSquarePaint;
     private final Paint legalSquarePaintHasPiece;
 
-    //for dragging a piece
-    int draggedSquare;
-    int selectedSquare;
-    float xTouchStart;
-    float yTouchStart;
-    //---------------------
+
 
     public ChessboardView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        xTouchStart = 0;
-        yTouchStart = 0;
+
 
         //-1 means no dragging or selection
-        draggedSquare = -1;
-        selectedSquare = -1;
 
         highlightPaint = new Paint();
         highlightPaint.setColor(Color.YELLOW);
@@ -107,86 +97,79 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
         x = Math.max(0, Math.min(getWidth() - 1, x));
         y = Math.max(0, Math.min(getHeight() - 1, y));
 
-        int touchSquare = getTouchSquare(x, y);
-        int targetPosition = touchSquare;
-        if (drawing.isChessBoardFlipped()) targetPosition = drawing.flip(touchSquare);
+        drawing.x = x;
+        drawing.y = y;
+        drawing.touchSquare = getTouchSquare(x, y);
+        int targetSquare = drawing.touchSquare;
+        if (drawing.isChessBoardFlipped()) targetSquare = drawing.flip(drawing.touchSquare);
 
         switch (action) {
 
             case MotionEvent.ACTION_DOWN:
 
-                if (!drawing.canSelect(targetPosition)) {
-                    draggedSquare = -1;
+                if (!drawing.canSelect(targetSquare)) {
+                    drawing.dragFrom = -1;
 
                     break;
                 }
 
-                draggedSquare = targetPosition;
-                selectedSquare = targetPosition;
+                drawing.dragFrom = targetSquare;
+                drawing.selectedSquare = targetSquare;
 
-                xTouchStart = x;
-                yTouchStart = y;
-                drawing.drawAllPieces(touchSquare);
+                drawing.xTouchStart = x;
+                drawing.yTouchStart = y;
                 break;
 
 
             case MotionEvent.ACTION_MOVE:
 
-                if (draggedSquare != -1) {
 
-                    drawing.dragPiece(draggedSquare, touchSquare, x - xTouchStart, y - yTouchStart);
-                }
                 break;
 
 
             case MotionEvent.ACTION_UP:
-                xTouchStart = 0;
-                yTouchStart = 0;
+                drawing.xTouchStart = 0;
+                drawing.yTouchStart = 0;
 
 
-                if (draggedSquare != ChessBoard.OUT) {
+                if (drawing.dragFrom != ChessBoard.OUT) {
                     //check for selecting a square
-                    if (draggedSquare == targetPosition) {
-                        selectedSquare = draggedSquare;
-                        draggedSquare = -1;
-                        drawing.drawAllPieces(selectedSquare);
+                    if (drawing.dragFrom == targetSquare) {
+                        drawing.selectedSquare = drawing.dragFrom;
+                        drawing.dragFrom = -1;
                         break;
                     }
 
 
-                    if (drawing.canMove(draggedSquare, targetPosition)) {
+                    if (drawing.canMove(drawing.dragFrom, targetSquare)) {
                         humanPlayed = true;
-                        humanMove = new Move(drawing.chessBoard.pieceType(draggedSquare),
-                                drawing.chessBoard.pieceColor(draggedSquare), draggedSquare, targetPosition);
-                        drawing.drawAllPieces(humanMove);
-                        draggedSquare = -1;
-                        selectedSquare = -1;
+                        humanMove = new Move(drawing.chessBoard.pieceType(drawing.dragFrom),
+                                drawing.chessBoard.pieceColor(drawing.dragFrom), drawing.dragFrom, targetSquare);
+                        drawing.dragFrom = -1;
+                        drawing.selectedSquare = -1;
 
                         break;
                     }
-                    drawing.drawAllPieces(draggedSquare);
-                    draggedSquare = -1;
+                    drawing.dragFrom = -1;
 
                     break;
                 }
 
                 //if piece is selected
-                if (selectedSquare != ChessBoard.OUT) {
-                    if (selectedSquare == targetPosition) break;
+                if (drawing.selectedSquare != ChessBoard.OUT) {
+                    if (drawing.selectedSquare == targetSquare) break;
                     //check for selecting other piece
-                    if (drawing.canMove(selectedSquare, targetPosition)) {
+                    if (drawing.canMove(drawing.selectedSquare, targetSquare)) {
                         humanPlayed = true;
-                        humanMove = new Move(drawing.chessBoard.pieceType(selectedSquare),
-                                drawing.chessBoard.pieceColor(selectedSquare), selectedSquare, targetPosition);
-                        drawing.drawAllPieces(humanMove);
-                        selectedSquare = -1;
+                        humanMove = new Move(drawing.chessBoard.pieceType(drawing.selectedSquare),
+                                drawing.chessBoard.pieceColor(drawing.selectedSquare), drawing.selectedSquare, targetSquare);
+                        drawing.selectedSquare = -1;
                         break;
 
                     } else {
-                        if (drawing.chessBoard.isSquareEmpty(targetPosition)) break;
-                        if (drawing.chessBoard.pieceColor(targetPosition) == drawing.getBottomScreenPlayerColor()) {
-                            selectedSquare = targetPosition;
-                            drawing.drawAllPieces(selectedSquare);
+                        if (drawing.chessBoard.isSquareEmpty(targetSquare)) break;
+                        if (drawing.chessBoard.pieceColor(targetSquare) == drawing.getBottomScreenPlayerColor()) {
+                            drawing.selectedSquare = targetSquare;
                             break;
                         }
 
@@ -204,19 +187,15 @@ class ChessboardView extends androidx.appcompat.widget.AppCompatImageView {
 
         }
 
-        if (selectedSquare != ChessBoard.OUT || draggedSquare != ChessBoard.OUT) {
-            int sourceSquare = Math.max(selectedSquare, draggedSquare);
-            ArrayList<Integer> squareLegalMoves = drawing.getLegalMoves(sourceSquare);
 
-            for (int square : squareLegalMoves) {
-                drawing.drawLegalSquare(square);
-            }
-
-        }
         if (humanPlayed) {
+            drawing.currentMove = humanMove;
             drawing.humanPlayed(humanMove);
 
         }
+
+        drawing.drawAllPieces();
+
 
         return true;
 

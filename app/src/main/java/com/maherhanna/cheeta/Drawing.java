@@ -11,6 +11,19 @@ public class Drawing {
     private final GameActivity activity;
     private final ChessboardView chessboardView;
     public ChessBoard chessBoard;
+    public Move currentMove = null;
+    public float xTouchStart = 0;
+    public float yTouchStart = 0;
+    //for dragging a piece
+    public int dragFrom = ChessBoard.NO_SQUARE;
+    int dragFromHighlight = dragFrom;
+    public int selectedSquare = ChessBoard.NO_SQUARE;
+    public int selectedSquareHighlight = ChessBoard.NO_SQUARE;
+    public int touchSquare = ChessBoard.NO_SQUARE;
+    public float x = 0;
+    public float y = 0;
+    //---------------------
+
 
 
     //pieces drawables
@@ -125,92 +138,97 @@ public class Drawing {
     }
 
 
-    public void drawAllPieces() {
-        int flip = 0;
-        if (isChessBoardFlipped()) {
-            flip = 1;
-        }
-        int index = 0;
-
-        for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-            if (!chessBoard.isSquareEmpty(i)) {
-                // flip the board if the black is at the bottom of screen
-                index = i - (ChessBoard.MAX_POSITION * flip);
-                index = Math.abs(index);
-                drawPiece(chessBoard.pieceType(i),chessBoard.pieceColor(i), index, 0, 0);
-            }
-        }
-
-    }
-
-    public void dragPiece(int source, int target, float xOffset, float yOffset) {
-        clearBoard();
-        int flip = 0;
-        if (isChessBoardFlipped()) {
-            flip = 1;
-
-        }
-        if (flip == 1) {
-
-            drawHighlight(flip(source));
-
-        } else {
-            drawHighlight(source);
-        }
-        drawHighlight(target);
-
-        int index = 0;
-        for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
-
-            // flip the board if the black is at the bottom of screen
-
-            index = i - (ChessBoard.MAX_POSITION * flip);
-            index = Math.abs(index);
-            if (!chessBoard.isSquareEmpty(i)) {
-                if (i == source) continue;
-
-                drawPiece(chessBoard.pieceType(i),chessBoard.pieceColor(i), index, 0f, 0f);
-            }
-        }
-        if (flip == 1) {
-
-            drawPiece(chessBoard.pieceType(source),chessBoard.pieceColor(source), flip(source), xOffset, yOffset);
 
 
-        } else {
-            drawPiece(chessBoard.pieceType(source),chessBoard.pieceColor(source), source, xOffset, yOffset);
-        }
-        show();
-    }
 
     public int flip(int position) {
         return ChessBoard.MAX_POSITION - position;
     }
 
 
-    public void drawAllPieces(Move move) {
+
+
+    public void drawAllPieces() {
         clearBoard();
-        int from = move.getFrom();
-        int to = move.getTo();
-        if (isChessBoardFlipped()) {
-            from = flip(from);
-            to = flip(to);
+        int from;
+        int to;
+        boolean fliped = isChessBoardFlipped();
+        int legalTargetsSquare = ChessBoard.NO_SQUARE;
+        dragFromHighlight = dragFrom;
+        selectedSquareHighlight = selectedSquare;
+        if(fliped){
+            dragFromHighlight = flip(dragFromHighlight);
+            selectedSquareHighlight = flip(selectedSquareHighlight);
         }
-        drawHighlight(from);
-        drawHighlight(to);
-        drawAllPieces();
+
+        if (currentMove != null) {
+
+                from = currentMove.getFrom();
+                to = currentMove.getTo();
+                if (fliped) {
+                    from = flip(from);
+                    to = flip(to);
+                }
+                drawHighlight(from);
+                drawHighlight(to);
+
+        }
+        if (selectedSquare != ChessBoard.NO_SQUARE) {
+            legalTargetsSquare = selectedSquare;
+
+            drawHighlight(selectedSquareHighlight);
+
+        }
+
+        if (dragFrom != ChessBoard.NO_SQUARE) {
+            legalTargetsSquare = dragFrom;
+            drawHighlight(dragFromHighlight);
+            drawHighlight(touchSquare);
+
+        }
+
+
+
+
+        int index = 0;
+        for (int i = ChessBoard.MIN_POSITION; i <= ChessBoard.MAX_POSITION; i++) {
+
+            // flip the board if the black is at the bottom of screen
+
+            if (fliped) {
+                index = ChessBoard.MAX_POSITION - i;
+            } else {
+                index = i;
+            }
+
+            if (!chessBoard.isSquareEmpty(i)) {
+                if (i == dragFrom) continue;
+
+                drawPiece(chessBoard.pieceType(i), chessBoard.pieceColor(i), index, 0f, 0f);
+            }
+        }
+
+        if (dragFrom != ChessBoard.NO_SQUARE) {
+
+            drawPiece(chessBoard.pieceType(dragFrom), chessBoard.pieceColor(dragFrom),
+                    dragFromHighlight, x - xTouchStart, y - yTouchStart);
+
+        }
+        if (legalTargetsSquare != ChessBoard.OUT ) {
+            ArrayList<Integer> squareLegalMoves = getLegalMoves(legalTargetsSquare);
+
+            for (int square : squareLegalMoves) {
+                drawLegalSquare(square);
+            }
+
+        }
+
+
+
+
         show();
     }
 
-    public void drawAllPieces(int highlight) {
-        clearBoard();
-        if (isChessBoardFlipped()) {
-            highlight = flip(highlight);
-        }
-        drawHighlight(highlight);
-        drawAllPieces();
-        show();
-    }
 
 
     public void show() {
@@ -226,9 +244,9 @@ public class Drawing {
     }
 
 
-    private void drawPiece(int pieceType,int pieceColor, int position, float xOffset, float yOffset) {
+    private void drawPiece(int pieceType, int pieceColor, int position, float xOffset, float yOffset) {
 
-        RectF pieceRect = getPieceDrawingRect(pieceType,pieceColor, position);
+        RectF pieceRect = getPieceDrawingRect(pieceType, pieceColor, position);
         pieceRect.offset(xOffset, yOffset);
 
         //limit the piece drawing rect inside the board
@@ -288,7 +306,7 @@ public class Drawing {
     }
 
 
-    private RectF getPieceDrawingRect(int pieceType,int pieceColor, int position) {
+    private RectF getPieceDrawingRect(int pieceType, int pieceColor, int position) {
         RectF result = new RectF();
         float x = ChessBoard.GetFile(position) * squareSize;
         float y = ChessBoard.GetRank(position) * squareSize;
@@ -400,5 +418,6 @@ public class Drawing {
     public int getBottomScreenPlayerColor() {
         return game.humanPlayerColor;
     }
+
 
 }

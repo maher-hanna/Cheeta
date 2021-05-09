@@ -43,8 +43,6 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
                 break;
             } else {
                 moveIndex = currentDepthMoveIndex;
-
-
             }
 
         } while (!foundCheckMate);
@@ -128,7 +126,9 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
 
     private int quiescence(ChessBoard chessBoard, int alpha, int beta, boolean maxing) {
         evaluations++;
-        int eval = getScoreFor(chessBoard, chessBoard.toPlayColor);
+        int toPlayColor = chessBoard.toPlayColor;
+
+        int eval = getScoreFor(chessBoard, toPlayColor);
         if( eval >= beta )
         {
             return beta;
@@ -138,13 +138,12 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
             alpha = eval;
         }
 
-        int toPlayColor = chessBoard.moves.getToPlayNow();
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
                 toPlayColor);
         Game.GameStatus gameStatus = chessBoard.checkStatus(toPlayLegalMoves);
         if (isGameFinished(gameStatus)) {
-            return getScoreFor(chessBoard, chessBoard.toPlayColor,gameStatus);
+            return getScoreFor(chessBoard, toPlayColor,gameStatus);
         } else {
             toPlayLegalMoves.removeNonTake();
         }
@@ -153,7 +152,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         if (toPlayLegalMoves.size() == 0) {
             evaluations++;
 
-            return getScoreFor(chessBoard, chessBoard.toPlayColor);
+            return getScoreFor(chessBoard, toPlayColor);
 
         }
 
@@ -182,7 +181,7 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
     }
 
     public int negaMax(ChessBoard chessBoard, int alpha, int beta, float depth, boolean maxing) {
-        int toPlayColor = chessBoard.moves.getToPlayNow();
+        int toPlayColor = chessBoard.toPlayColor;
 
         LegalMoves toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(chessBoard,
                 toPlayColor);

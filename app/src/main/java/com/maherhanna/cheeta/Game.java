@@ -29,7 +29,7 @@ class Game {
         this.humanPlayerColor = humanPlayerColor;
 
 
-        this.chessBoard = new ChessBoard(trickyPosition);
+        this.chessBoard = new ChessBoard(cmkPosition);
 
         drawing.chessBoard = this.chessBoard;
 
@@ -67,8 +67,6 @@ class Game {
     public void humanPlayed(Move humanMove) {
         humanMove = chessBoard.getLegalMovesFor(humanPlayerColor).getMove(humanMove);
         chessBoard.move(humanMove);
-        drawing.drawAllPieces(humanMove);
-        drawing.show();
         currentPlayer = Piece.GetOppositeColor(humanPlayerColor);
         chessBoard.updateLegalMovesFor(humanPlayerColor, false);
         int opponentColor = currentPlayer;
@@ -89,14 +87,16 @@ class Game {
     }
 
     public void computerPlayed(Move computerMove) {
+        drawing.currentMove = computerMove;
         computerAi.cancel(true);
         chessBoard.move(computerMove);
+        drawing.drawAllPieces();
+
         int color = computerMove.getColor();
         chessBoard.updateLegalMovesFor(color, false);
         int opponentColor = Piece.GetOppositeColor(color);
         chessBoard.updateLegalMovesFor(opponentColor, chessBoard.isKingInCheck(opponentColor));
-        drawing.drawAllPieces(computerMove);
-        drawing.show();
+
         currentPlayer = Piece.GetOppositeColor(color);
         GameStatus gameStatus = checkGameFinished(color);
         if (gameStatus == GameStatus.NOT_FINISHED) {
