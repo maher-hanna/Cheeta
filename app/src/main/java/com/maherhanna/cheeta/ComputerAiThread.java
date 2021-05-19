@@ -98,9 +98,11 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
 
             if (score >= beta) {
                 currentMaxIndex = i;
+                foundCheckMate = true;
                 break;
 
-            } else if (score > alpha) {
+            }
+            if (score > alpha) {
                 alpha = score;
                 currentMaxIndex = i;
 
@@ -126,7 +128,8 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         int eval = getScoreFor(chessBoard, toPlayColor);
         if (eval >= beta) {
             return beta;
-        } else if (alpha < eval) {
+        }
+        if (alpha < eval) {
             alpha = eval;
         }
 
@@ -159,7 +162,8 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
                     !maxing);
             if (score >= beta) {
                 return beta;
-            } else if (score > alpha) {
+            }
+            if (score > alpha) {
                 alpha = score;
             }
         }
@@ -205,7 +209,8 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
 
             if (score >= beta) {
                 return beta;
-            } else if (score > alpha) {
+            }
+            if (score > alpha) {
                 alpha = score;
             }
         }
@@ -279,8 +284,8 @@ public class ComputerAiThread extends AsyncTask<ChessBoard, Void, Move> {
         return value;
     }
 
-    private int getGameFinishedScoreFor(Game.GameStatus gameStatus, int maxingPlayer) {
-        if (maxingPlayer == Piece.WHITE) {
+    private int getGameFinishedScoreFor(Game.GameStatus gameStatus, int player) {
+        if (player == Piece.WHITE) {
             return getGameFinishedWhiteScore(gameStatus);
         } else {
             return getGameFinishedBlackScore(gameStatus);
