@@ -1,11 +1,25 @@
 package com.maherhanna.cheeta;
 
+import java.util.Objects;
+
 public class Move {
 
     private long bitValue;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Move move = (Move) o;
+        return bitValue == move.bitValue;
+    }
 
-    public Move(int pieceType,int pieceColor, int from, int to) {
+    @Override
+    public int hashCode() {
+        return Objects.hash(bitValue);
+    }
+
+    public Move(int pieceType, int pieceColor, int from, int to) {
         bitValue = 0;
         setPieceType(pieceType);
         setPieceColor(pieceColor);
