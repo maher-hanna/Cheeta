@@ -4,14 +4,15 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
+        android:isGame="true"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Cheeta"
-        android:isGame="true">
-        <activity android:name=".GameActivity"
+        android:theme="@style/Theme.Cheeta">
+        <activity
+            android:name=".GameActivity"
             android:configChanges="orientation"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait" />
         <activity android:name=".MainActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait"
