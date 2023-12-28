@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId "com.maherhanna.cheeta"
         minSdkVersion 19
-        targetSdkVersion 29
+        targetSdkVersion 33
         versionCode 3
         versionName "0.2.1"
 
