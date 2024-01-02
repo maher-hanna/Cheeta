@@ -11,10 +11,10 @@ class ChessBoard {
     //----------------------------------------------------------------------------------
     //data
     //-----------------------------------------------------------------------------------
-    lateinit var moves: ChessboardMoves
+    lateinit var moves: GameHistory
     lateinit var states: ArrayList<State>
-    lateinit var blackLegalMoves: LegalMoves
-    lateinit var whiteLegalMoves: LegalMoves
+    lateinit var blackPlayerLegalMoves: PlayerLegalMoves
+    lateinit var whitePlayerLegalMoves: PlayerLegalMoves
     var whitePawns: Long = 0
     var whiteRooks: Long = 0
     var whiteBishops: Long = 0
@@ -41,7 +41,7 @@ class ChessBoard {
     //---------------------------------------------------------------------------------
     constructor(copy: ChessBoard?) {
         if (copy != null) {
-            moves = ChessboardMoves(copy.moves)
+            moves = GameHistory(copy.moves)
             states = ArrayList(copy.states)
             whitePawns = copy.whitePawns
             whiteRooks = copy.whiteRooks
@@ -67,18 +67,18 @@ class ChessBoard {
     }
 
     constructor() {
-        moves = ChessboardMoves()
+        moves = GameHistory()
         states = ArrayList()
-        blackLegalMoves = LegalMoves()
-        whiteLegalMoves = LegalMoves()
+        blackPlayerLegalMoves = PlayerLegalMoves()
+        whitePlayerLegalMoves = PlayerLegalMoves()
         setupFromFen(Game.startPosition)
     }
 
     constructor(fenString: String) {
-        moves = ChessboardMoves()
+        moves = GameHistory()
         states = ArrayList()
-        blackLegalMoves = LegalMoves()
-        whiteLegalMoves = LegalMoves()
+        blackPlayerLegalMoves = PlayerLegalMoves()
+        whitePlayerLegalMoves = PlayerLegalMoves()
         setupFromFen(fenString)
     }
 
@@ -349,11 +349,11 @@ class ChessBoard {
     }
 
     fun updateBlackLegalMoves() {
-        blackLegalMoves = Game.moveGenerator.getBlackLegalMoves(this)
+        blackPlayerLegalMoves = Game.moveGenerator.getBlackLegalMoves(this)
     }
 
     fun updateWhiteLegalMoves() {
-        whiteLegalMoves = Game.moveGenerator.getWhiteLegalMoves(this)
+        whitePlayerLegalMoves = Game.moveGenerator.getWhiteLegalMoves(this)
     }
 
     fun updateLegalMovesFor(playerColor: Int, kingInCheck: Boolean) {
@@ -383,32 +383,33 @@ class ChessBoard {
             return whitePositions
         }
 
-    fun getLegalMovesFor(color: Int): LegalMoves {
+    fun getLegalMovesFor(color: Int): PlayerLegalMoves {
         return if (color == Piece.WHITE) {
-            whiteLegalMoves
+            whitePlayerLegalMoves
         } else {
-            blackLegalMoves
+            blackPlayerLegalMoves
         }
     }
 
     fun getLegalTargetsFor(position: Int): ArrayList<Int> {
         return if (isPieceWhiteAt(position)) {
-            whiteLegalMoves!!.getLegalTargetsFor(position)
+            whitePlayerLegalMoves!!.getLegalTargetsFor(position)
         } else {
-            blackLegalMoves!!.getLegalTargetsFor(position)
+            blackPlayerLegalMoves!!.getLegalTargetsFor(position)
         }
     }
 
     fun isKingInCheck(kingColor: Int): Boolean {
         return Game.moveGenerator.isKingAttacked(this, kingColor)
+
     }
 
     fun canMove(fromSquare: Int, toSquare: Int): Boolean {
         var isLegal = false
         isLegal = if (isPieceBlackAt(fromSquare)) {
-            blackLegalMoves!!.canMove(fromSquare, toSquare)
+            blackPlayerLegalMoves!!.canMove(fromSquare, toSquare)
         } else {
-            whiteLegalMoves!!.canMove(fromSquare, toSquare)
+            whitePlayerLegalMoves!!.canMove(fromSquare, toSquare)
         }
         return isLegal
     }
@@ -585,11 +586,11 @@ class ChessBoard {
         }
     }
 
-    fun checkStatus(toPlayLegalMoves: LegalMoves): GameStatus {
+    fun checkStatus(toPlayPlayerLegalMoves: PlayerLegalMoves): GameStatus {
         val lastPlayed = moves.lastPlayed
         var gameStatus = GameStatus.NOT_FINISHED
         val currentToPlayColor = GetOppositeColor(lastPlayed)
-        if (toPlayLegalMoves.size() == 0) {
+        if (toPlayPlayerLegalMoves.size() == 0) {
             val isKingInCheck = Game.moveGenerator.isKingAttacked(this, currentToPlayColor)
             gameStatus = if (isKingInCheck) {
                 //win
@@ -764,6 +765,7 @@ class ChessBoard {
         const val CASTLING_KING_SIDE = 1
         const val CASTLING_QUEEN_SIDE = 2
         const val CASTLING_BOTH_SIDES = 3
+
         @JvmStatic
         fun GetPosition(file: Int, rank: Int): Int {
             if (file < FILE_A || file > FILE_H) return OUT

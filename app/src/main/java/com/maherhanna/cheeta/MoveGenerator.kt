@@ -1,6 +1,8 @@
 package com.maherhanna.cheeta
 
+import android.util.Log
 import com.maherhanna.cheeta.Piece.Companion.GetOppositeColor
+import kotlin.system.measureTimeMillis
 
 class MoveGenerator {
     //*****************************************************************************
@@ -929,11 +931,21 @@ class MoveGenerator {
     }
 
     fun isKingAttacked(chessBoard: ChessBoard, kingColor: Int): Boolean {
+        //val startTime = System.nanoTime()
+
         val chessBoardWithoutKing = ChessBoard(chessBoard)
         val kingPosition = getKingPosition(chessBoard, kingColor)
         chessBoardWithoutKing.removeKing(kingColor)
-        return (getAllAttackedSquaresFor(chessBoardWithoutKing, GetOppositeColor(kingColor))
-                and (1L shl kingPosition)) != 0L
+        val isAttacked =
+            (getAllAttackedSquaresFor(chessBoardWithoutKing, GetOppositeColor(kingColor))
+                    and (1L shl kingPosition)) != 0L
+//        Log.d(
+//            Game.DEBUG,
+//            "isKingAttacked elapsedTme in nano seconds: ${System.nanoTime() - startTime}"
+//        )
+        return isAttacked
+
+
     }
 
     fun getKingPosition(chessBoard: ChessBoard, kingColor: Int): Int {
@@ -1007,25 +1019,25 @@ class MoveGenerator {
         }
     }
 
-    fun getWhiteLegalMoves(chessBoard: ChessBoard): LegalMoves {
+    fun getWhiteLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
         val moves = getWhitePseudoLegalMoves(chessBoard)
         removeMovesThatExposeKing(chessBoard, moves, Piece.WHITE)
-        val legalMoves = LegalMoves()
-        legalMoves.addAll(moves)
-        checkCastling(chessBoard, legalMoves, Piece.WHITE)
-        return legalMoves
+        val playerLegalMoves = PlayerLegalMoves()
+        playerLegalMoves.addAll(moves)
+        checkCastling(chessBoard, playerLegalMoves, Piece.WHITE)
+        return playerLegalMoves
     }
 
-    fun getBlackLegalMoves(chessBoard: ChessBoard): LegalMoves {
+    fun getBlackLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
         val moves = getBlackPseudoLegalMoves(chessBoard)
         removeMovesThatExposeKing(chessBoard, moves, Piece.BLACK)
-        val legalMoves = LegalMoves()
-        legalMoves.addAll(moves)
-        checkCastling(chessBoard, legalMoves, Piece.BLACK)
-        return legalMoves
+        val playerLegalMoves = PlayerLegalMoves()
+        playerLegalMoves.addAll(moves)
+        checkCastling(chessBoard, playerLegalMoves, Piece.BLACK)
+        return playerLegalMoves
     }
 
-    fun getLegalMovesFor(chessBoard: ChessBoard, color: Int): LegalMoves {
+    fun getLegalMovesFor(chessBoard: ChessBoard, color: Int): PlayerLegalMoves {
         return if (color == Piece.WHITE) {
             getWhiteLegalMoves(chessBoard)
         } else {
@@ -1034,7 +1046,7 @@ class MoveGenerator {
     }
 
     private fun checkCastling(
-        chessBoard: ChessBoard, legalMoves: LegalMoves,
+        chessBoard: ChessBoard, playerLegalMoves: PlayerLegalMoves,
         color: Int
     ) {
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
@@ -1043,13 +1055,13 @@ class MoveGenerator {
             kingTarget = initialKingPosition + 2
             val move = Move(Piece.KING, color, initialKingPosition, kingTarget)
             move.setCastling(Move.CastlingType.CASTLING_kING_SIDE)
-            legalMoves.add(move)
+            playerLegalMoves.add(move)
         }
         if (canCastleQueenSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
             kingTarget = initialKingPosition - 2
             val move = Move(Piece.KING, color, initialKingPosition, kingTarget)
             move.setCastling(Move.CastlingType.CASTLING_QUEEN_SIDE)
-            legalMoves.add(move)
+            playerLegalMoves.add(move)
         }
     }
 

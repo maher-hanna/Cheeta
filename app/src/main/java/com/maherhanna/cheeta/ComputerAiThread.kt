@@ -1,6 +1,7 @@
 package com.maherhanna.cheeta
 
 import android.os.AsyncTask
+import android.os.Trace
 import android.util.Log
 import com.maherhanna.cheeta.ChessBoard.Companion.GetFile
 import com.maherhanna.cheeta.ChessBoard.Companion.GetPosition
@@ -36,6 +37,7 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
             evaluations = 0
             timeLeft = startTime + maxSearchTime - System.nanoTime()
             maxDepth++
+            //Log.d(Game.DEBUG, "depth: ${maxDepth}")
             val currentDepthMoveIndex =
                 search(startChessBoard, toPlayLegalMoves, timeLeft, maxDepth)
             if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
@@ -47,7 +49,7 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
             }
         } while (!foundCheckMate)
         var duration = System.nanoTime() - startTime
-        duration = duration / 1000 // convert to milli second
+        duration /= 1000 // convert to milli second
         Log.d(
             Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
                     moveIndex
@@ -56,14 +58,12 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
         return toPlayLegalMoves[moveIndex]
     }
 
-    fun search(chessBoard: ChessBoard?, moves: LegalMoves, timeLeft: Long, maxDepth: Int): Int {
-        val maxScore = LOSE_SCORE
+    fun search(chessBoard: ChessBoard?, moves: PlayerLegalMoves, timeLeft: Long, maxDepth: Int): Int {
         var timeFinished = false
         val searchStart = System.nanoTime()
         var score = 0
         var maxIndex = ChessBoard.NO_SQUARE
         var currentMaxIndex = 0
-        val progress = 0f
         var alpha = LOSE_SCORE
         val beta = WIN_SCORE
         for (i in 0 until moves.size()) {
@@ -93,8 +93,8 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
         return maxIndex
     }
 
-    private fun quiescence(chessBoard: ChessBoard, alpha: Int, beta: Int, ply: Int): Int {
-        var alpha = alpha
+    private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, beta: Int, ply: Int): Int {
+        var alpha = alphaArg
         evaluations++
         val toPlayColor = chessBoard.toPlayColor
         val eval = getScoreFor(chessBoard, toPlayColor)
@@ -181,7 +181,7 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
         return alpha
     }
 
-    fun scoreMoves(moves: LegalMoves, ply: Int): ArrayList<MoveScore> {
+    fun scoreMoves(moves: PlayerLegalMoves, ply: Int): ArrayList<MoveScore> {
         val scores = ArrayList<MoveScore>()
         var currentScore = 0
         var currentMove: Move
@@ -204,10 +204,10 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
         return scores
     }
 
-    fun sortMoves(moves: LegalMoves, ply: Int): LegalMoves {
+    fun sortMoves(moves: PlayerLegalMoves, ply: Int): PlayerLegalMoves {
         val scores = scoreMoves(moves, ply)
         Collections.sort(scores)
-        val sortedMoves = LegalMoves()
+        val sortedMoves = PlayerLegalMoves()
         for (i in 0 until moves.size()) {
             sortedMoves.add(moves[scores[i].moveIndex])
         }

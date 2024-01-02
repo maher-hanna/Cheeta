@@ -4,10 +4,27 @@ import java.util.Objects
 
 class Move {
     private var bitValue: Long
-    override fun equals(o: Any?): Boolean {
-        if (this === o) return true
-        if (o == null || javaClass != o.javaClass) return false
-        val move = o as Move
+    var from: Int
+        get() = BitMath.getBitsValue(bitValue, FROM_START, FROM_MASK).toInt()
+        set(position) {
+            bitValue = BitMath.setBitsValue(bitValue, FROM_START, FROM_MASK, position)
+        }
+    var to: Int
+        get() = BitMath.getBitsValue(bitValue, TO_START, TO_MASK).toInt()
+        set(position) {
+            bitValue = BitMath.setBitsValue(bitValue, TO_START, TO_MASK, position)
+        }
+    val color: Int
+        get() = BitMath.getBitsValue(bitValue, COLOR_START, COLOR_MASK).toInt()
+    var pieceType: Int
+        get() = BitMath.getBitsValue(bitValue, TYPE_START, TYPE_MASK).toInt()
+        set(type) {
+            bitValue = BitMath.setBitsValue(bitValue, TYPE_START, TYPE_MASK, type)
+        }
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val move = other as Move
         return bitValue == move.bitValue
     }
 
@@ -93,23 +110,7 @@ class Move {
                 fiftyMoves
             )
         }
-    var from: Int
-        get() = BitMath.getBitsValue(bitValue, FROM_START, FROM_MASK).toInt()
-        set(position) {
-            bitValue = BitMath.setBitsValue(bitValue, FROM_START, FROM_MASK, position)
-        }
-    var to: Int
-        get() = BitMath.getBitsValue(bitValue, TO_START, TO_MASK).toInt()
-        set(position) {
-            bitValue = BitMath.setBitsValue(bitValue, TO_START, TO_MASK, position)
-        }
-    val color: Int
-        get() = BitMath.getBitsValue(bitValue, COLOR_START, COLOR_MASK).toInt()
-    var pieceType: Int
-        get() = BitMath.getBitsValue(bitValue, TYPE_START, TYPE_MASK).toInt()
-        set(type) {
-            bitValue = BitMath.setBitsValue(bitValue, TYPE_START, TYPE_MASK, type)
-        }
+
 
     fun setPieceColor(color: Int) {
         bitValue = BitMath.setBitsValue(bitValue, COLOR_START, COLOR_MASK, color)

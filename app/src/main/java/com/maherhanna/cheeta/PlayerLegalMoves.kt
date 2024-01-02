@@ -1,11 +1,7 @@
 package com.maherhanna.cheeta
 
-class LegalMoves {
-    private val legalMoves: ArrayList<Move>
-
-    init {
-        legalMoves = ArrayList()
-    }
+class PlayerLegalMoves {
+    private val legalMoves: ArrayList<Move> = ArrayList()
 
     fun getLegalTargetsFor(position: Int): ArrayList<Int> {
         val targetSquares = ArrayList<Int>()
@@ -18,9 +14,9 @@ class LegalMoves {
     }
 
     fun canMove(from: Int, to: Int): Boolean {
-        val targetsForFrom = getLegalTargetsFor(from)
-        if (targetsForFrom.isEmpty()) return false
-        return if (targetsForFrom.contains(to)) true else false
+        val targets = getLegalTargetsFor(from)
+        if (targets.isEmpty()) return false
+        return targets.contains(to)
     }
 
     fun size(): Int {
