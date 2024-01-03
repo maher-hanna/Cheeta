@@ -1,7 +1,6 @@
 package com.maherhanna.cheeta
 
 import android.os.AsyncTask
-import android.os.Trace
 import android.util.Log
 import com.maherhanna.cheeta.ChessBoard.Companion.GetFile
 import com.maherhanna.cheeta.ChessBoard.Companion.GetPosition
@@ -9,14 +8,14 @@ import com.maherhanna.cheeta.ChessBoard.Companion.GetRank
 import com.maherhanna.cheeta.Game.GameStatus
 import java.util.Collections
 
-open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
+open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
     private var foundCheckMate = false
     var evaluations: Long = 0
     var maxingPlayer = 0
 
     //killerMove[id][ply]
     var killerMove = Array(2) { arrayOfNulls<Move>(64) }
-    protected override fun doInBackground(vararg chessBoards: ChessBoard?): Move {
+    override fun doInBackground(vararg chessBoards: ChessBoard?): Move {
         val startTime = System.nanoTime()
         //convert maximum search time from seconds to nano seconds
         val maxSearchTime = Game.COMPUTER_MAX_SEARCH_TIME * 1000000000
@@ -58,7 +57,12 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
         return toPlayLegalMoves[moveIndex]
     }
 
-    fun search(chessBoard: ChessBoard?, moves: PlayerLegalMoves, timeLeft: Long, maxDepth: Int): Int {
+    fun search(
+        chessBoard: ChessBoard?,
+        moves: PlayerLegalMoves,
+        timeLeft: Long,
+        maxDepth: Int
+    ): Int {
         var timeFinished = false
         val searchStart = System.nanoTime()
         var score = 0
@@ -188,17 +192,26 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
         for (i in 0 until moves.size()) {
             currentMove = moves[i]
             currentScore = 0
+
+            // capture score
             if (currentMove.isTake) {
                 val victim = currentMove.takenPieceType
                 val attacker = currentMove.pieceType
-                currentScore = mvv_lva[attacker * 6 + victim] + 10000
-            } else {
-                if (killerMove[0][ply] != null && killerMove[0][ply]!!.equals(moves[i])) {
-                    currentScore = 9000
-                } else if (killerMove[1][ply] != null && killerMove[1][ply]!!.equals(moves[i])) {
-                    currentScore = 8000
-                }
+                currentScore += mvv_lva[attacker * 6 + victim] + 10000
             }
+
+            // promotion score
+            if(currentMove.isPromote){
+                currentScore += 10000
+            }
+
+            // killer move score
+            if (killerMove[0][ply] != null && killerMove[0][ply] == moves[i]) {
+                currentScore += 9000
+            } else if (killerMove[1][ply] != null && killerMove[1][ply] == moves[i]) {
+                currentScore += 8000
+            }
+
             scores.add(MoveScore(currentScore, i))
         }
         return scores
@@ -224,7 +237,9 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
             GameStatus.FINISHED_WIN_WHITE -> value = WIN_SCORE
             GameStatus.FINISHED_WIN_BLACK -> value = LOSE_SCORE
             GameStatus.FINISHED_DRAW -> value = 0
-            else -> {value = 0}
+            else -> {
+                value = 0
+            }
         }
         return value
     }
@@ -235,7 +250,9 @@ open class ComputerAiThread : AsyncTask<ChessBoard?, Void?, Move>() {
             GameStatus.FINISHED_WIN_WHITE -> value = LOSE_SCORE
             GameStatus.FINISHED_WIN_BLACK -> value = WIN_SCORE
             GameStatus.FINISHED_DRAW -> value = 0
-            else -> {value = 0}
+            else -> {
+                value = 0
+            }
         }
         return value
     }

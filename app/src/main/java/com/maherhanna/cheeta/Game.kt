@@ -4,7 +4,7 @@ import com.maherhanna.cheeta.Piece.Companion.GetOppositeColor
 
 class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     private val chessBoard: ChessBoard
-    private var computerAi: ComputerAiThread
+    private var computerAi: ComputerAi
     @JvmField
     var paused: Boolean
     var currentPlayer = 0
@@ -110,7 +110,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         FINISHED_WIN_BLACK
     }
 
-    private inner class ComputerAi : ComputerAiThread() {
+    private inner class ComputerAi : ChessEngine() {
         override fun onPostExecute(move: Move) {
             computerPlayed(move)
         }
