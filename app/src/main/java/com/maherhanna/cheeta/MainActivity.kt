@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
 import androidx.appcompat.app.AppCompatActivity
+import com.maherhanna.cheeta.core.Piece
 
 class MainActivity : AppCompatActivity() {
     lateinit var btn_start: Button

@@ -2,10 +2,14 @@ package com.maherhanna.cheeta
 
 import android.os.AsyncTask
 import android.util.Log
-import com.maherhanna.cheeta.ChessBoard.Companion.GetFile
-import com.maherhanna.cheeta.ChessBoard.Companion.GetPosition
-import com.maherhanna.cheeta.ChessBoard.Companion.GetRank
-import com.maherhanna.cheeta.Game.GameStatus
+import com.maherhanna.cheeta.core.ChessBoard.Companion.GetFile
+import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
+import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
+import com.maherhanna.cheeta.core.GameStatus
+import com.maherhanna.cheeta.core.ChessBoard
+import com.maherhanna.cheeta.core.Move
+import com.maherhanna.cheeta.core.Piece
+import com.maherhanna.cheeta.core.PlayerLegalMoves
 import java.util.Collections
 
 open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {

@@ -1,11 +1,9 @@
-package com.maherhanna.cheeta
+package com.maherhanna.cheeta.core
 
-import android.util.Log
-import com.maherhanna.cheeta.Game.GameStatus
-import com.maherhanna.cheeta.MoveGenerator.Companion.getInitialRookKingSide
-import com.maherhanna.cheeta.MoveGenerator.Companion.getInitialRookQueenSide
-import com.maherhanna.cheeta.Piece.Companion.GetOppositeColor
-import com.maherhanna.cheeta.core.BitMath
+import com.maherhanna.cheeta.core.GameStatus
+import com.maherhanna.cheeta.core.MoveGenerator.Companion.getInitialRookKingSide
+import com.maherhanna.cheeta.core.MoveGenerator.Companion.getInitialRookQueenSide
+import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
 import java.util.Scanner
 
 class ChessBoard {
@@ -13,6 +11,7 @@ class ChessBoard {
     //data
     //-----------------------------------------------------------------------------------
     lateinit var moves: GameHistory
+    var moveGenerator: MoveGenerator = MoveGenerator()
     lateinit var states: ArrayList<State>
     lateinit var blackPlayerLegalMoves: PlayerLegalMoves
     lateinit var whitePlayerLegalMoves: PlayerLegalMoves
@@ -72,10 +71,11 @@ class ChessBoard {
         states = ArrayList()
         blackPlayerLegalMoves = PlayerLegalMoves()
         whitePlayerLegalMoves = PlayerLegalMoves()
-        setupFromFen(Game.startPosition)
+        setupFromFen(startPosition)
     }
 
-    constructor(fenString: String) {
+    constructor(fenString: String,moveGenerator: MoveGenerator) {
+        this.moveGenerator = moveGenerator
         moves = GameHistory()
         states = ArrayList()
         blackPlayerLegalMoves = PlayerLegalMoves()
@@ -350,14 +350,14 @@ class ChessBoard {
     }
 
     fun updateBlackLegalMoves() {
-        blackPlayerLegalMoves = Game.moveGenerator.getBlackLegalMoves(this)
+        blackPlayerLegalMoves = moveGenerator.getBlackLegalMoves(this)
     }
 
     fun updateWhiteLegalMoves() {
-        whitePlayerLegalMoves = Game.moveGenerator.getWhiteLegalMoves(this)
+        whitePlayerLegalMoves = moveGenerator.getWhiteLegalMoves(this)
     }
 
-    fun updateLegalMovesFor(playerColor: Int, kingInCheck: Boolean) {
+    fun updateLegalMovesFor(moveGenerator:MoveGenerator,playerColor: Int, kingInCheck: Boolean) {
         if (playerColor == Piece.WHITE) {
             updateWhiteLegalMoves()
         } else {
@@ -401,7 +401,7 @@ class ChessBoard {
     }
 
     fun isKingInCheck(kingColor: Int): Boolean {
-        return Game.moveGenerator.isKingAttacked(this, kingColor)
+        return moveGenerator.isKingAttacked(this, kingColor)
 
     }
 
@@ -592,7 +592,7 @@ class ChessBoard {
         var gameStatus = GameStatus.NOT_FINISHED
         val currentToPlayColor = GetOppositeColor(lastPlayed)
         if (toPlayPlayerLegalMoves.size() == 0) {
-            val isKingInCheck = Game.moveGenerator.isKingAttacked(this, currentToPlayColor)
+            val isKingInCheck = moveGenerator.isKingAttacked(this, currentToPlayColor)
             gameStatus = if (isKingInCheck) {
                 //win
                 if (lastPlayed == Piece.WHITE) {
@@ -728,7 +728,6 @@ class ChessBoard {
             }
             stringBuilder.append('\n')
         }
-        Log.d(Game.DEBUG, stringBuilder.toString())
     }
 
     val whiteCastlingRights: Int
@@ -740,6 +739,15 @@ class ChessBoard {
 
     companion object {
         //public constants
+        const val startPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
+        private const val trickyPosition =
+            "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
+        private const val killerPosition =
+            "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
+        private const val cmkPosition =
+            "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "
+        const val positionInUse = startPosition
+
         //-------------------------------------------------------------------------------
         const val MIN_POSITION = 0
         const val MAX_POSITION = 63
@@ -851,7 +859,6 @@ class ChessBoard {
                 }
                 stringBuilder.append('\n')
             }
-            Log.d(Game.DEBUG, stringBuilder.toString())
         }
     }
 }

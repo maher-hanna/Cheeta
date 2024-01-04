@@ -1,4 +1,4 @@
-package com.maherhanna.cheeta
+package com.maherhanna.cheeta.core
 
 class Piece(p: Piece) {
     var position: Int

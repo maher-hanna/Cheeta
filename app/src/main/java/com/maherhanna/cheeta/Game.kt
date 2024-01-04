@@ -1,6 +1,10 @@
 package com.maherhanna.cheeta
 
-import com.maherhanna.cheeta.Piece.Companion.GetOppositeColor
+import com.maherhanna.cheeta.core.ChessBoard
+import com.maherhanna.cheeta.core.GameStatus
+import com.maherhanna.cheeta.core.Move
+import com.maherhanna.cheeta.core.MoveGenerator
+import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
 
 class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     private val chessBoard: ChessBoard
@@ -17,7 +21,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         computerAi = ComputerAi()
         paused = false
         this.humanPlayerColor = humanPlayerColor
-        chessBoard = ChessBoard(positionInUse)
+        chessBoard = ChessBoard(ChessBoard.positionInUse, moveGenerator)
         drawing.chessBoard = chessBoard
     }
 
@@ -46,7 +50,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         humanMove = chessBoard.getLegalMovesFor(humanPlayerColor).getMove(humanMove!!)
         chessBoard.move(humanMove)
         currentPlayer = GetOppositeColor(humanPlayerColor)
-        chessBoard.updateLegalMovesFor(humanPlayerColor, false)
+        chessBoard.updateLegalMovesFor(moveGenerator,humanPlayerColor, false)
         val opponentColor = currentPlayer
         val isOpponentKingInCheck = chessBoard.isKingInCheck(opponentColor)
         if (isOpponentKingInCheck) {
@@ -55,7 +59,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
             drawing.kingInCheck = ChessBoard.NO_SQUARE
         }
         drawing.drawAllPieces()
-        chessBoard.updateLegalMovesFor(opponentColor, isOpponentKingInCheck)
+        chessBoard.updateLegalMovesFor(moveGenerator,opponentColor, isOpponentKingInCheck)
         val gameStatus = checkGameFinished(humanPlayerColor)
         if (gameStatus == GameStatus.NOT_FINISHED) {
             playComputer(opponentColor)
@@ -71,7 +75,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         computerAi.cancel(true)
         chessBoard.move(computerMove)
         val color = computerMove.color
-        chessBoard.updateLegalMovesFor(color, false)
+        chessBoard.updateLegalMovesFor(moveGenerator,color, false)
         val opponentColor = GetOppositeColor(color)
         val isOpponentKingInCheck = chessBoard.isKingInCheck(opponentColor)
         if (isOpponentKingInCheck) {
@@ -80,7 +84,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
             drawing.kingInCheck = ChessBoard.NO_SQUARE
         }
         drawing.drawAllPieces()
-        chessBoard.updateLegalMovesFor(opponentColor, isOpponentKingInCheck)
+        chessBoard.updateLegalMovesFor(moveGenerator,opponentColor, isOpponentKingInCheck)
         currentPlayer = GetOppositeColor(color)
         val gameStatus = checkGameFinished(color)
         if (gameStatus == GameStatus.NOT_FINISHED) {
@@ -103,13 +107,6 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         isGameFinished = true
     }
 
-    enum class GameStatus {
-        NOT_FINISHED,
-        FINISHED_DRAW,
-        FINISHED_WIN_WHITE,
-        FINISHED_WIN_BLACK
-    }
-
     private inner class ComputerAi : ChessEngine() {
         override fun onPostExecute(move: Move) {
             computerPlayed(move)
@@ -118,14 +115,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
 
     companion object {
         const val DEBUG = "Cheeta_Debug"
-        const val startPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
-        private const val trickyPosition =
-            "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
-        private const val killerPosition =
-            "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
-        private const val cmkPosition =
-            "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "
-        private const val positionInUse = startPosition
+
         const val COMPUTER_MAX_SEARCH_TIME: Long = 4
         @JvmField
         var moveGenerator = MoveGenerator()

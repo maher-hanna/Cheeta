@@ -13,6 +13,8 @@ import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.appcompat.widget.AppCompatImageView
+import com.maherhanna.cheeta.core.ChessBoard
+import com.maherhanna.cheeta.core.Move
 
 internal class ChessboardView(context: Context?, attrs: AttributeSet?) : AppCompatImageView(
     context!!, attrs

@@ -1,4 +1,4 @@
-package com.maherhanna.cheeta
+package com.maherhanna.cheeta.core
 
 import java.util.Objects
 

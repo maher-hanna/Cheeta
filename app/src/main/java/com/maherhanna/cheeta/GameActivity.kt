@@ -6,6 +6,7 @@ import android.os.Handler
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.maherhanna.cheeta.core.Piece
 
 class GameActivity : AppCompatActivity() {
     var drawing: Drawing? = null

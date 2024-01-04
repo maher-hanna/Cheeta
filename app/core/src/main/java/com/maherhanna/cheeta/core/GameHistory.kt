@@ -1,6 +1,4 @@
-package com.maherhanna.cheeta
-
-import com.maherhanna.cheeta.Piece.Companion.GetOppositeColor
+package com.maherhanna.cheeta.core
 
 class GameHistory {
     private val moves: ArrayList<Move>

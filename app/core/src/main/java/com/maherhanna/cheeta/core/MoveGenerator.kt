@@ -1,9 +1,6 @@
-package com.maherhanna.cheeta
+package com.maherhanna.cheeta.core
 
-import android.util.Log
-import com.maherhanna.cheeta.Piece.Companion.GetOppositeColor
-import com.maherhanna.cheeta.core.BitMath
-import kotlin.system.measureTimeMillis
+import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
 
 class MoveGenerator {
     //*****************************************************************************
@@ -1014,7 +1011,7 @@ class MoveGenerator {
         while (itr.hasNext()) {
             val move = itr.next()
             chessBoardAfterMove = movePiece(chessBoard, move)
-            if (Game.moveGenerator.isKingAttacked(chessBoardAfterMove, kingColor)) {
+            if (isKingAttacked(chessBoardAfterMove, kingColor)) {
                 itr.remove()
             }
         }

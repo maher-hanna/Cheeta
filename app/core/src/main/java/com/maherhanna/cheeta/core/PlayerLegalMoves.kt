@@ -1,4 +1,6 @@
-package com.maherhanna.cheeta
+package com.maherhanna.cheeta.core
+
+import com.maherhanna.cheeta.core.Move
 
 class PlayerLegalMoves {
     private val legalMoves: ArrayList<Move> = ArrayList()

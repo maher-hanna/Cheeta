@@ -3,7 +3,10 @@ package com.maherhanna.cheeta
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.RectF
-import com.maherhanna.cheeta.Game.GameStatus
+import com.maherhanna.cheeta.core.GameStatus
+import com.maherhanna.cheeta.core.ChessBoard
+import com.maherhanna.cheeta.core.Move
+import com.maherhanna.cheeta.core.Piece
 
 class Drawing(private val activity: GameActivity) {
     @JvmField
