@@ -2,6 +2,7 @@ package com.maherhanna.cheeta
 
 import android.util.Log
 import com.maherhanna.cheeta.Piece.Companion.GetOppositeColor
+import com.maherhanna.cheeta.core.BitMath
 import kotlin.system.measureTimeMillis
 
 class MoveGenerator {

@@ -1,5 +1,6 @@
 package com.maherhanna.cheeta
 
+import com.maherhanna.cheeta.core.BitMath
 import java.util.Objects
 
 class Move {

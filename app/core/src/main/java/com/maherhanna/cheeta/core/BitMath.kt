@@ -1,4 +1,4 @@
-package com.maherhanna.cheeta
+package com.maherhanna.cheeta.core
 
 object BitMath {
     //-----------------------------------------------------------------------------------
@@ -74,7 +74,8 @@ object BitMath {
         return if (bitboard != 0L) {
             MagicTable[((bitboard and -bitboard) * Magic ushr 58).toInt()]
         } else {
-            ChessBoard.OUT
+            //ChessBoard.OUT
+            -1
         }
     }
 
@@ -104,7 +105,8 @@ object BitMath {
             bitboard = bitboard and (bitboard ushr 1).inv()
             MagicTable[(bitboard * Magic ushr 58).toInt()]
         } else {
-            ChessBoard.OUT
+            //ChessBoard.OUT
+            -1
         }
     }
 }

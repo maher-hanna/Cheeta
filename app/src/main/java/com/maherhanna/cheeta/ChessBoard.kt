@@ -5,6 +5,7 @@ import com.maherhanna.cheeta.Game.GameStatus
 import com.maherhanna.cheeta.MoveGenerator.Companion.getInitialRookKingSide
 import com.maherhanna.cheeta.MoveGenerator.Companion.getInitialRookQueenSide
 import com.maherhanna.cheeta.Piece.Companion.GetOppositeColor
+import com.maherhanna.cheeta.core.BitMath
 import java.util.Scanner
 
 class ChessBoard {
