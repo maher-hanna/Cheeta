@@ -17,6 +17,9 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
     private var foundCheckMate = false
     var evaluations: Long = 0
     var maxingPlayer = 0
+    var searchTimeFinished = false
+    var alpha = LOSE_SCORE
+    var beta = WIN_SCORE
 
     //killerMove[id][ply]
     var killerMove = Array(2) { arrayOfNulls<Move>(64) }
@@ -26,6 +29,7 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
         val maxSearchTime = Game.COMPUTER_MAX_SEARCH_TIME * 1000000000
         foundCheckMate = false
         evaluations = 0
+        searchTimeFinished = false
         val startChessBoard = ChessBoard(chessBoards[0])
         maxingPlayer = startChessBoard.toPlayColor
         var toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(
@@ -36,22 +40,27 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
         var maxDepth = 0
         var timeLeft: Long
         var moveIndex = 0
+        alpha = LOSE_SCORE
+        beta = WIN_SCORE
         do {
-            val previousEvaluations = evaluations
-            evaluations = 0
+            //val previousEvaluations = evaluations
+            //evaluations = 0
             timeLeft = startTime + maxSearchTime - System.nanoTime()
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
             val currentDepthMoveIndex =
                 search(startChessBoard, toPlayLegalMoves, timeLeft, maxDepth)
-            if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
-                maxDepth--
-                evaluations = previousEvaluations
-                break
-            } else {
+//            if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
+//                maxDepth--
+//                evaluations = previousEvaluations
+//                break
+//            } else {
+            if (currentDepthMoveIndex != ChessBoard.NO_SQUARE) {
+
                 moveIndex = currentDepthMoveIndex
             }
-        } while (!foundCheckMate)
+            //}
+        } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
         Log.d(
@@ -66,15 +75,14 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
         chessBoard: ChessBoard?,
         moves: PlayerLegalMoves,
         timeLeft: Long,
-        maxDepth: Int
+        maxDepth: Int,
+
     ): Int {
-        var timeFinished = false
         val searchStart = System.nanoTime()
         var score = 0
         var maxIndex = ChessBoard.NO_SQUARE
-        var currentMaxIndex = 0
-        var alpha = LOSE_SCORE
-        val beta = WIN_SCORE
+        var currentMaxIndex = ChessBoard.NO_SQUARE
+
         for (i in 0 until moves.size()) {
             val chessBoardAfterMove = ChessBoard(chessBoard!!)
             chessBoardAfterMove.move(moves[i])
@@ -92,39 +100,40 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
                 currentMaxIndex = i
             }
             if (System.nanoTime() - searchStart > timeLeft) {
-                timeFinished = true
+                searchTimeFinished = true
                 break
             }
         }
-        if (!timeFinished) {
+        if (!searchTimeFinished) {
             maxIndex = currentMaxIndex
         }
-        return maxIndex
+        return currentMaxIndex
     }
 
-    private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, beta: Int, ply: Int): Int {
-        var alpha = alphaArg
-        evaluations++
+    private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {
+        var quiescenceAlpha = alphaArg
+        var quiescenceBeta = betaArg
+        //evaluations++
         val toPlayColor = chessBoard.toPlayColor
         val eval = getScoreFor(chessBoard, toPlayColor)
-        if (eval >= beta) {
-            return beta
+        if (eval >= quiescenceBeta) {
+            return quiescenceBeta
         }
-        if (alpha < eval) {
-            alpha = eval
+        if (quiescenceAlpha < eval) {
+            quiescenceAlpha = eval
         }
         var toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(
             chessBoard,
             toPlayColor
         )
-        val gameStatus = Game.checkStatus(chessBoard,toPlayLegalMoves)
+        val gameStatus = Game.checkStatus(chessBoard, toPlayLegalMoves)
         if (isGameFinished(gameStatus)) {
             return getScoreFor(chessBoard, toPlayColor, gameStatus)
         } else {
             toPlayLegalMoves.removeNonTake()
         }
         if (toPlayLegalMoves.size() == 0) {
-            evaluations++
+            //evaluations++
             return getScoreFor(chessBoard, toPlayColor)
         }
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
@@ -132,17 +141,17 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
             val chessBoardAfterMove = ChessBoard(chessBoard)
             chessBoardAfterMove.move(toPlayLegalMoves[i])
             val score = -quiescence(
-                chessBoardAfterMove, -beta, -alpha,
+                chessBoardAfterMove, -quiescenceBeta, -quiescenceAlpha,
                 ply + 1
             )
-            if (score >= beta) {
-                return beta
+            if (score >= quiescenceBeta) {
+                return quiescenceBeta
             }
-            if (score > alpha) {
-                alpha = score
+            if (score > quiescenceAlpha) {
+                quiescenceAlpha = score
             }
         }
-        return alpha
+        return quiescenceAlpha
     }
 
     fun negaMax(chessBoard: ChessBoard, alpha: Int, beta: Int, depth: Float, ply: Int): Int {
@@ -152,7 +161,7 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
             chessBoard,
             toPlayColor
         )
-        val gameStatus = Game.checkStatus(chessBoard,toPlayLegalMoves)
+        val gameStatus = Game.checkStatus(chessBoard, toPlayLegalMoves)
         if (depth == 0f) {
             evaluations++
             return if (isGameFinished(gameStatus)) {
@@ -206,7 +215,7 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
             }
 
             // promotion score
-            if(currentMove.isPromote){
+            if (currentMove.isPromote) {
                 currentScore += 10000
             }
 
