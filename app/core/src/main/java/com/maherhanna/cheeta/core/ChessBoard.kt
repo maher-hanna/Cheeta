@@ -1,20 +1,17 @@
 package com.maherhanna.cheeta.core
 
-import com.maherhanna.cheeta.core.GameStatus
 import com.maherhanna.cheeta.core.MoveGenerator.Companion.getInitialRookKingSide
 import com.maherhanna.cheeta.core.MoveGenerator.Companion.getInitialRookQueenSide
 import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
 import java.util.Scanner
 
 class ChessBoard {
+
     //----------------------------------------------------------------------------------
     //data
     //-----------------------------------------------------------------------------------
-    lateinit var moves: GameHistory
-    var moveGenerator: MoveGenerator = MoveGenerator()
-    lateinit var states: ArrayList<State>
-    lateinit var blackPlayerLegalMoves: PlayerLegalMoves
-    lateinit var whitePlayerLegalMoves: PlayerLegalMoves
+    var moves: GameHistory = GameHistory()
+    var states: ArrayList<State> = ArrayList()
     var whitePawns: Long = 0
     var whiteRooks: Long = 0
     var whiteBishops: Long = 0
@@ -39,7 +36,7 @@ class ChessBoard {
     var fullMovesCount = 1
 
     //---------------------------------------------------------------------------------
-    constructor(copy: ChessBoard?) {
+    constructor(copy: ChessBoard?)  {
         if (copy != null) {
             moves = GameHistory(copy.moves)
             states = ArrayList(copy.states)
@@ -65,27 +62,11 @@ class ChessBoard {
         }
 
     }
-
-    constructor() {
-        moves = GameHistory()
-        states = ArrayList()
-        blackPlayerLegalMoves = PlayerLegalMoves()
-        whitePlayerLegalMoves = PlayerLegalMoves()
-        setupFromFen(startPosition)
-    }
-
-    constructor(fenString: String,moveGenerator: MoveGenerator) {
-        this.moveGenerator = moveGenerator
-        moves = GameHistory()
-        states = ArrayList()
-        blackPlayerLegalMoves = PlayerLegalMoves()
-        whitePlayerLegalMoves = PlayerLegalMoves()
+    constructor(fenString: String){
         setupFromFen(fenString)
+
     }
 
-    fun setUpBoard(fenString: String) {
-        setupFromFen(fenString)
-    }
 
     fun setupFromFen(fenString: String) {
         var currentFile = FILE_A
@@ -242,8 +223,7 @@ class ChessBoard {
         fullMovesCount = scanner.nextInt()
         val startState = State(allPieces, enPassantTarget, blackCastlingRights, whiteCastlingRights)
         states.add(startState)
-        updateWhiteLegalMoves()
-        updateBlackLegalMoves()
+
     }
 
     private fun addBlackPawn(square: Int) {
@@ -349,21 +329,6 @@ class ChessBoard {
         emptySquares = allPieces.inv()
     }
 
-    fun updateBlackLegalMoves() {
-        blackPlayerLegalMoves = moveGenerator.getBlackLegalMoves(this)
-    }
-
-    fun updateWhiteLegalMoves() {
-        whitePlayerLegalMoves = moveGenerator.getWhiteLegalMoves(this)
-    }
-
-    fun updateLegalMovesFor(moveGenerator:MoveGenerator,playerColor: Int, kingInCheck: Boolean) {
-        if (playerColor == Piece.WHITE) {
-            updateWhiteLegalMoves()
-        } else {
-            updateBlackLegalMoves()
-        }
-    }
 
     val blackPositions: ArrayList<Int>
         get() {
@@ -384,36 +349,6 @@ class ChessBoard {
             return whitePositions
         }
 
-    fun getLegalMovesFor(color: Int): PlayerLegalMoves {
-        return if (color == Piece.WHITE) {
-            whitePlayerLegalMoves
-        } else {
-            blackPlayerLegalMoves
-        }
-    }
-
-    fun getLegalTargetsFor(position: Int): ArrayList<Int> {
-        return if (isPieceWhiteAt(position)) {
-            whitePlayerLegalMoves!!.getLegalTargetsFor(position)
-        } else {
-            blackPlayerLegalMoves!!.getLegalTargetsFor(position)
-        }
-    }
-
-    fun isKingInCheck(kingColor: Int): Boolean {
-        return moveGenerator.isKingAttacked(this, kingColor)
-
-    }
-
-    fun canMove(fromSquare: Int, toSquare: Int): Boolean {
-        var isLegal = false
-        isLegal = if (isPieceBlackAt(fromSquare)) {
-            blackPlayerLegalMoves!!.canMove(fromSquare, toSquare)
-        } else {
-            whitePlayerLegalMoves!!.canMove(fromSquare, toSquare)
-        }
-        return isLegal
-    }
 
     fun move(move: Move) {
         val fromSquare = move.from
@@ -587,47 +522,6 @@ class ChessBoard {
         }
     }
 
-    fun checkStatus(toPlayPlayerLegalMoves: PlayerLegalMoves): GameStatus {
-        val lastPlayed = moves.lastPlayed
-        var gameStatus = GameStatus.NOT_FINISHED
-        val currentToPlayColor = GetOppositeColor(lastPlayed)
-        if (toPlayPlayerLegalMoves.size() == 0) {
-            val isKingInCheck = moveGenerator.isKingAttacked(this, currentToPlayColor)
-            gameStatus = if (isKingInCheck) {
-                //win
-                if (lastPlayed == Piece.WHITE) {
-                    GameStatus.FINISHED_WIN_WHITE
-                } else {
-                    GameStatus.FINISHED_WIN_BLACK
-                }
-            } else {
-                //draw stalemate
-                GameStatus.FINISHED_DRAW
-            }
-        }
-        if (insufficientMaterial()) {
-            gameStatus = GameStatus.FINISHED_DRAW
-            return gameStatus
-        }
-        if (fiftyMovesDrawCount == 50) {
-            gameStatus = GameStatus.FINISHED_DRAW
-            return gameStatus
-        }
-
-        //check for third repetition draw
-        var repeatedPositionCount = 1
-        val lastState = states[states.size - 1]
-        for (i in 0 until states.size - 1) {
-            if (lastState.equals(states[i])) {
-                repeatedPositionCount++
-                if (repeatedPositionCount == 3) {
-                    gameStatus = GameStatus.FINISHED_DRAW
-                    break
-                }
-            }
-        }
-        return gameStatus
-    }
 
     val allPiecesCount: Int
         get() = BitMath.countSetBits(allPieces)
@@ -640,7 +534,7 @@ class ChessBoard {
     val blackBishopsCount: Int
         get() = BitMath.countSetBits(blackBishops)
 
-    private fun insufficientMaterial(): Boolean {
+    fun insufficientMaterial(): Boolean {
         val allPiecesCount = allPiecesCount
 
 

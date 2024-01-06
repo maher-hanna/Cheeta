@@ -8,6 +8,7 @@ import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
 import com.maherhanna.cheeta.core.GameStatus
 import com.maherhanna.cheeta.core.ChessBoard
 import com.maherhanna.cheeta.core.Move
+import com.maherhanna.cheeta.core.MoveScore
 import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.PlayerLegalMoves
 import java.util.Collections
@@ -116,7 +117,7 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
             chessBoard,
             toPlayColor
         )
-        val gameStatus = chessBoard.checkStatus(toPlayLegalMoves)
+        val gameStatus = Game.checkStatus(chessBoard,toPlayLegalMoves)
         if (isGameFinished(gameStatus)) {
             return getScoreFor(chessBoard, toPlayColor, gameStatus)
         } else {
@@ -151,7 +152,7 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
             chessBoard,
             toPlayColor
         )
-        val gameStatus = chessBoard.checkStatus(toPlayLegalMoves)
+        val gameStatus = Game.checkStatus(chessBoard,toPlayLegalMoves)
         if (depth == 0f) {
             evaluations++
             return if (isGameFinished(gameStatus)) {

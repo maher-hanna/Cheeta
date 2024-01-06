@@ -234,7 +234,7 @@ class Drawing(private val activity: GameActivity) {
     fun canMove(from: Int, to: Int): Boolean {
         return if (!isWaitingHumanToPlay) {
             false
-        } else chessBoard!!.canMove(from, to)
+        } else Game.moveGenerator.canMove(chessBoard!!,from, to) == true
     }
 
     private fun drawPiece(
@@ -380,7 +380,7 @@ class Drawing(private val activity: GameActivity) {
         get() = game!!.isGameFinished
 
     fun getLegalMoves(square: Int): ArrayList<Int> {
-        return chessBoard!!.getLegalTargetsFor(square)
+        return Game.moveGenerator.getLegalTargetsFor(chessBoard!!,square)
     }
 
     fun canSelect(position: Int): Boolean {

@@ -2,7 +2,11 @@ package com.maherhanna.cheeta.core
 
 import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
 
-class MoveGenerator {
+class MoveGenerator(
+    var blackPlayerLegalMoves: PlayerLegalMoves,
+    var whitePlayerLegalMoves: PlayerLegalMoves
+) {
+
     //*****************************************************************************
     //calculated at start
     //-----------------------------------------------------------------------------
@@ -133,7 +137,44 @@ class MoveGenerator {
             bishopAttacksMask[SOUTH_EAST][square] = southEastAttackMask
         }
     }
+    fun getLegalMovesFor(color: Int): PlayerLegalMoves {
+        return if (color == Piece.WHITE) {
+            whitePlayerLegalMoves
+        } else {
+            blackPlayerLegalMoves
+        }
+    }
+    fun getLegalTargetsFor(chessBoard: ChessBoard,position: Int): ArrayList<Int> {
+        return if (chessBoard.isPieceWhiteAt(position)) {
+            whitePlayerLegalMoves.getLegalTargetsFor(position)
+        } else {
+            blackPlayerLegalMoves.getLegalTargetsFor(position)
+        }
+    }
+    fun canMove(chessBoard: ChessBoard,fromSquare: Int, toSquare: Int): Boolean {
+        var isLegal = false
+        isLegal = if (chessBoard.isPieceBlackAt(fromSquare)) {
+            blackPlayerLegalMoves.canMove(fromSquare, toSquare)
+        } else {
+            whitePlayerLegalMoves.canMove(fromSquare, toSquare)
+        }
+        return isLegal
+    }
+    fun updateBlackLegalMoves(chessBoard: ChessBoard) {
+        blackPlayerLegalMoves = getBlackLegalMoves(chessBoard)
+    }
 
+    fun updateWhiteLegalMoves(chessBoard: ChessBoard) {
+        whitePlayerLegalMoves = getWhiteLegalMoves(chessBoard)
+    }
+
+    fun updateLegalMovesFor(chessBoard: ChessBoard,playerColor: Int, kingInCheck: Boolean) {
+        if (playerColor == Piece.WHITE) {
+            updateWhiteLegalMoves(chessBoard)
+        } else {
+            updateBlackLegalMoves(chessBoard)
+        }
+    }
     fun getWhitePawnsPushes(whitePawns: Long, empty: Long): ArrayList<Move> {
         val moves = ArrayList<Move>()
         val singlePushes = whitePawnsSinglePush(whitePawns, empty)
@@ -928,6 +969,10 @@ class MoveGenerator {
         }
     }
 
+    fun isKingInCheck(chessBoard: ChessBoard,kingColor: Int): Boolean {
+        return isKingAttacked(chessBoard, kingColor)
+
+    }
     fun isKingAttacked(chessBoard: ChessBoard, kingColor: Int): Boolean {
         //val startTime = System.nanoTime()
 
@@ -1049,13 +1094,13 @@ class MoveGenerator {
     ) {
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
         var kingTarget = 0
-        if (canCastleKingSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
+        if (canCastleKingSide(chessBoard, color, isKingInCheck(chessBoard,color))) {
             kingTarget = initialKingPosition + 2
             val move = Move(Piece.KING, color, initialKingPosition, kingTarget)
             move.setCastling(Move.CastlingType.CASTLING_kING_SIDE)
             playerLegalMoves.add(move)
         }
-        if (canCastleQueenSide(chessBoard, color, chessBoard.isKingInCheck(color))) {
+        if (canCastleQueenSide(chessBoard, color, isKingInCheck(chessBoard,color))) {
             kingTarget = initialKingPosition - 2
             val move = Move(Piece.KING, color, initialKingPosition, kingTarget)
             move.setCastling(Move.CastlingType.CASTLING_QUEEN_SIDE)

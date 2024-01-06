@@ -4,7 +4,9 @@ import com.maherhanna.cheeta.core.ChessBoard
 import com.maherhanna.cheeta.core.GameStatus
 import com.maherhanna.cheeta.core.Move
 import com.maherhanna.cheeta.core.MoveGenerator
+import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
+import com.maherhanna.cheeta.core.PlayerLegalMoves
 
 class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     private val chessBoard: ChessBoard
@@ -21,7 +23,9 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         computerAi = ComputerAi()
         paused = false
         this.humanPlayerColor = humanPlayerColor
-        chessBoard = ChessBoard(ChessBoard.positionInUse, moveGenerator)
+        chessBoard = ChessBoard(ChessBoard.positionInUse)
+        moveGenerator.updateWhiteLegalMoves(chessBoard)
+        moveGenerator.updateBlackLegalMoves(chessBoard)
         drawing.chessBoard = chessBoard
     }
 
@@ -42,24 +46,24 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     }
 
     fun checkGameFinished(lastPlayed: Int): GameStatus {
-        return chessBoard.checkStatus(chessBoard.getLegalMovesFor(GetOppositeColor(lastPlayed)))
+        return checkStatus(chessBoard,moveGenerator.getLegalMovesFor(GetOppositeColor(lastPlayed)))
     }
 
     fun humanPlayed(humanMove: Move?) {
         var humanMove = humanMove
-        humanMove = chessBoard.getLegalMovesFor(humanPlayerColor).getMove(humanMove!!)
+        humanMove = moveGenerator.getLegalMovesFor(humanPlayerColor).getMove(humanMove!!)
         chessBoard.move(humanMove)
         currentPlayer = GetOppositeColor(humanPlayerColor)
-        chessBoard.updateLegalMovesFor(moveGenerator,humanPlayerColor, false)
+        moveGenerator.updateLegalMovesFor(chessBoard,humanPlayerColor, false)
         val opponentColor = currentPlayer
-        val isOpponentKingInCheck = chessBoard.isKingInCheck(opponentColor)
+        val isOpponentKingInCheck = moveGenerator.isKingInCheck(chessBoard,opponentColor)
         if (isOpponentKingInCheck) {
             drawing.kingInCheck = moveGenerator.getKingPosition(chessBoard, opponentColor)
         } else {
             drawing.kingInCheck = ChessBoard.NO_SQUARE
         }
         drawing.drawAllPieces()
-        chessBoard.updateLegalMovesFor(moveGenerator,opponentColor, isOpponentKingInCheck)
+        moveGenerator.updateLegalMovesFor(chessBoard,opponentColor, isOpponentKingInCheck)
         val gameStatus = checkGameFinished(humanPlayerColor)
         if (gameStatus == GameStatus.NOT_FINISHED) {
             playComputer(opponentColor)
@@ -75,16 +79,16 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         computerAi.cancel(true)
         chessBoard.move(computerMove)
         val color = computerMove.color
-        chessBoard.updateLegalMovesFor(moveGenerator,color, false)
+        moveGenerator.updateLegalMovesFor(chessBoard,color, false)
         val opponentColor = GetOppositeColor(color)
-        val isOpponentKingInCheck = chessBoard.isKingInCheck(opponentColor)
+        val isOpponentKingInCheck = moveGenerator.isKingInCheck(chessBoard,opponentColor)
         if (isOpponentKingInCheck) {
             drawing.kingInCheck = moveGenerator.getKingPosition(chessBoard, opponentColor)
         } else {
             drawing.kingInCheck = ChessBoard.NO_SQUARE
         }
         drawing.drawAllPieces()
-        chessBoard.updateLegalMovesFor(moveGenerator,opponentColor, isOpponentKingInCheck)
+        moveGenerator.updateLegalMovesFor(chessBoard,opponentColor, isOpponentKingInCheck)
         currentPlayer = GetOppositeColor(color)
         val gameStatus = checkGameFinished(color)
         if (gameStatus == GameStatus.NOT_FINISHED) {
@@ -107,6 +111,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         isGameFinished = true
     }
 
+
     private inner class ComputerAi : ChessEngine() {
         override fun onPostExecute(move: Move) {
             computerPlayed(move)
@@ -118,6 +123,48 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
 
         const val COMPUTER_MAX_SEARCH_TIME: Long = 4
         @JvmField
-        var moveGenerator = MoveGenerator()
+        var moveGenerator = MoveGenerator(PlayerLegalMoves(), PlayerLegalMoves())
+        fun checkStatus(chessBoard: ChessBoard,toPlayPlayerLegalMoves: PlayerLegalMoves): GameStatus {
+            val lastPlayed = chessBoard.moves.lastPlayed
+            var gameStatus = GameStatus.NOT_FINISHED
+            val currentToPlayColor = GetOppositeColor(lastPlayed)
+            if (toPlayPlayerLegalMoves.size() == 0) {
+                val isKingInCheck = moveGenerator.isKingAttacked(chessBoard, currentToPlayColor)
+                gameStatus = if (isKingInCheck) {
+                    //win
+                    if (lastPlayed == Piece.WHITE) {
+                        GameStatus.FINISHED_WIN_WHITE
+                    } else {
+                        GameStatus.FINISHED_WIN_BLACK
+                    }
+                } else {
+                    //draw stalemate
+                    GameStatus.FINISHED_DRAW
+                }
+            }
+            if (chessBoard.insufficientMaterial()) {
+                gameStatus = GameStatus.FINISHED_DRAW
+                return gameStatus
+            }
+            if (chessBoard.fiftyMovesDrawCount == 50) {
+                gameStatus = GameStatus.FINISHED_DRAW
+                return gameStatus
+            }
+
+            //check for third repetition draw
+            var repeatedPositionCount = 1
+            val lastState = chessBoard.states[chessBoard.states.size - 1]
+            for (i in 0 until chessBoard.states.size - 1) {
+                if (lastState.equals(chessBoard.states[i])) {
+                    repeatedPositionCount++
+                    if (repeatedPositionCount == 3) {
+                        gameStatus = GameStatus.FINISHED_DRAW
+                        break
+                    }
+                }
+            }
+            return gameStatus
+        }
+
     }
 }
