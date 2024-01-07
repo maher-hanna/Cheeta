@@ -1,6 +1,5 @@
 package com.maherhanna.cheeta
 
-import android.os.AsyncTask
 import android.util.Log
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetFile
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
@@ -13,7 +12,7 @@ import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.PlayerLegalMoves
 import java.util.Collections
 
-open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
+open class ChessEngine {
     private var foundCheckMate = false
     var evaluations: Long = 0
     var maxingPlayer = 0
@@ -23,52 +22,60 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
 
     //killerMove[id][ply]
     var killerMove = Array(2) { arrayOfNulls<Move>(64) }
-    override fun doInBackground(vararg chessBoards: ChessBoard?): Move {
-        val startTime = System.nanoTime()
-        //convert maximum search time from seconds to nano seconds
-        val maxSearchTime = Game.COMPUTER_MAX_SEARCH_TIME * 1000000000
-        foundCheckMate = false
-        evaluations = 0
-        searchTimeFinished = false
-        val startChessBoard = ChessBoard(chessBoards[0])
-        maxingPlayer = startChessBoard.toPlayColor
-        var toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(
-            startChessBoard,
-            maxingPlayer
-        )
-        toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
-        var maxDepth = 0
-        var timeLeft: Long
-        var moveIndex = 0
-        alpha = LOSE_SCORE
-        beta = WIN_SCORE
-        do {
-            //val previousEvaluations = evaluations
-            //evaluations = 0
-            timeLeft = startTime + maxSearchTime - System.nanoTime()
-            maxDepth++
-            //Log.d(Game.DEBUG, "depth: ${maxDepth}")
-            val currentDepthMoveIndex =
-                search(startChessBoard, toPlayLegalMoves, timeLeft, maxDepth)
+    fun getMove(chessBoard: ChessBoard, onResult: (move: Move) -> Unit) {
+        val engineThread = object : Thread() {
+            override fun run() {
+                val startTime = System.nanoTime()
+                //convert maximum search time from seconds to nano seconds
+                val maxSearchTime = Game.COMPUTER_MAX_SEARCH_TIME * 1000000000
+                foundCheckMate = false
+                evaluations = 0
+                searchTimeFinished = false
+                maxingPlayer = chessBoard.toPlayColor
+                var toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(
+                    chessBoard,
+                    maxingPlayer
+                )
+                toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
+                var maxDepth = 0
+                var timeLeft: Long
+                var moveIndex = 0
+                alpha = LOSE_SCORE
+                beta = WIN_SCORE
+                do {
+                    //val previousEvaluations = evaluations
+                    //evaluations = 0
+                    timeLeft = startTime + maxSearchTime - System.nanoTime()
+                    maxDepth++
+                    //Log.d(Game.DEBUG, "depth: ${maxDepth}")
+                    val currentDepthMoveIndex =
+                        search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
 //            if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
 //                maxDepth--
 //                evaluations = previousEvaluations
 //                break
 //            } else {
-            if (currentDepthMoveIndex != ChessBoard.NO_SQUARE) {
+                    if (currentDepthMoveIndex != ChessBoard.NO_SQUARE) {
 
-                moveIndex = currentDepthMoveIndex
+                        moveIndex = currentDepthMoveIndex
+                    }
+                    //}
+                } while (!foundCheckMate && !searchTimeFinished)
+                var duration = System.nanoTime() - startTime
+                duration /= 1000 // convert to milli second
+                Log.d(
+                    Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
+                            moveIndex
+                )
+                Log.d(
+                    Game.DEBUG,
+                    "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
+                )
+                onResult(toPlayLegalMoves[moveIndex])
             }
-            //}
-        } while (!foundCheckMate && !searchTimeFinished)
-        var duration = System.nanoTime() - startTime
-        duration /= 1000 // convert to milli second
-        Log.d(
-            Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
-                    moveIndex
-        )
-        Log.d(Game.DEBUG, "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth)
-        return toPlayLegalMoves[moveIndex]
+        }
+        engineThread.start()
+
     }
 
     fun search(
@@ -77,7 +84,7 @@ open class ChessEngine : AsyncTask<ChessBoard?, Void?, Move>() {
         timeLeft: Long,
         maxDepth: Int,
 
-    ): Int {
+        ): Int {
         val searchStart = System.nanoTime()
         var score = 0
         var maxIndex = ChessBoard.NO_SQUARE

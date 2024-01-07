@@ -10,7 +10,7 @@ import com.maherhanna.cheeta.core.PlayerLegalMoves
 
 class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     private val chessBoard: ChessBoard
-    private var computerAi: ComputerAi
+    private var chessEngine: ChessEngine
     @JvmField
     var paused: Boolean
     var currentPlayer = 0
@@ -20,7 +20,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         private set
 
     init {
-        computerAi = ComputerAi()
+        chessEngine = ChessEngine()
         paused = false
         this.humanPlayerColor = humanPlayerColor
         chessBoard = ChessBoard(ChessBoard.positionInUse)
@@ -76,7 +76,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
 
     fun computerPlayed(computerMove: Move) {
         drawing.currentMove = computerMove
-        computerAi.cancel(true)
+        //computerAi.cancel(true)
         chessBoard.move(computerMove)
         val color = computerMove.color
         moveGenerator.updateLegalMovesFor(chessBoard,color, false)
@@ -103,8 +103,10 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
 
     fun playComputer(color: Int) {
         if (paused) return
-        computerAi = ComputerAi()
-        computerAi.execute(chessBoard)
+        //computerAi = ChessEngine()
+        chessEngine.getMove(chessBoard){ move ->
+            computerPlayed(move)
+        }
     }
 
     fun setGameFinished() {
@@ -112,11 +114,11 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     }
 
 
-    private inner class ComputerAi : ChessEngine() {
-        override fun onPostExecute(move: Move) {
-            computerPlayed(move)
-        }
-    }
+//    private inner class ComputerAi : ChessEngine() {
+//        override fun onPostExecute(move: Move) {
+//            computerPlayed(move)
+//        }
+//    }
 
     companion object {
         const val DEBUG = "Cheeta_Debug"
