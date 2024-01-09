@@ -605,23 +605,36 @@ class ChessBoard {
     }
 
     //------------------------
-    fun print() {
+    fun print():String {
         val stringBuilder = StringBuilder()
         stringBuilder.append(" \n")
-        val blackPiecesSymbols = charArrayOf('0', 'p', 'r', 'n', 'b', 'q', 'k')
-        val whitePiecesSymbols = charArrayOf('0', 'P', 'R', 'N', 'B', 'Q', 'K')
+        val blackPiecesSymbols = charArrayOf('p', 'n', 'b','r',  'q', 'k')
+        val whitePiecesSymbols = charArrayOf('P',  'N', 'B','R', 'Q', 'K')
         var currentSymbol = '0'
         for (rank in 7 downTo 0) {
             for (file in 0..7) {
+                currentSymbol = '0'
                 val pieceType = pieceType(Square(file, rank))
                 val pieceColor = pieceColor(Square(file, rank))
-                if (pieceColor == Piece.WHITE) currentSymbol = whitePiecesSymbols[pieceType]
-                if (pieceColor == Piece.BLACK) currentSymbol = blackPiecesSymbols[pieceType]
+                val charIndex = when(pieceType){
+                    Piece.PAWN -> 0
+                    Piece.KNIGHT -> 1
+                    Piece.BISHOP -> 2
+                    Piece.ROOK -> 3
+                    Piece.QUEEN -> 4
+                    Piece.KING -> 5
+                    else -> -1
+                }
+                if(charIndex != -1) {
+                    if (pieceColor == Piece.WHITE) currentSymbol = whitePiecesSymbols[charIndex]
+                    if (pieceColor == Piece.BLACK) currentSymbol = blackPiecesSymbols[charIndex]
+                }
                 stringBuilder.append(currentSymbol)
                 stringBuilder.append(' ')
             }
             stringBuilder.append('\n')
         }
+        return stringBuilder.toString()
     }
 
     val whiteCastlingRights: Int

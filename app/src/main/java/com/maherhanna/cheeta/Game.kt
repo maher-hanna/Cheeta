@@ -104,9 +104,12 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     fun playComputer(color: Int) {
         if (paused) return
         //computerAi = ChessEngine()
-        chessEngine.getMove(chessBoard){ move ->
-            computerPlayed(move)
+        val engineThread = object : Thread() {
+            override fun run() {
+                computerPlayed(chessEngine.getMove(chessBoard))
+            }
         }
+        engineThread.start()
     }
 
     fun setGameFinished() {

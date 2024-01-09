@@ -27,12 +27,12 @@ class Piece(p: Piece) {
     }
 
     companion object {
-        const val PAWN = 0
-        const val KNIGHT = 1
-        const val BISHOP = 2
-        const val ROOK = 3
-        const val QUEEN = 4
-        const val KING = 5
+        const val PAWN = 1
+        const val KNIGHT = 2
+        const val BISHOP = 3
+        const val ROOK = 4
+        const val QUEEN = 5
+        const val KING = 6
         const val WHITE = 0
         const val BLACK = 1
 
