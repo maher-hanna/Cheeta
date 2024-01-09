@@ -15,6 +15,12 @@ import android.view.MotionEvent
 import androidx.appcompat.widget.AppCompatImageView
 import com.maherhanna.cheeta.core.ChessBoard
 import com.maherhanna.cheeta.core.Move
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class ChessboardView(context: Context?, attrs: AttributeSet?) : AppCompatImageView(
     context!!, attrs
@@ -27,7 +33,9 @@ internal class ChessboardView(context: Context?, attrs: AttributeSet?) : AppComp
     private val legalSquarePaint: Paint
     private val legalSquarePaintHasPiece: Paint
     private var kingCheckHighlight: RadialGradient? = null
+    private val uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+    fun runOnUiThread(block: suspend () -> Unit) = uiScope.launch { block() }
     init {
         highlightPaint = Paint()
         highlightPaint.color = Color.YELLOW
@@ -120,8 +128,7 @@ internal class ChessboardView(context: Context?, attrs: AttributeSet?) : AppComp
                     if (drawing!!.dragFrom == targetSquare) {
                         drawing!!.selectedSquare = drawing!!.dragFrom
                         drawing!!.dragFrom = -1
-                    }
-                    else if (drawing!!.canMove(drawing!!.dragFrom, targetSquare)) {
+                    } else if (drawing!!.canMove(drawing!!.dragFrom, targetSquare)) {
                         humanPlayed = true
                         humanMove = Move(
                             drawing!!.chessBoard!!.pieceType(drawing!!.dragFrom),
@@ -131,7 +138,7 @@ internal class ChessboardView(context: Context?, attrs: AttributeSet?) : AppComp
                         )
                         drawing!!.dragFrom = -1
                         drawing!!.selectedSquare = -1
-                    } else{
+                    } else {
 
                         drawing!!.dragFrom = -1
                     }
@@ -139,7 +146,8 @@ internal class ChessboardView(context: Context?, attrs: AttributeSet?) : AppComp
 
                 //if piece is selected
                 if (drawing!!.selectedSquare != ChessBoard.OUT) {
-                    if (drawing!!.selectedSquare == targetSquare) {}
+                    if (drawing!!.selectedSquare == targetSquare) {
+                    }
                     //check for selecting other piece
                     else if (drawing!!.canMove(drawing!!.selectedSquare, targetSquare)) {
                         humanPlayed = true
@@ -185,14 +193,18 @@ internal class ChessboardView(context: Context?, attrs: AttributeSet?) : AppComp
     }
 
     fun finishGame(messageId: Int) {
-        val gameFinishedDialog = AlertDialog.Builder(context).create()
-        gameFinishedDialog.setTitle(context.getString(R.string.game_finished))
-        val message = context.getString(messageId)
-        gameFinishedDialog.setMessage(message)
-        gameFinishedDialog.setButton(
-            AlertDialog.BUTTON_NEUTRAL, context.getString(R.string.game_finished_ok_button)
-        ) { dialog, which -> dialog.dismiss() }
-        gameFinishedDialog.show()
+        runOnUiThread {
+            val gameFinishedDialog = AlertDialog.Builder(context).create()
+            gameFinishedDialog.setTitle(context.getString(R.string.game_finished))
+            val message = context.getString(messageId)
+            gameFinishedDialog.setMessage(message)
+            gameFinishedDialog.setButton(
+                AlertDialog.BUTTON_NEUTRAL, context.getString(R.string.game_finished_ok_button)
+            ) { dialog, which -> dialog.dismiss() }
+            gameFinishedDialog.show()
+
+        }
+
     }
 
     fun drawLegalSquare(squareRect: RectF, hasPiece: Boolean) {
