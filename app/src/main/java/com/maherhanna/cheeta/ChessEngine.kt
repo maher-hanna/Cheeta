@@ -22,59 +22,56 @@ open class ChessEngine {
 
     //killerMove[id][ply]
     var killerMove = Array(2) { arrayOfNulls<Move>(64) }
-    fun getMove(chessBoard: ChessBoard, onResult: (move: Move) -> Unit) {
-        val engineThread = object : Thread() {
-            override fun run() {
-                val startTime = System.nanoTime()
-                //convert maximum search time from seconds to nano seconds
-                val maxSearchTime = Game.COMPUTER_MAX_SEARCH_TIME * 1000000000
-                foundCheckMate = false
-                evaluations = 0
-                searchTimeFinished = false
-                maxingPlayer = chessBoard.toPlayColor
-                var toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(
-                    chessBoard,
-                    maxingPlayer
-                )
-                toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
-                var maxDepth = 0
-                var timeLeft: Long
-                var moveIndex = 0
-                alpha = LOSE_SCORE
-                beta = WIN_SCORE
-                do {
-                    //val previousEvaluations = evaluations
-                    //evaluations = 0
-                    timeLeft = startTime + maxSearchTime - System.nanoTime()
-                    maxDepth++
-                    //Log.d(Game.DEBUG, "depth: ${maxDepth}")
-                    val currentDepthMoveIndex =
-                        search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
+    fun getMove(chessBoard: ChessBoard) : Move {
+
+        val startTime = System.nanoTime()
+        //convert maximum search time from seconds to nano seconds
+        val maxSearchTime = Game.COMPUTER_MAX_SEARCH_TIME * 1000000000
+        foundCheckMate = false
+        evaluations = 0
+        searchTimeFinished = false
+        maxingPlayer = chessBoard.toPlayColor
+        var toPlayLegalMoves = Game.moveGenerator.getLegalMovesFor(
+            chessBoard,
+            maxingPlayer
+        )
+        toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
+        var maxDepth = 0
+        var timeLeft: Long
+        var moveIndex = 0
+        alpha = LOSE_SCORE
+        beta = WIN_SCORE
+        do {
+            //val previousEvaluations = evaluations
+            //evaluations = 0
+            timeLeft = startTime + maxSearchTime - System.nanoTime()
+            maxDepth++
+            Log.d(Game.DEBUG, "depth: ${maxDepth}")
+            val currentDepthMoveIndex =
+                search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
 //            if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
 //                maxDepth--
 //                evaluations = previousEvaluations
 //                break
 //            } else {
-                    if (currentDepthMoveIndex != ChessBoard.NO_SQUARE) {
+            if (currentDepthMoveIndex != ChessBoard.NO_SQUARE) {
 
-                        moveIndex = currentDepthMoveIndex
-                    }
-                    //}
-                } while (!foundCheckMate && !searchTimeFinished)
-                var duration = System.nanoTime() - startTime
-                duration /= 1000 // convert to milli second
-                Log.d(
-                    Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
-                            moveIndex
-                )
-                Log.d(
-                    Game.DEBUG,
-                    "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
-                )
-                onResult(toPlayLegalMoves[moveIndex])
+                moveIndex = currentDepthMoveIndex
             }
-        }
-        engineThread.start()
+            //}
+        } while (!foundCheckMate && !searchTimeFinished)
+        var duration = System.nanoTime() - startTime
+        duration /= 1000 // convert to milli second
+        Log.d(
+            Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
+                    moveIndex
+        )
+        Log.d(
+            Game.DEBUG,
+            "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
+        )
+        return toPlayLegalMoves[moveIndex]
+
 
     }
 
@@ -218,7 +215,7 @@ open class ChessEngine {
             if (currentMove.isTake) {
                 val victim = currentMove.takenPieceType
                 val attacker = currentMove.pieceType
-                currentScore += mvv_lva[attacker * 6 + victim] + 10000
+                currentScore += mvv_lva[(attacker - 1)  * 6 + (victim - 1)] + 10000
             }
 
             // promotion score

@@ -109,4 +109,25 @@ object BitMath {
             -1
         }
     }
+
+    fun print(bitboard: Long):String {
+        val stringBuilder = StringBuilder()
+        stringBuilder.append(" \n")
+        for (rank in 7 downTo 0) {
+            for (file in 0..7) {
+               if(isBitSet(bitboard,ChessBoard.Square(file,rank).toLong())) {
+                   stringBuilder.append('1')
+                   stringBuilder.append(' ')
+
+               } else {
+                   stringBuilder.append('0')
+                   stringBuilder.append(' ')
+
+               }
+            }
+            stringBuilder.append('\n')
+        }
+        return stringBuilder.toString()
+    }
+
 }
