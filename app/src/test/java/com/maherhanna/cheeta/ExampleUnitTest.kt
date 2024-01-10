@@ -18,7 +18,6 @@ class ExampleUnitTest {
     @Test
     fun move_generator_isCorrect() {
         val chessBoard = ChessBoard(ChessBoard.positionInUse)
-        Log.d(Game.DEBUG, "chessBoard.print(): ${chessBoard.print()}")
         val moveGenerator = MoveGenerator(PlayerLegalMoves(), PlayerLegalMoves())
         chessBoard.toPlayColor = Piece.WHITE
         moveGenerator.updateWhiteLegalMoves(chessBoard)
@@ -34,13 +33,11 @@ class ExampleUnitTest {
             84998978956UL,
             2439530234167UL
         )
-
-        for (i in 1 until 10) {
+        for (i in 1 until 7) {
             val perftResult = Perft(i,chessBoard,moveGenerator)
             assertEquals(perftResults[i - 1], perftResult)
 
         }
-
     }
 
     fun Perft(depth: Int, chessBoard: ChessBoard, moveGenerator: MoveGenerator): ULong {

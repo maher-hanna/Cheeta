@@ -124,7 +124,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
 //    }
 
     companion object {
-        const val DEBUG = "Cheeta_Debug"
+        const val DEBUG_TAG = "Cheeta_Debug"
 
         const val COMPUTER_MAX_SEARCH_TIME: Long = 4
         @JvmField

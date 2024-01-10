@@ -359,25 +359,24 @@ class ChessBoard {
         removePiece(fromSquare)
         if (moveColor == Piece.WHITE) fullMovesCount++
 
-
         //set enPassant target
-        var enPassantTarget = NO_SQUARE
+        var enPassantTargetAfterMove = NO_SQUARE
         if (move.isPawnDoubleMove) {
-            enPassantTarget = if (moveColor == Piece.WHITE) {
+            enPassantTargetAfterMove = if (moveColor == Piece.WHITE) {
                 move.to - 8
             } else {
                 move.to + 8
             }
         }
-        var blackCastlingRights = blackCastlingRights
-        var whiteCastlingRights = whiteCastlingRights
+        var blackCastlingRightsAfterMove = blackCastlingRights
+        var whiteCastlingRightsAfterMove = whiteCastlingRights
         if (move.isCastling) {
             val rookPosition: Int
             val rookCastlingTarget: Int
             if (moveColor == Piece.WHITE) {
-                whiteCastlingRights = NO_CASTLING
+                whiteCastlingRightsAfterMove = NO_CASTLING
             } else {
-                blackCastlingRights = NO_CASTLING
+                blackCastlingRightsAfterMove = NO_CASTLING
             }
             if (move.castlingType === Move.CastlingType.CASTLING_kING_SIDE) {
                 rookPosition = getInitialRookKingSide(
@@ -395,28 +394,28 @@ class ChessBoard {
         } else {
             if (movedPieceType == Piece.ROOK) {
                 if (moveColor == Piece.WHITE) {
-                    whiteCastlingRights = if (fromSquare == getInitialRookKingSide(Piece.WHITE)) {
+                    whiteCastlingRightsAfterMove = if (fromSquare == getInitialRookKingSide(Piece.WHITE)) {
                         //king side
-                        BitMath.unSetBit(whiteCastlingRights, 0)
+                        BitMath.unSetBit(whiteCastlingRightsAfterMove, 0)
                     } else {
                         //queen side
-                        BitMath.unSetBit(whiteCastlingRights, 1)
+                        BitMath.unSetBit(whiteCastlingRightsAfterMove, 1)
                     }
                 } else {
-                    blackCastlingRights = if (fromSquare == getInitialRookKingSide(Piece.BLACK)) {
+                    blackCastlingRightsAfterMove = if (fromSquare == getInitialRookKingSide(Piece.BLACK)) {
                         //king side
-                        BitMath.unSetBit(blackCastlingRights, 0)
+                        BitMath.unSetBit(blackCastlingRightsAfterMove, 0)
                     } else {
                         //queen side
-                        BitMath.unSetBit(blackCastlingRights, 1)
+                        BitMath.unSetBit(blackCastlingRightsAfterMove, 1)
                     }
                 }
             }
             if (movedPieceType == Piece.KING) {
                 if (moveColor == Piece.WHITE) {
-                    whiteCastlingRights = NO_CASTLING
+                    whiteCastlingRightsAfterMove = NO_CASTLING
                 } else {
-                    blackCastlingRights = NO_CASTLING
+                    blackCastlingRightsAfterMove = NO_CASTLING
                 }
             }
         }
@@ -436,7 +435,7 @@ class ChessBoard {
         if (move.isTake || movedPieceType == Piece.PAWN) {
             fiftyMovesDrawCount = 0
         }
-        val state = State(allPieces, enPassantTarget, blackCastlingRights, whiteCastlingRights)
+        val state = State(allPieces, enPassantTargetAfterMove, blackCastlingRightsAfterMove, whiteCastlingRightsAfterMove)
         states.add(state)
         moves.add(move)
         toPlayColor = if (toPlayColor == Piece.WHITE) Piece.BLACK else Piece.WHITE
@@ -450,7 +449,7 @@ class ChessBoard {
         val movedPieceType = lastMove.pieceType
         setPieceAt(fromSquare, movedPieceType, moveColor)
         removePiece(toSquare)
-        if (lastMove.isTake) {
+        if (lastMove.isTake && !lastMove.isEnPasant) {
             setPieceAt(toSquare, lastMove.takenPieceType, GetOppositeColor(moveColor))
         }
         if (lastMove.isPromote) {

@@ -63,11 +63,11 @@ open class ChessEngine {
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
         Log.d(
-            Game.DEBUG, "alpha beta evaluations: " + evaluations + " move " +
+            Game.DEBUG_TAG, "alpha beta evaluations: " + evaluations + " move " +
                     moveIndex
         )
         Log.d(
-            Game.DEBUG,
+            Game.DEBUG_TAG,
             "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
         )
         return toPlayLegalMoves[moveIndex]
@@ -76,7 +76,7 @@ open class ChessEngine {
     }
 
     fun search(
-        chessBoard: ChessBoard?,
+        chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
         timeLeft: Long,
         maxDepth: Int,
@@ -88,12 +88,12 @@ open class ChessEngine {
         var currentMaxIndex = ChessBoard.NO_SQUARE
 
         for (i in 0 until moves.size()) {
-            val chessBoardAfterMove = ChessBoard(chessBoard!!)
-            chessBoardAfterMove.move(moves[i])
+            chessBoard.move(moves[i])
             score = -negaMax(
-                chessBoardAfterMove, -beta,
+                chessBoard, -beta,
                 -alpha, (maxDepth - 1).toFloat(), 1
             )
+            chessBoard.unMove()
             if (score >= beta) {
                 currentMaxIndex = i
                 foundCheckMate = true
@@ -142,12 +142,12 @@ open class ChessEngine {
         }
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
         for (i in 0 until toPlayLegalMoves.size()) {
-            val chessBoardAfterMove = ChessBoard(chessBoard)
-            chessBoardAfterMove.move(toPlayLegalMoves[i])
+            chessBoard.move(toPlayLegalMoves[i])
             val score = -quiescence(
-                chessBoardAfterMove, -quiescenceBeta, -quiescenceAlpha,
+                chessBoard, -quiescenceBeta, -quiescenceAlpha,
                 ply + 1
             )
+            chessBoard.unMove()
             if (score >= quiescenceBeta) {
                 return quiescenceBeta
             }
@@ -182,12 +182,12 @@ open class ChessEngine {
         evaluations++
         var maxScore = LOSE_SCORE
         for (i in 0 until toPlayLegalMoves.size()) {
-            val chessBoardAfterMove = ChessBoard(chessBoard)
-            chessBoardAfterMove.move(toPlayLegalMoves[i])
+            chessBoard.move(toPlayLegalMoves[i])
             val score = -negaMax(
-                chessBoardAfterMove, -beta, -alpha,
+                chessBoard, -beta, -alpha,
                 depth - 1, ply + 1
             )
+            chessBoard.unMove()
             maxScore = Math.max(maxScore, score)
             alpha = Math.max(alpha, score)
             if (score >= beta) {
