@@ -72,7 +72,6 @@ open class ChessEngine {
         )
         return toPlayLegalMoves[moveIndex]
 
-
     }
 
     fun search(

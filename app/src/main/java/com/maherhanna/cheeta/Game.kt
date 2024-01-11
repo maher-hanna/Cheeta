@@ -10,18 +10,17 @@ import com.maherhanna.cheeta.core.PlayerLegalMoves
 
 class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     private val chessBoard: ChessBoard
-    private var chessEngine: ChessEngine
+    private var chessEngine: ChessEngine = ChessEngine()
+
     @JvmField
-    var paused: Boolean
-    var currentPlayer = 0
+    var paused: Boolean = false
+    private var currentPlayer = 0
     @JvmField
     var humanPlayerColor: Int
     var isGameFinished = false
         private set
 
     init {
-        chessEngine = ChessEngine()
-        paused = false
         this.humanPlayerColor = humanPlayerColor
         chessBoard = ChessBoard(ChessBoard.positionInUse)
         moveGenerator.updateWhiteLegalMoves(chessBoard)
@@ -106,7 +105,8 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         //computerAi = ChessEngine()
         val engineThread = object : Thread() {
             override fun run() {
-                computerPlayed(chessEngine.getMove(chessBoard))
+                val move = chessEngine.getMove(ChessBoard(chessBoard))
+                computerPlayed(move)
             }
         }
         engineThread.start()
