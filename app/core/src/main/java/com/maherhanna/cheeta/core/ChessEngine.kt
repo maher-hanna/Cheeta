@@ -1,16 +1,9 @@
-package com.maherhanna.cheeta
+package com.maherhanna.cheeta.core
 
-import android.util.Log
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetFile
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
-import com.maherhanna.cheeta.core.GameStatus
-import com.maherhanna.cheeta.core.ChessBoard
-import com.maherhanna.cheeta.core.Move
-import com.maherhanna.cheeta.core.MoveGenerator
-import com.maherhanna.cheeta.core.MoveScore
-import com.maherhanna.cheeta.core.Piece
-import com.maherhanna.cheeta.core.PlayerLegalMoves
+import com.maherhanna.cheeta.core.util.Log
 import kotlin.math.abs
 
 open class ChessEngine {

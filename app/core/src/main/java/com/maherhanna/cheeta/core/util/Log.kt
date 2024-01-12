@@ -1,4 +1,4 @@
-package com.maherhanna.cheeta.util
+package com.maherhanna.cheeta.core.util
 
 class Log {
     companion object {

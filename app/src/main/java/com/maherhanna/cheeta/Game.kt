@@ -1,12 +1,10 @@
 package com.maherhanna.cheeta
 
 import com.maherhanna.cheeta.core.ChessBoard
+import com.maherhanna.cheeta.core.ChessEngine
 import com.maherhanna.cheeta.core.GameStatus
 import com.maherhanna.cheeta.core.Move
-import com.maherhanna.cheeta.core.MoveGenerator
-import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
-import com.maherhanna.cheeta.core.PlayerLegalMoves
 
 class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     private val chessBoard: ChessBoard

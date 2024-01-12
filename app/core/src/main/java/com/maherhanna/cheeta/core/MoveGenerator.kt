@@ -1035,13 +1035,15 @@ class MoveGenerator(
             toSquare, chessBoardAfterMove.pieceType(fromSquare),
             chessBoardAfterMove.pieceColor(fromSquare)
         )
-        chessBoardAfterMove.removePiece(fromSquare)
         if (move.isEnPasant) {
             if (move.color == Piece.WHITE) {
                 chessBoardAfterMove.removePiece(toSquare - 8)
             } else {
                 chessBoardAfterMove.removePiece(toSquare + 8)
             }
+        }else{
+            chessBoardAfterMove.removePiece(fromSquare)
+
         }
         return chessBoardAfterMove
     }
