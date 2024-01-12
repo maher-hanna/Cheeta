@@ -8,7 +8,7 @@ import com.maherhanna.cheeta.core.ChessBoard
 import com.maherhanna.cheeta.core.Move
 import com.maherhanna.cheeta.core.Piece
 
-class Drawing(private val activity: GameActivity) {
+class Drawing(activity: GameActivity) {
     @JvmField
     var game: Game? = null
     private val chessboardView: ChessboardView
@@ -24,10 +24,10 @@ class Drawing(private val activity: GameActivity) {
     //for dragging a piece
     @JvmField
     var dragFrom = ChessBoard.NO_SQUARE
-    var dragFromHighlight = dragFrom
+    private var dragFromHighlight = dragFrom
     @JvmField
     var selectedSquare = ChessBoard.NO_SQUARE
-    var selectedSquareHighlight = ChessBoard.NO_SQUARE
+    private var selectedSquareHighlight = ChessBoard.NO_SQUARE
     @JvmField
     var touchSquare = ChessBoard.NO_SQUARE
     @JvmField
@@ -65,8 +65,7 @@ class Drawing(private val activity: GameActivity) {
     var squareSize = 0f
 
     //----------------
-    var isWaitingHumanToPlay = false
-        private set
+    private var isWaitingHumanToPlay = false
 
     init {
         chessboardView = activity.findViewById(R.id.chessboardView)
@@ -122,7 +121,7 @@ class Drawing(private val activity: GameActivity) {
 
     private fun calculateRect(bitmapWidth: Float, bitmapHeight: Float): RectF {
         val result: RectF
-        val squareScaleDownFactor = (Math.max(bitmapWidth, bitmapHeight)
+        val squareScaleDownFactor = (bitmapWidth.coerceAtLeast(bitmapHeight)
                 / squareSize)
         var width = bitmapWidth / squareScaleDownFactor
         var height = bitmapHeight / squareScaleDownFactor
@@ -146,8 +145,7 @@ class Drawing(private val activity: GameActivity) {
 
     private fun getSquareRect(square: Int): RectF {
         val squareLeft = ChessBoard.GetFile(square) * squareSize
-        val squareTop: Float
-        squareTop = (8 - ChessBoard.GetRank(square) - 1) * squareSize
+        val squareTop: Float = (8 - ChessBoard.GetRank(square) - 1) * squareSize
         val squareRight = squareLeft + squareSize
         val squareBottom = squareTop + squareSize
         return RectF(squareLeft, squareTop, squareRight, squareBottom)
@@ -161,12 +159,12 @@ class Drawing(private val activity: GameActivity) {
         clearBoard()
         var from: Int
         var to: Int
-        val fliped = isChessBoardFlipped
+        val flipped = isChessBoardFlipped
         var legalTargetsSquare = ChessBoard.NO_SQUARE
         dragFromHighlight = dragFrom
         selectedSquareHighlight = selectedSquare
         var kingInCheckHighlight = kingInCheck
-        if (fliped) {
+        if (flipped) {
             dragFromHighlight = flip(dragFromHighlight)
             selectedSquareHighlight = flip(selectedSquareHighlight)
             kingInCheckHighlight = flip(kingInCheckHighlight)
@@ -174,7 +172,7 @@ class Drawing(private val activity: GameActivity) {
         if (currentMove != null) {
             from = currentMove!!.from
             to = currentMove!!.to
-            if (fliped) {
+            if (flipped) {
                 from = flip(from)
                 to = flip(to)
             }
@@ -193,11 +191,10 @@ class Drawing(private val activity: GameActivity) {
         if (kingInCheck != ChessBoard.NO_SQUARE) {
             drawCheckHighlight(kingInCheckHighlight)
         }
-        var index = 0
         for (i in ChessBoard.MIN_POSITION..ChessBoard.MAX_POSITION) {
 
             // flip the board if the black is at the bottom of screen
-            index = if (fliped) {
+            val index = if (flipped) {
                 ChessBoard.MAX_POSITION - i
             } else {
                 i
@@ -234,7 +231,7 @@ class Drawing(private val activity: GameActivity) {
     fun canMove(from: Int, to: Int): Boolean {
         return if (!isWaitingHumanToPlay) {
             false
-        } else Game.moveGenerator.canMove(chessBoard!!,from, to) == true
+        } else game?.chessEngine?.moveGenerator?.canMove(chessBoard!!,from, to) == true
     }
 
     private fun drawPiece(
@@ -245,7 +242,7 @@ class Drawing(private val activity: GameActivity) {
         yOffset: Float,
         scaleFactor: Float
     ) {
-        var pieceRect = getPieceDrawingRect(pieceType, pieceColor, position)
+        var pieceRect = getPieceDrawingRect(pieceType, position)
         pieceRect = scaleRect(pieceRect, scaleFactor)
         pieceRect.offset(xOffset, yOffset)
 
@@ -306,7 +303,7 @@ class Drawing(private val activity: GameActivity) {
         return scaledRect
     }
 
-    private fun getPieceDrawingRect(pieceType: Int, pieceColor: Int, position: Int): RectF {
+    private fun getPieceDrawingRect(pieceType: Int,  position: Int): RectF {
         var result = RectF()
         val x = ChessBoard.GetFile(position) * squareSize
         var y = ChessBoard.GetRank(position) * squareSize
@@ -346,8 +343,7 @@ class Drawing(private val activity: GameActivity) {
     }
 
     fun finishGame(gameStatus: GameStatus) {
-        val message_id: Int
-        message_id = if (gameStatus === GameStatus.FINISHED_DRAW) {
+        val messageId: Int = if (gameStatus === GameStatus.FINISHED_DRAW) {
             R.string.message_draw
         } else {
             if (game!!.humanPlayerColor == Piece.WHITE) {
@@ -364,7 +360,7 @@ class Drawing(private val activity: GameActivity) {
                 }
             }
         }
-        chessboardView.finishGame(message_id)
+        chessboardView.finishGame(messageId)
     }
 
     fun waitHumanToPlay() {
@@ -379,8 +375,8 @@ class Drawing(private val activity: GameActivity) {
     val isGameFinished: Boolean
         get() = game!!.isGameFinished
 
-    fun getLegalMoves(square: Int): ArrayList<Int> {
-        return Game.moveGenerator.getLegalTargetsFor(chessBoard!!,square)
+    private fun getLegalMoves(square: Int): ArrayList<Int> {
+        return game?.chessEngine?.moveGenerator?.getLegalTargetsFor(chessBoard!!,square) ?: ArrayList()
     }
 
     fun canSelect(position: Int): Boolean {
@@ -388,9 +384,8 @@ class Drawing(private val activity: GameActivity) {
                 chessBoard!!.pieceColor(position) == game!!.humanPlayerColor
     }
 
-    fun drawLegalSquare(square: Int) {
-        val squareRect: RectF
-        squareRect = if (isChessBoardFlipped) {
+    private fun drawLegalSquare(square: Int) {
+        val squareRect: RectF = if (isChessBoardFlipped) {
             getSquareRect(flip(square))
         } else {
             getSquareRect(square)
