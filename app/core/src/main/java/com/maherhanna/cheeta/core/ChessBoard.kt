@@ -378,7 +378,7 @@ class ChessBoard {
             } else {
                 blackCastlingRightsAfterMove = NO_CASTLING
             }
-            if (move.castlingType === Move.CastlingType.CASTLING_kING_SIDE) {
+            if (move.castlingType === Move.CastlingType.CASTLING_KING_SIDE) {
                 rookPosition = getInitialRookKingSide(
                     moveColor
                 )
@@ -461,7 +461,7 @@ class ChessBoard {
         if (lastMove.isCastling) {
             val rookPosition: Int
             val currentRookPosition: Int
-            if (lastMove.castlingType === Move.CastlingType.CASTLING_kING_SIDE) {
+            if (lastMove.castlingType === Move.CastlingType.CASTLING_KING_SIDE) {
                 rookPosition = getInitialRookKingSide(
                     moveColor
                 )

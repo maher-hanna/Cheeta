@@ -110,6 +110,15 @@ object BitMath {
         }
     }
 
+    fun getBitIndex(mask:Long,rayDirection:Int): Int{
+        return if (rayDirection == MoveGenerator.NORTH_EAST || rayDirection == MoveGenerator.NORTH_WEST ||
+            rayDirection == MoveGenerator.EAST) {
+            getLSBitIndex(mask)
+        } else {
+            getMSBitIndex(mask)
+        }
+    }
+
     fun print(bitboard: Long):String {
         val stringBuilder = StringBuilder()
         stringBuilder.append(" \n")

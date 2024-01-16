@@ -153,7 +153,7 @@ class Move {
     }
 
     enum class CastlingType {
-        CASTLING_kING_SIDE,
+        CASTLING_KING_SIDE,
         CASTLING_QUEEN_SIDE
     }
 

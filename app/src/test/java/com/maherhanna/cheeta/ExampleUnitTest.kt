@@ -1,9 +1,11 @@
 package com.maherhanna.cheeta
 
 import com.maherhanna.cheeta.core.ChessBoard
+import com.maherhanna.cheeta.core.ChessEngine
 import com.maherhanna.cheeta.core.MoveGenerator
 import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.PlayerLegalMoves
+import com.maherhanna.cheeta.core.util.Log
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -44,6 +46,9 @@ class ExampleUnitTest {
 
         for (i in 1 until 7) {
             val perftResult = Perft(i, chessBoard, moveGenerator)
+            if(perftResults[i] != perftResult){
+                Log.d(ChessEngine.DEBUG_TAG,"depth: ${i}")
+            }
             assertEquals(perftResults[i], perftResult)
 
         }

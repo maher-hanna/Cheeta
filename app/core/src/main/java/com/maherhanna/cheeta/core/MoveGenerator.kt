@@ -1,11 +1,19 @@
 package com.maherhanna.cheeta.core
 
 import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
+import com.maherhanna.cheeta.core.util.Log
 
 class MoveGenerator(
     var blackPlayerLegalMoves: PlayerLegalMoves,
     var whitePlayerLegalMoves: PlayerLegalMoves
 ) {
+    // king pinned pieces
+    var whiteKingPinnedPieces = LongArray(64)
+    var blackKingPinnedPieces = LongArray(64)
+
+    var whiteKingCheckLine: Long = 0L.inv()
+    var blackKingCheckLine: Long = 0L.inv()
+
 
     //*****************************************************************************
     //calculated at start
@@ -137,6 +145,7 @@ class MoveGenerator(
             bishopAttacksMask[SOUTH_EAST][square] = southEastAttackMask
         }
     }
+
     fun getLegalMovesFor(color: Int): PlayerLegalMoves {
         return if (color == Piece.WHITE) {
             whitePlayerLegalMoves
@@ -144,14 +153,16 @@ class MoveGenerator(
             blackPlayerLegalMoves
         }
     }
-    fun getLegalTargetsFor(chessBoard: ChessBoard,position: Int): ArrayList<Int> {
+
+    fun getLegalTargetsFor(chessBoard: ChessBoard, position: Int): ArrayList<Int> {
         return if (chessBoard.isPieceWhiteAt(position)) {
             whitePlayerLegalMoves.getLegalTargetsFor(position)
         } else {
             blackPlayerLegalMoves.getLegalTargetsFor(position)
         }
     }
-    fun canMove(chessBoard: ChessBoard,fromSquare: Int, toSquare: Int): Boolean {
+
+    fun canMove(chessBoard: ChessBoard, fromSquare: Int, toSquare: Int): Boolean {
         var isLegal = false
         isLegal = if (chessBoard.isPieceBlackAt(fromSquare)) {
             blackPlayerLegalMoves.canMove(fromSquare, toSquare)
@@ -160,6 +171,7 @@ class MoveGenerator(
         }
         return isLegal
     }
+
     fun updateBlackLegalMoves(chessBoard: ChessBoard) {
         blackPlayerLegalMoves = getBlackLegalMoves(chessBoard)
     }
@@ -168,109 +180,138 @@ class MoveGenerator(
         whitePlayerLegalMoves = getWhiteLegalMoves(chessBoard)
     }
 
-    fun updateLegalMovesFor(chessBoard: ChessBoard,playerColor: Int, kingInCheck: Boolean) {
+    fun updateLegalMovesFor(chessBoard: ChessBoard, playerColor: Int, kingInCheck: Boolean) {
         if (playerColor == Piece.WHITE) {
             updateWhiteLegalMoves(chessBoard)
         } else {
             updateBlackLegalMoves(chessBoard)
         }
     }
+
     fun getWhitePawnsPushes(whitePawns: Long, empty: Long): ArrayList<Move> {
         val moves = ArrayList<Move>()
-        val singlePushes = whitePawnsSinglePush(whitePawns, empty)
-        val doublePushes = whitePawnsDoublePush(whitePawns, empty)
+        val singlePushes = whitePawnsSinglePush(whitePawns, empty) and whiteKingCheckLine
+        val doublePushes = whitePawnsDoublePush(whitePawns, empty) and whiteKingCheckLine
         var count = BitMath.countSetBits(singlePushes)
         var singlePushesCopy = singlePushes
         for (i in 0 until count) {
             val index = BitMath.getLSBitIndex(singlePushesCopy)
             singlePushesCopy = BitMath.popBit(singlePushesCopy, index)
-            val move = Move(
-                Piece.PAWN, Piece.WHITE,
-                index - 8, index
-            )
-            if (ChessBoard.GetRank(index) == ChessBoard.RANK_8) {
-                move.setPromotes(Piece.QUEEN)
+            if (whiteKingPinnedPieces[index - 8] and (1L shl index) != 0L) {
+
+                val move = Move(
+                    Piece.PAWN, Piece.WHITE,
+                    index - 8, index
+                )
+                if (ChessBoard.GetRank(index) == ChessBoard.RANK_8) {
+                    move.setPromotes(Piece.QUEEN)
+                }
+                moves.add(move)
             }
-            moves.add(move)
         }
         count = BitMath.countSetBits(doublePushes)
         var doublePushesCopy = doublePushes
         for (i in 0 until count) {
             val index = BitMath.getLSBitIndex(doublePushesCopy)
             doublePushesCopy = BitMath.popBit(doublePushesCopy, index)
-            val move = Move(
-                Piece.PAWN, Piece.WHITE,
-                index - 16, index
-            )
-            move.setPawnDoublePush()
-            moves.add(move)
+            if (whiteKingPinnedPieces[index - 16] and (1L shl index) != 0L) {
+                val move = Move(
+                    Piece.PAWN, Piece.WHITE,
+                    index - 16, index
+                )
+                move.setPawnDoublePush()
+                moves.add(move)
+            }
         }
         return moves
     }
 
     fun getWhitePawnsCaptures(chessBoard: ChessBoard): ArrayList<Move> {
         val attacks = ArrayList<Move>()
-        val attacksWest = whitePawnsAttackWest(chessBoard.whitePawns, chessBoard.allBlackPieces)
-        val attacksEast = whitePawnsAttackEast(chessBoard.whitePawns, chessBoard.allBlackPieces)
+        val attacksWest = whitePawnsAttackWest(
+            chessBoard.whitePawns,
+            chessBoard.allBlackPieces
+        ) and whiteKingCheckLine
+        val attacksEast = whitePawnsAttackEast(
+            chessBoard.whitePawns,
+            chessBoard.allBlackPieces
+        ) and whiteKingCheckLine
         var count = BitMath.countSetBits(attacksWest)
         var attacksWestCopy = attacksWest
         for (i in 0 until count) {
             val index = BitMath.getLSBitIndex(attacksWestCopy)
             attacksWestCopy = BitMath.popBit(attacksWestCopy, index)
-            val attack = Move(
-                Piece.PAWN, Piece.WHITE,
-                index - 7, index
-            )
-            attack.setTakes(chessBoard.pieceType(index))
-            if (ChessBoard.GetRank(index) == ChessBoard.RANK_8) {
-                attack.setPromotes(Piece.QUEEN)
+            if (whiteKingPinnedPieces[index - 7] and (1L shl index) != 0L) {
+                val attack = Move(
+                    Piece.PAWN, Piece.WHITE,
+                    index - 7, index
+                )
+                attack.setTakes(chessBoard.pieceType(index))
+                if (ChessBoard.GetRank(index) == ChessBoard.RANK_8) {
+                    attack.setPromotes(Piece.QUEEN)
+                }
+                attacks.add(attack)
             }
-            attacks.add(attack)
         }
         count = BitMath.countSetBits(attacksEast)
         var attacksEastCopy = attacksEast
         for (i in 0 until count) {
             val index = BitMath.getLSBitIndex(attacksEastCopy)
             attacksEastCopy = BitMath.popBit(attacksEastCopy, index)
-            val attack = Move(
-                Piece.PAWN, Piece.WHITE,
-                index - 9, index
-            )
-            attack.setTakes(chessBoard.pieceType(index))
-            if (ChessBoard.GetRank(index) == ChessBoard.RANK_8) {
-                attack.setPromotes(Piece.QUEEN)
+            if (whiteKingPinnedPieces[index - 9] and (1L shl index) != 0L) {
+
+                val attack = Move(
+                    Piece.PAWN, Piece.WHITE,
+                    index - 9, index
+                )
+                attack.setTakes(chessBoard.pieceType(index))
+                if (ChessBoard.GetRank(index) == ChessBoard.RANK_8) {
+                    attack.setPromotes(Piece.QUEEN)
+                }
+                attacks.add(attack)
             }
-            attacks.add(attack)
         }
+        val enPassantTargetMask = 1L shl chessBoard.enPassantTarget
         if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE &&
             ChessBoard.GetRank(chessBoard.enPassantTarget) == ChessBoard.RANK_6
         ) {
             val enPassantWest =
-                whitePawnsAttackWest(chessBoard.whitePawns, 1L shl chessBoard.enPassantTarget)
+                whitePawnsAttackWest(
+                    chessBoard.whitePawns,
+                    enPassantTargetMask
+                ) and whiteKingCheckLine
             val enPassantEast =
-                whitePawnsAttackEast(chessBoard.whitePawns, 1L shl chessBoard.enPassantTarget)
+                whitePawnsAttackEast(
+                    chessBoard.whitePawns,
+                    enPassantTargetMask
+                ) and whiteKingCheckLine
 
-            //en passant west
             if (enPassantWest != 0L) {
+                //en passant west
                 val index = chessBoard.enPassantTarget
-                val enPassantWestMove = Move(
-                    Piece.PAWN, Piece.WHITE,
-                    index - 7, index
-                )
-                enPassantWestMove.setTakes(Piece.PAWN)
-                enPassantWestMove.setEnPasant()
-                attacks.add(enPassantWestMove)
+                if (whiteKingPinnedPieces[index - 7] and (1L shl index) != 0L) {
+                    val enPassantWestMove = Move(
+                        Piece.PAWN, Piece.WHITE,
+                        index - 7, index
+                    )
+                    enPassantWestMove.setTakes(Piece.PAWN)
+                    enPassantWestMove.setEnPasant()
+                    attacks.add(enPassantWestMove)
+                }
             }
             if (enPassantEast != 0L) {
                 //en passant east
                 val index = chessBoard.enPassantTarget
-                val enPassantEastMove = Move(
-                    Piece.PAWN, Piece.WHITE,
-                    index - 9, index
-                )
-                enPassantEastMove.setTakes(Piece.PAWN)
-                enPassantEastMove.setEnPasant()
-                attacks.add(enPassantEastMove)
+
+                if (whiteKingPinnedPieces[index - 9] and (1L shl index) != 0L) {
+                    val enPassantEastMove = Move(
+                        Piece.PAWN, Piece.WHITE,
+                        index - 9, index
+                    )
+                    enPassantEastMove.setTakes(Piece.PAWN)
+                    enPassantEastMove.setEnPasant()
+                    attacks.add(enPassantEastMove)
+                }
             }
         }
         return attacks
@@ -278,101 +319,125 @@ class MoveGenerator(
 
     fun getBlackPawnsPushes(blackPawns: Long, empty: Long): ArrayList<Move> {
         val moves = ArrayList<Move>()
-        val singlePushes = blackPawnsSinglePush(blackPawns, empty)
-        val doublePushes = blackPawnsDoublePush(blackPawns, empty)
+        val singlePushes = blackPawnsSinglePush(blackPawns, empty) and blackKingCheckLine
+        val doublePushes = blackPawnsDoublePush(blackPawns, empty) and blackKingCheckLine
         var count = BitMath.countSetBits(singlePushes)
         var singlePushesCopy = singlePushes
         for (i in 0 until count) {
             val index = BitMath.getLSBitIndex(singlePushesCopy)
             singlePushesCopy = BitMath.popBit(singlePushesCopy, index)
-            val move = Move(
-                Piece.PAWN, Piece.BLACK,
-                index + 8, index
-            )
-            if (ChessBoard.GetRank(index) == ChessBoard.RANK_1) {
-                move.setPromotes(Piece.QUEEN)
+            if (blackKingPinnedPieces[index + 8] and (1L shl index) != 0L) {
+                val move = Move(
+                    Piece.PAWN, Piece.BLACK,
+                    index + 8, index
+                )
+                if (ChessBoard.GetRank(index) == ChessBoard.RANK_1) {
+                    move.setPromotes(Piece.QUEEN)
+                }
+                moves.add(move)
             }
-            moves.add(move)
         }
         count = BitMath.countSetBits(doublePushes)
         var doublePushesCopy = doublePushes
         for (i in 0 until count) {
             val index = BitMath.getLSBitIndex(doublePushesCopy)
             doublePushesCopy = BitMath.popBit(doublePushesCopy, index)
-            val move = Move(
-                Piece.PAWN, Piece.BLACK,
-                index + 16, index
-            )
-            move.setPawnDoublePush()
-            moves.add(move)
+            if (blackKingPinnedPieces[index + 16] and (1L shl index) != 0L) {
+                val move = Move(
+                    Piece.PAWN, Piece.BLACK,
+                    index + 16, index
+                )
+                move.setPawnDoublePush()
+                moves.add(move)
+            }
         }
         return moves
     }
 
     fun getBlackPawnsCaptures(chessBoard: ChessBoard): ArrayList<Move> {
         val attacks = ArrayList<Move>()
-        val attacksWest = blackPawnsAttackWest(chessBoard.blackPawns, chessBoard.allWhitePieces)
-        val attacksEast = blackPawnsAttackEast(chessBoard.blackPawns, chessBoard.allWhitePieces)
+        val attacksWest = blackPawnsAttackWest(
+            chessBoard.blackPawns,
+            chessBoard.allWhitePieces
+        ) and blackKingCheckLine
+        val attacksEast = blackPawnsAttackEast(
+            chessBoard.blackPawns,
+            chessBoard.allWhitePieces
+        ) and blackKingCheckLine
         var count = BitMath.countSetBits(attacksWest)
         var attacksWestCopy = attacksWest
         for (i in 0 until count) {
             val index = BitMath.getLSBitIndex(attacksWestCopy)
             attacksWestCopy = BitMath.popBit(attacksWestCopy, index)
-            val attack = Move(
-                Piece.PAWN, Piece.BLACK,
-                index + 9, index
-            )
-            attack.setTakes(chessBoard.pieceType(index))
-            if (ChessBoard.GetRank(index) == ChessBoard.RANK_1) {
-                attack.setPromotes(Piece.QUEEN)
+            if (blackKingPinnedPieces[index + 9] and (1L shl index) != 0L) {
+                val attack = Move(
+                    Piece.PAWN, Piece.BLACK,
+                    index + 9, index
+                )
+                attack.setTakes(chessBoard.pieceType(index))
+                if (ChessBoard.GetRank(index) == ChessBoard.RANK_1) {
+                    attack.setPromotes(Piece.QUEEN)
+                }
+                attacks.add(attack)
             }
-            attacks.add(attack)
         }
         count = BitMath.countSetBits(attacksEast)
         var attacksEastCopy = attacksEast
         for (i in 0 until count) {
             val index = BitMath.getLSBitIndex(attacksEastCopy)
             attacksEastCopy = BitMath.popBit(attacksEastCopy, index)
-            val attack = Move(
-                Piece.PAWN, Piece.BLACK,
-                index + 7, index
-            )
-            attack.setTakes(chessBoard.pieceType(index))
-            if (ChessBoard.GetRank(index) == ChessBoard.RANK_1) {
-                attack.setPromotes(Piece.QUEEN)
+            if (blackKingPinnedPieces[index + 7] and (1L shl index) != 0L) {
+                val attack = Move(
+                    Piece.PAWN, Piece.BLACK,
+                    index + 7, index
+                )
+                attack.setTakes(chessBoard.pieceType(index))
+                if (ChessBoard.GetRank(index) == ChessBoard.RANK_1) {
+                    attack.setPromotes(Piece.QUEEN)
+                }
+                attacks.add(attack)
             }
-            attacks.add(attack)
         }
+        val enPassantTargetMask = 1L shl chessBoard.enPassantTarget
         if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE &&
             ChessBoard.GetRank(chessBoard.enPassantTarget) == ChessBoard.RANK_3
         ) {
             val enPassantWest =
-                blackPawnsAttackWest(chessBoard.blackPawns, 1L shl chessBoard.enPassantTarget)
+                blackPawnsAttackWest(
+                    chessBoard.blackPawns,
+                    enPassantTargetMask
+                ) and blackKingCheckLine
             val enPassantEast =
-                blackPawnsAttackEast(chessBoard.blackPawns, 1L shl chessBoard.enPassantTarget)
+                blackPawnsAttackEast(
+                    chessBoard.blackPawns,
+                    enPassantTargetMask
+                ) and blackKingCheckLine
             if (enPassantWest != 0L) {
 
                 //en passant west
                 val index = chessBoard.enPassantTarget
-                val enPassantWestMove = Move(
-                    Piece.PAWN, Piece.BLACK,
-                    index + 9, index
-                )
-                enPassantWestMove.setTakes(Piece.PAWN)
-                enPassantWestMove.setEnPasant()
-                attacks.add(enPassantWestMove)
+                if (blackKingPinnedPieces[index + 9] and (1L shl index) != 0L) {
+                    val enPassantWestMove = Move(
+                        Piece.PAWN, Piece.BLACK,
+                        index + 9, index
+                    )
+                    enPassantWestMove.setTakes(Piece.PAWN)
+                    enPassantWestMove.setEnPasant()
+                    attacks.add(enPassantWestMove)
+                }
             }
             if (enPassantEast != 0L) {
-
                 //en passant east
                 val index = chessBoard.enPassantTarget
-                val enPassantEastMove = Move(
-                    Piece.PAWN, Piece.BLACK,
-                    index + 7, index
-                )
-                enPassantEastMove.setTakes(Piece.PAWN)
-                enPassantEastMove.setEnPasant()
-                attacks.add(enPassantEastMove)
+                if (blackKingPinnedPieces[index + 7] and (1L shl index) != 0L) {
+                    val enPassantEastMove = Move(
+                        Piece.PAWN, Piece.BLACK,
+                        index + 7, index
+                    )
+                    enPassantEastMove.setTakes(Piece.PAWN)
+                    enPassantEastMove.setEnPasant()
+                    attacks.add(enPassantEastMove)
+                }
             }
         }
         return attacks
@@ -411,6 +476,8 @@ class MoveGenerator(
         var quietTargets: Long = 0
         var captureTargets: Long = 0
         var kingPosition = ChessBoard.OUT
+        val kingPositionBit =
+            if (color == Piece.WHITE) chessBoard.whiteKing else chessBoard.blackPawns
         val moves = ArrayList<Move>()
         if (color == Piece.BLACK) {
             quietTargets = kingMovesQuite(chessBoard.blackKing, chessBoard.emptySquares)
@@ -421,6 +488,21 @@ class MoveGenerator(
             captureTargets = kingMovesCapture(chessBoard.whiteKing, chessBoard.allBlackPieces)
             kingPosition = BitMath.getLSBitIndex(chessBoard.whiteKing)
         }
+        val enemyPieces =
+            if (color == Piece.WHITE) chessBoard.allBlackPieces else chessBoard.allWhitePieces
+
+
+        val chessBoardWithoutKing = ChessBoard(chessBoard)
+        chessBoardWithoutKing.removePiece(kingPosition)
+
+        val opponentAttackedSquaresWithoutKing = getAllAttackedSquaresForWithOwn(
+            chessBoardWithoutKing,
+            Piece.GetOppositeColor(color)
+        )
+
+        quietTargets = quietTargets and opponentAttackedSquaresWithoutKing.inv()
+        captureTargets = captureTargets and opponentAttackedSquaresWithoutKing.inv()
+
         var count = BitMath.countSetBits(quietTargets)
         for (i in 0 until count) {
             val target = BitMath.getLSBitIndex(quietTargets)
@@ -456,6 +538,7 @@ class MoveGenerator(
         var knights: Long = 0
         var currentKnightPosition = ChessBoard.OUT
         val moves = ArrayList<Move>()
+        val kingCheckLine = if (color == Piece.WHITE) whiteKingCheckLine else blackKingCheckLine
         knights = if (color == Piece.BLACK) {
             chessBoard.blackKnights
         } else {
@@ -463,31 +546,44 @@ class MoveGenerator(
         }
         val knightsCount = BitMath.countSetBits(knights)
         var knightsCopy = knights
+        val kingPinnedPieces =
+            if (color == Piece.WHITE) whiteKingPinnedPieces else blackKingPinnedPieces
         for (i in 0 until knightsCount) {
             currentKnightPosition = BitMath.getLSBitIndex(knightsCopy)
             knightsCopy = BitMath.popBit(knightsCopy, currentKnightPosition)
-            quietTargets = knightMovesQuite(currentKnightPosition, chessBoard.emptySquares)
+            quietTargets =
+                knightMovesQuite(currentKnightPosition, chessBoard.emptySquares) and kingCheckLine
             captureTargets = if (color == Piece.BLACK) {
-                knightMovesCapture(currentKnightPosition, chessBoard.allWhitePieces)
+                knightMovesCapture(
+                    currentKnightPosition,
+                    chessBoard.allWhitePieces
+                ) and kingCheckLine
             } else {
-                knightMovesCapture(currentKnightPosition, chessBoard.allBlackPieces)
+                knightMovesCapture(
+                    currentKnightPosition,
+                    chessBoard.allBlackPieces
+                ) and kingCheckLine
             }
             var count = BitMath.countSetBits(quietTargets)
             var quietTargetsCopy = quietTargets
             for (index in 0 until count) {
                 val target = BitMath.getLSBitIndex(quietTargetsCopy)
                 quietTargetsCopy = BitMath.popBit(quietTargetsCopy, target)
-                val move = Move(Piece.KNIGHT, color, currentKnightPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[currentKnightPosition] and (1L shl target)) != 0L) {
+                    val move = Move(Piece.KNIGHT, color, currentKnightPosition, target)
+                    moves.add(move)
+                }
             }
             count = BitMath.countSetBits(captureTargets)
             var captureTargetsCopy = captureTargets
             for (index in 0 until count) {
                 val captureTarget = BitMath.getLSBitIndex(captureTargetsCopy)
                 captureTargetsCopy = BitMath.popBit(captureTargetsCopy, captureTarget)
-                val move = Move(Piece.KNIGHT, color, currentKnightPosition, captureTarget)
-                move.setTakes(chessBoard.pieceType(captureTarget))
-                moves.add(move)
+                if ((kingPinnedPieces[currentKnightPosition] and (1L shl captureTarget)) != 0L) {
+                    val move = Move(Piece.KNIGHT, color, currentKnightPosition, captureTarget)
+                    move.setTakes(chessBoard.pieceType(captureTarget))
+                    moves.add(move)
+                }
             }
         }
         return moves
@@ -514,11 +610,11 @@ class MoveGenerator(
 
     fun getRooksMoves(
         chessBoard: ChessBoard,
-        rooks: Long,
+        rooksArg: Long,
         color: Int,
         pieceType: Int
     ): ArrayList<Move> {
-        var rooks = rooks
+        var rooks = rooksArg
         val moves = ArrayList<Move>()
         var quietTargets: Long = 0
         var captureTarget: Long = 0
@@ -528,13 +624,16 @@ class MoveGenerator(
         var westTargets: Long = 0
         var rookPosition = ChessBoard.OUT
         val rooksCount = BitMath.countSetBits(rooks)
+        val kingCheckLine = if (color == Piece.WHITE) whiteKingCheckLine else blackKingCheckLine
+        val kingPinnedPieces =
+            if (color == Piece.WHITE) whiteKingPinnedPieces else blackKingPinnedPieces
         for (rook in 0 until rooksCount) {
             rookPosition = BitMath.getLSBitIndex(rooks)
             rooks = BitMath.popBit(rooks, rookPosition)
-            northTargets = rookAttacks(NORTH, rookPosition, chessBoard.allPieces)
-            southTargets = rookAttacks(SOUTH, rookPosition, chessBoard.allPieces)
-            eastTargets = rookAttacks(EAST, rookPosition, chessBoard.allPieces)
-            westTargets = rookAttacks(WEST, rookPosition, chessBoard.allPieces)
+            northTargets = rookAttacks(NORTH, rookPosition, chessBoard.allPieces) and kingCheckLine
+            southTargets = rookAttacks(SOUTH, rookPosition, chessBoard.allPieces) and kingCheckLine
+            eastTargets = rookAttacks(EAST, rookPosition, chessBoard.allPieces) and kingCheckLine
+            westTargets = rookAttacks(WEST, rookPosition, chessBoard.allPieces) and kingCheckLine
             var move: Move
             var captureTargetIndex = ChessBoard.OUT
 
@@ -549,17 +648,21 @@ class MoveGenerator(
             }
             quietTargets = northTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
-                captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
-                move = Move(pieceType, color, rookPosition, captureTargetIndex)
-                move.setTakes(chessBoard.pieceType(captureTargetIndex))
-                moves.add(move)
+                if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
+                    captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
+                    move = Move(pieceType, color, rookPosition, captureTargetIndex)
+                    move.setTakes(chessBoard.pieceType(captureTargetIndex))
+                    moves.add(move)
+                }
             }
             var quietTargetsCount = BitMath.countSetBits(quietTargets)
             for (i in 0 until quietTargetsCount) {
                 val target = BitMath.getLSBitIndex(quietTargets)
                 quietTargets = BitMath.popBit(quietTargets, target)
-                move = Move(pieceType, color, rookPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[rookPosition] and (1L shl target)) != 0L) {
+                    move = Move(pieceType, color, rookPosition, target)
+                    moves.add(move)
+                }
             }
 
 
@@ -575,16 +678,20 @@ class MoveGenerator(
             quietTargets = southTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
-                move = Move(pieceType, color, rookPosition, captureTargetIndex)
-                move.setTakes(chessBoard.pieceType(captureTargetIndex))
-                moves.add(move)
+                if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
+                    move = Move(pieceType, color, rookPosition, captureTargetIndex)
+                    move.setTakes(chessBoard.pieceType(captureTargetIndex))
+                    moves.add(move)
+                }
             }
             quietTargetsCount = BitMath.countSetBits(quietTargets)
             for (i in 0 until quietTargetsCount) {
                 val target = BitMath.getLSBitIndex(quietTargets)
                 quietTargets = BitMath.popBit(quietTargets, target)
-                move = Move(pieceType, color, rookPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[rookPosition] and (1L shl target)) != 0L) {
+                    move = Move(pieceType, color, rookPosition, target)
+                    moves.add(move)
+                }
             }
 
             //west moves
@@ -599,16 +706,20 @@ class MoveGenerator(
             quietTargets = westTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
-                move = Move(pieceType, color, rookPosition, captureTargetIndex)
-                move.setTakes(chessBoard.pieceType(captureTargetIndex))
-                moves.add(move)
+                if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
+                    move = Move(pieceType, color, rookPosition, captureTargetIndex)
+                    move.setTakes(chessBoard.pieceType(captureTargetIndex))
+                    moves.add(move)
+                }
             }
             quietTargetsCount = BitMath.countSetBits(quietTargets)
             for (i in 0 until quietTargetsCount) {
                 val target = BitMath.getLSBitIndex(quietTargets)
                 quietTargets = BitMath.popBit(quietTargets, target)
-                move = Move(pieceType, color, rookPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[rookPosition] and (1L shl target)) != 0L) {
+                    move = Move(pieceType, color, rookPosition, target)
+                    moves.add(move)
+                }
             }
 
             //east moves
@@ -623,16 +734,20 @@ class MoveGenerator(
             quietTargets = eastTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
-                move = Move(pieceType, color, rookPosition, captureTargetIndex)
-                move.setTakes(chessBoard.pieceType(captureTargetIndex))
-                moves.add(move)
+                if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
+                    move = Move(pieceType, color, rookPosition, captureTargetIndex)
+                    move.setTakes(chessBoard.pieceType(captureTargetIndex))
+                    moves.add(move)
+                }
             }
             quietTargetsCount = BitMath.countSetBits(quietTargets)
             for (i in 0 until quietTargetsCount) {
                 val target = BitMath.getLSBitIndex(quietTargets)
                 quietTargets = BitMath.popBit(quietTargets, target)
-                move = Move(pieceType, color, rookPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[rookPosition] and (1L shl target)) != 0L) {
+                    move = Move(pieceType, color, rookPosition, target)
+                    moves.add(move)
+                }
             }
         }
         return moves
@@ -659,11 +774,11 @@ class MoveGenerator(
 
     fun getBishopsMoves(
         chessBoard: ChessBoard,
-        bishops: Long,
+        bishopsArg: Long,
         color: Int,
         pieceType: Int
     ): ArrayList<Move> {
-        var bishops = bishops
+        var bishops = bishopsArg
         val moves = ArrayList<Move>()
         var quietTargets: Long = 0
         var captureTarget: Long = 0
@@ -673,13 +788,19 @@ class MoveGenerator(
         var southEastTargets: Long = 0
         var bishopPosition = ChessBoard.OUT
         val bishopsCount = BitMath.countSetBits(bishops)
+        val kingCheckLine = if (color == Piece.WHITE) whiteKingCheckLine else blackKingCheckLine
+        val kingPinnedPieces = if (color == Piece.WHITE) whiteKingPinnedPieces else blackKingPinnedPieces
         for (bishop in 0 until bishopsCount) {
             bishopPosition = BitMath.getLSBitIndex(bishops)
             bishops = BitMath.popBit(bishops, bishopPosition)
-            northWestTargets = bishopAttacks(NORTH_WEST, bishopPosition, chessBoard.allPieces)
-            southWestTargets = bishopAttacks(SOUTH_WEST, bishopPosition, chessBoard.allPieces)
-            northEastTargets = bishopAttacks(NORTH_EAST, bishopPosition, chessBoard.allPieces)
-            southEastTargets = bishopAttacks(SOUTH_EAST, bishopPosition, chessBoard.allPieces)
+            northWestTargets =
+                bishopAttacks(NORTH_WEST, bishopPosition, chessBoard.allPieces) and kingCheckLine
+            southWestTargets =
+                bishopAttacks(SOUTH_WEST, bishopPosition, chessBoard.allPieces) and kingCheckLine
+            northEastTargets =
+                bishopAttacks(NORTH_EAST, bishopPosition, chessBoard.allPieces) and kingCheckLine
+            southEastTargets =
+                bishopAttacks(SOUTH_EAST, bishopPosition, chessBoard.allPieces) and kingCheckLine
             var move: Move
             var captureTargetIndex = ChessBoard.OUT
 
@@ -695,16 +816,20 @@ class MoveGenerator(
             quietTargets = northWestTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
-                move = Move(pieceType, color, bishopPosition, captureTargetIndex)
-                move.setTakes(chessBoard.pieceType(captureTargetIndex))
-                moves.add(move)
+                if ((kingPinnedPieces[bishopPosition] and (1L shl captureTargetIndex)) != 0L) {
+                    move = Move(pieceType, color, bishopPosition, captureTargetIndex)
+                    move.setTakes(chessBoard.pieceType(captureTargetIndex))
+                    moves.add(move)
+                }
             }
             var quietTargetsCount = BitMath.countSetBits(quietTargets)
             for (i in 0 until quietTargetsCount) {
                 val target = BitMath.getLSBitIndex(quietTargets)
                 quietTargets = BitMath.popBit(quietTargets, target)
-                move = Move(pieceType, color, bishopPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[bishopPosition] and (1L shl target)) != 0L) {
+                    move = Move(pieceType, color, bishopPosition, target)
+                    moves.add(move)
+                }
             }
 
 
@@ -720,16 +845,20 @@ class MoveGenerator(
             quietTargets = southWestTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
-                move = Move(pieceType, color, bishopPosition, captureTargetIndex)
-                move.setTakes(chessBoard.pieceType(captureTargetIndex))
-                moves.add(move)
+                if ((kingPinnedPieces[bishopPosition] and (1L shl captureTargetIndex)) != 0L) {
+                    move = Move(pieceType, color, bishopPosition, captureTargetIndex)
+                    move.setTakes(chessBoard.pieceType(captureTargetIndex))
+                    moves.add(move)
+                }
             }
             quietTargetsCount = BitMath.countSetBits(quietTargets)
             for (i in 0 until quietTargetsCount) {
                 val target = BitMath.getLSBitIndex(quietTargets)
                 quietTargets = BitMath.popBit(quietTargets, target)
-                move = Move(pieceType, color, bishopPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[bishopPosition] and (1L shl target)) != 0L) {
+                    move = Move(pieceType, color, bishopPosition, target)
+                    moves.add(move)
+                }
             }
 
             //south east moves
@@ -744,16 +873,20 @@ class MoveGenerator(
             quietTargets = southEastTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
-                move = Move(pieceType, color, bishopPosition, captureTargetIndex)
-                move.setTakes(chessBoard.pieceType(captureTargetIndex))
-                moves.add(move)
+                if ((kingPinnedPieces[bishopPosition] and (1L shl captureTargetIndex)) != 0L) {
+                    move = Move(pieceType, color, bishopPosition, captureTargetIndex)
+                    move.setTakes(chessBoard.pieceType(captureTargetIndex))
+                    moves.add(move)
+                }
             }
             quietTargetsCount = BitMath.countSetBits(quietTargets)
             for (i in 0 until quietTargetsCount) {
                 val target = BitMath.getLSBitIndex(quietTargets)
                 quietTargets = BitMath.popBit(quietTargets, target)
-                move = Move(pieceType, color, bishopPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[bishopPosition] and (1L shl target)) != 0L) {
+                    move = Move(pieceType, color, bishopPosition, target)
+                    moves.add(move)
+                }
             }
 
             //north east moves
@@ -768,16 +901,20 @@ class MoveGenerator(
             quietTargets = northEastTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
-                move = Move(pieceType, color, bishopPosition, captureTargetIndex)
-                move.setTakes(chessBoard.pieceType(captureTargetIndex))
-                moves.add(move)
+                if ((kingPinnedPieces[bishopPosition] and (1L shl captureTargetIndex)) != 0L) {
+                    move = Move(pieceType, color, bishopPosition, captureTargetIndex)
+                    move.setTakes(chessBoard.pieceType(captureTargetIndex))
+                    moves.add(move)
+                }
             }
             quietTargetsCount = BitMath.countSetBits(quietTargets)
             for (i in 0 until quietTargetsCount) {
                 val target = BitMath.getLSBitIndex(quietTargets)
                 quietTargets = BitMath.popBit(quietTargets, target)
-                move = Move(pieceType, color, bishopPosition, target)
-                moves.add(move)
+                if ((kingPinnedPieces[bishopPosition] and (1L shl target)) != 0L) {
+                    move = Move(pieceType, color, bishopPosition, target)
+                    moves.add(move)
+                }
             }
         }
         return moves
@@ -815,7 +952,7 @@ class MoveGenerator(
             queens = chessBoard.whiteQueens
             king = chessBoard.whiteKing
             attackedSquares =
-                attackedSquares or (northWest(pawns) or northEast(pawns) and chessBoard.emptySquares)
+                (northWest(pawns) or northEast(pawns) and chessBoard.emptySquares)
         } else {
             pawns = chessBoard.blackPawns
             rooks = chessBoard.blackRooks
@@ -824,7 +961,7 @@ class MoveGenerator(
             queens = chessBoard.blackQueens
             king = chessBoard.blackKing
             attackedSquares =
-                attackedSquares or (southWest(pawns) or southEast(pawns) and chessBoard.emptySquares)
+                (southWest(pawns) or southEast(pawns) and chessBoard.emptySquares)
         }
 
         //check rooks and queens
@@ -899,11 +1036,138 @@ class MoveGenerator(
         return attackedSquares
     }
 
+    fun getAllAttackedSquaresForWithOwn(chessBoard: ChessBoard, color: Int): Long {
+        var attackedSquares: Long = 0
+        var pawns: Long = 0
+        var rooks: Long = 0
+        var bishops: Long = 0
+        var knights: Long = 0
+        var queens: Long = 0
+        var king: Long = 0
+        val myPiece =
+            if (color == Piece.WHITE) chessBoard.allWhitePieces else chessBoard.allBlackPieces
+        if (color == Piece.WHITE) {
+            pawns = chessBoard.whitePawns
+            rooks = chessBoard.whiteRooks
+            bishops = chessBoard.whiteBishops
+            knights = chessBoard.whiteKnights
+            queens = chessBoard.whiteQueens
+            king = chessBoard.whiteKing
+            attackedSquares =
+                (northWest(pawns) or northEast(pawns) and (chessBoard.emptySquares or myPiece))
+        } else {
+            pawns = chessBoard.blackPawns
+            rooks = chessBoard.blackRooks
+            bishops = chessBoard.blackBishops
+            knights = chessBoard.blackKnights
+            queens = chessBoard.blackQueens
+            king = chessBoard.blackKing
+            attackedSquares =
+                (southWest(pawns) or southEast(pawns) and (chessBoard.emptySquares or myPiece))
+        }
+
+        //check rooks and queens
+        var rooksAndQueens = rooks or queens
+        val rooksAndQueensCount = BitMath.countSetBits(rooksAndQueens)
+        var rookPosition = 0
+        for (rook in 0 until rooksAndQueensCount) {
+            rookPosition = BitMath.getLSBitIndex(rooksAndQueens)
+            rooksAndQueens = BitMath.popBit(rooksAndQueens, rookPosition)
+            val northTargets =
+                rookAttacks(
+                    NORTH,
+                    rookPosition,
+                    chessBoard.allPieces
+                ) and (chessBoard.emptySquares or myPiece)
+            val southTargets =
+                rookAttacks(
+                    SOUTH,
+                    rookPosition,
+                    chessBoard.allPieces
+                ) and (chessBoard.emptySquares or myPiece)
+            val eastTargets =
+                rookAttacks(
+                    EAST,
+                    rookPosition,
+                    chessBoard.allPieces
+                ) and (chessBoard.emptySquares or myPiece)
+            val westTargets =
+                rookAttacks(
+                    WEST,
+                    rookPosition,
+                    chessBoard.allPieces
+                ) and (chessBoard.emptySquares or myPiece)
+            attackedSquares =
+                attackedSquares or (northTargets or southTargets or eastTargets or westTargets)
+        }
+
+        //check bishops and queens
+        var bishopsAndQueens = bishops or queens
+        val bishopsAndQueensCount = BitMath.countSetBits(bishopsAndQueens)
+        var bishopPosition = 0
+        for (bishop in 0 until bishopsAndQueensCount) {
+            bishopPosition = BitMath.getLSBitIndex(bishopsAndQueens)
+            bishopsAndQueens = BitMath.popBit(bishopsAndQueens, bishopPosition)
+            val northWestTargets = bishopAttacks(
+                NORTH_WEST,
+                bishopPosition,
+                chessBoard.allPieces
+            ) and (chessBoard.emptySquares or myPiece)
+            val southWestTargets = bishopAttacks(
+                SOUTH_WEST,
+                bishopPosition,
+                chessBoard.allPieces
+            ) and (chessBoard.emptySquares or myPiece)
+            val northEastTargets = bishopAttacks(
+                NORTH_EAST,
+                bishopPosition,
+                chessBoard.allPieces
+            ) and (chessBoard.emptySquares or myPiece)
+            val southEastTargets = bishopAttacks(
+                SOUTH_EAST,
+                bishopPosition,
+                chessBoard.allPieces
+            ) and (chessBoard.emptySquares or myPiece)
+            attackedSquares =
+                attackedSquares or (northWestTargets or southWestTargets or northEastTargets or southEastTargets)
+        }
+
+        //check knights
+        val knightsCount = BitMath.countSetBits(knights)
+        var knightPosition = 0
+        for (knight in 0 until knightsCount) {
+            knightPosition = BitMath.getLSBitIndex(knights)
+            knights = BitMath.popBit(knights, knightPosition)
+            attackedSquares =
+                attackedSquares or (knightAttacksMask[knightPosition] and (chessBoard.emptySquares or myPiece))
+        }
+
+        //check king
+        attackedSquares =
+            attackedSquares or (northWest(king) and (chessBoard.emptySquares or myPiece))
+        attackedSquares = attackedSquares or (north(king) and (chessBoard.emptySquares or myPiece))
+        attackedSquares =
+            attackedSquares or (northEast(king) and (chessBoard.emptySquares or myPiece))
+        attackedSquares = attackedSquares or (west(king) and (chessBoard.emptySquares or myPiece))
+        attackedSquares = attackedSquares or (east(king) and (chessBoard.emptySquares or myPiece))
+        attackedSquares =
+            attackedSquares or (southWest(king) and (chessBoard.emptySquares or myPiece))
+        attackedSquares = attackedSquares or (south(king) and (chessBoard.emptySquares or myPiece))
+        attackedSquares =
+            attackedSquares or (southEast(king) and (chessBoard.emptySquares or myPiece))
+        return attackedSquares
+    }
+
     fun getWhitePseudoLegalMoves(chessBoard: ChessBoard): ArrayList<Move> {
         val moves = ArrayList<Move>()
 
         //add pawns moves
-        moves.addAll(getWhitePawnsPushes(chessBoard.whitePawns, chessBoard.emptySquares))
+        moves.addAll(
+            getWhitePawnsPushes(
+                chessBoard.whitePawns,
+                chessBoard.emptySquares
+            )
+        )
         moves.addAll(getWhitePawnsCaptures(chessBoard))
 
         //add king moves
@@ -913,7 +1177,14 @@ class MoveGenerator(
         moves.addAll(getKnightMoves(chessBoard, Piece.WHITE))
 
         //add rooks moves
-        moves.addAll(getRooksMoves(chessBoard, chessBoard.whiteRooks, Piece.WHITE, Piece.ROOK))
+        moves.addAll(
+            getRooksMoves(
+                chessBoard,
+                chessBoard.whiteRooks,
+                Piece.WHITE,
+                Piece.ROOK
+            )
+        )
 
         //add bishops moves
         moves.addAll(
@@ -926,7 +1197,14 @@ class MoveGenerator(
         )
 
         //add queens moves
-        moves.addAll(getQueensMoves(chessBoard, chessBoard.whiteQueens, Piece.WHITE, Piece.QUEEN))
+        moves.addAll(
+            getQueensMoves(
+                chessBoard,
+                chessBoard.whiteQueens,
+                Piece.WHITE,
+                Piece.QUEEN
+            )
+        )
         return moves
     }
 
@@ -934,7 +1212,12 @@ class MoveGenerator(
         val moves = ArrayList<Move>()
 
         //add pawns moves
-        moves.addAll(getBlackPawnsPushes(chessBoard.blackPawns, chessBoard.emptySquares))
+        moves.addAll(
+            getBlackPawnsPushes(
+                chessBoard.blackPawns,
+                chessBoard.emptySquares
+            )
+        )
         moves.addAll(getBlackPawnsCaptures(chessBoard))
 
         //add king moves
@@ -944,7 +1227,14 @@ class MoveGenerator(
         moves.addAll(getKnightMoves(chessBoard, Piece.BLACK))
 
         //add rooks moves
-        moves.addAll(getRooksMoves(chessBoard, chessBoard.blackRooks, Piece.BLACK, Piece.ROOK))
+        moves.addAll(
+            getRooksMoves(
+                chessBoard,
+                chessBoard.blackRooks,
+                Piece.BLACK,
+                Piece.ROOK
+            )
+        )
 
         //add bishops moves
         moves.addAll(
@@ -957,7 +1247,14 @@ class MoveGenerator(
         )
 
         //add queens moves
-        moves.addAll(getQueensMoves(chessBoard, chessBoard.blackQueens, Piece.BLACK, Piece.QUEEN))
+        moves.addAll(
+            getQueensMoves(
+                chessBoard,
+                chessBoard.blackQueens,
+                Piece.BLACK,
+                Piece.QUEEN
+            )
+        )
         return moves
     }
 
@@ -969,13 +1266,13 @@ class MoveGenerator(
         }
     }
 
-    fun isKingInCheck(chessBoard: ChessBoard,kingColor: Int): Boolean {
+    fun isKingInCheck(chessBoard: ChessBoard, kingColor: Int): Boolean {
         return isKingAttacked(chessBoard, kingColor)
 
     }
+
     fun isKingAttacked(chessBoard: ChessBoard, kingColor: Int): Boolean {
         //val startTime = System.nanoTime()
-
         val chessBoardWithoutKing = ChessBoard(chessBoard)
         val kingPosition = getKingPosition(chessBoard, kingColor)
         chessBoardWithoutKing.removeKing(kingColor)
@@ -987,8 +1284,6 @@ class MoveGenerator(
 //            "isKingAttacked elapsedTme in nano seconds: ${System.nanoTime() - startTime}"
 //        )
         return isAttacked
-
-
     }
 
     fun getKingPosition(chessBoard: ChessBoard, kingColor: Int): Int {
@@ -1041,7 +1336,7 @@ class MoveGenerator(
             } else {
                 chessBoardAfterMove.removePiece(toSquare + 8)
             }
-        }else{
+        } else {
             chessBoardAfterMove.removePiece(fromSquare)
 
         }
@@ -1065,8 +1360,9 @@ class MoveGenerator(
     }
 
     fun getWhiteLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
+        updateKingPinnedPieces(chessBoard, Piece.WHITE)
         val moves = getWhitePseudoLegalMoves(chessBoard)
-        removeMovesThatExposeKing(chessBoard, moves, Piece.WHITE)
+        //removeMovesThatExposeKing(chessBoard, moves, Piece.WHITE)
         val playerLegalMoves = PlayerLegalMoves()
         playerLegalMoves.addAll(moves)
         checkCastling(chessBoard, playerLegalMoves, Piece.WHITE)
@@ -1074,8 +1370,9 @@ class MoveGenerator(
     }
 
     fun getBlackLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
+        updateKingPinnedPieces(chessBoard, Piece.BLACK)
         val moves = getBlackPseudoLegalMoves(chessBoard)
-        removeMovesThatExposeKing(chessBoard, moves, Piece.BLACK)
+        //removeMovesThatExposeKing(chessBoard, moves, Piece.BLACK)
         val playerLegalMoves = PlayerLegalMoves()
         playerLegalMoves.addAll(moves)
         checkCastling(chessBoard, playerLegalMoves, Piece.BLACK)
@@ -1096,13 +1393,13 @@ class MoveGenerator(
     ) {
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
         var kingTarget = 0
-        if (canCastleKingSide(chessBoard, color, isKingInCheck(chessBoard,color))) {
+        if (canCastleKingSide(chessBoard, color, isKingInCheck(chessBoard, color))) {
             kingTarget = initialKingPosition + 2
             val move = Move(Piece.KING, color, initialKingPosition, kingTarget)
-            move.setCastling(Move.CastlingType.CASTLING_kING_SIDE)
+            move.setCastling(Move.CastlingType.CASTLING_KING_SIDE)
             playerLegalMoves.add(move)
         }
-        if (canCastleQueenSide(chessBoard, color, isKingInCheck(chessBoard,color))) {
+        if (canCastleQueenSide(chessBoard, color, isKingInCheck(chessBoard, color))) {
             kingTarget = initialKingPosition - 2
             val move = Move(Piece.KING, color, initialKingPosition, kingTarget)
             move.setCastling(Move.CastlingType.CASTLING_QUEEN_SIDE)
@@ -1191,6 +1488,334 @@ class MoveGenerator(
         }
     }
 
+
+    fun updateKingPinnedPieces(chessBoard: ChessBoard, color: Int) {
+        // calculate king connected pieces
+        // -------------------------------------------------------------------
+        //white
+        whiteKingPinnedPieces.fill(0L.inv())
+        whiteKingCheckLine = 0L.inv()
+        var whiteKingNorthConnectedPieces = 0L
+        var whiteKingNorthWestConnectedPieces = 0L
+        var whiteKingWestConnectedPieces = 0L
+        var whiteKingSouthWestConnectedPieces = 0L
+        var whiteKingSouthConnectedPieces = 0L
+        var whiteKingSouthEastConnectedPieces = 0L
+        var whiteKingEastConnectedPieces = 0L
+        var whiteKingNorthEastConnectedPieces = 0L
+        //black
+        blackKingPinnedPieces.fill(0L.inv())
+        blackKingCheckLine = 0L.inv()
+        var blackKingNorthConnectedPieces = 0L
+        var blackKingNorthWestConnectedPieces = 0L
+        var blackKingWestConnectedPieces = 0L
+        var blackKingSouthWestConnectedPieces = 0L
+        var blackKingSouthConnectedPieces = 0L
+        var blackKingSouthEastConnectedPieces = 0L
+        var blackKingEastConnectedPieces = 0L
+        var blackKingNorthEastConnectedPieces = 0L
+
+        val kingPosition = getKingPosition(chessBoard, color)
+        val northTargets =
+            rookAttacks(NORTH, kingPosition, chessBoard.allPieces)
+        val southTargets =
+            rookAttacks(SOUTH, kingPosition, chessBoard.allPieces)
+        val eastTargets =
+            rookAttacks(EAST, kingPosition, chessBoard.allPieces)
+        val westTargets =
+            rookAttacks(WEST, kingPosition, chessBoard.allPieces)
+
+        val kingMask = if (color == Piece.WHITE) chessBoard.whiteKing else chessBoard.blackKing
+        val enemyPieces =
+            if (color == Piece.WHITE) chessBoard.allBlackPieces else chessBoard.allWhitePieces
+        val enemyKnights =
+            if (color == Piece.WHITE) chessBoard.blackKnights else chessBoard.whiteKnights
+        val enemyPawns = if (color == Piece.WHITE) chessBoard.blackPawns else chessBoard.whitePawns
+        val enemyRooksAndQueens =
+            if (color == Piece.WHITE) (chessBoard.blackRooks or chessBoard.blackQueens) else (chessBoard.whiteRooks or chessBoard.whiteQueens)
+        val enemyBishopsAndQueens =
+            if (color == Piece.WHITE) (chessBoard.blackBishops or chessBoard.blackQueens) else (chessBoard.whiteBishops or chessBoard.whiteQueens)
+
+        val straitTargets = (northTargets or southTargets or eastTargets or westTargets)
+        val straitEnemyCheckPieces = straitTargets and enemyRooksAndQueens
+        if ((northTargets and straitEnemyCheckPieces) != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = northTargets
+            } else {
+                blackKingCheckLine = northTargets
+            }
+        } else if ((southTargets and straitEnemyCheckPieces) != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = southTargets
+            } else {
+                blackKingCheckLine = southTargets
+            }
+        } else if ((eastTargets and straitEnemyCheckPieces) != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = eastTargets
+            } else {
+                blackKingCheckLine = eastTargets
+            }
+        } else if ((westTargets and straitEnemyCheckPieces) != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = westTargets
+            } else {
+                blackKingCheckLine = westTargets
+            }
+        }
+
+        val northWestTargets = bishopAttacks(
+            NORTH_WEST,
+            kingPosition,
+            chessBoard.allPieces
+        )
+        val southWestTargets = bishopAttacks(
+            SOUTH_WEST,
+            kingPosition,
+            chessBoard.allPieces
+        )
+        val northEastTargets = bishopAttacks(
+            NORTH_EAST,
+            kingPosition,
+            chessBoard.allPieces
+        )
+        val southEastTargets = bishopAttacks(
+            SOUTH_EAST,
+            kingPosition,
+            chessBoard.allPieces
+        )
+
+        val diagonalTargets =
+            (northWestTargets or southWestTargets or northEastTargets or southEastTargets)
+        val diagonalEnemyCheckPieces = diagonalTargets and enemyPieces and enemyBishopsAndQueens
+        if ((northWestTargets and diagonalEnemyCheckPieces) != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = whiteKingCheckLine and northWestTargets
+            } else {
+                blackKingCheckLine = blackKingCheckLine and northWestTargets
+            }
+        } else if ((southWestTargets and diagonalEnemyCheckPieces) != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = whiteKingCheckLine and southWestTargets
+            } else {
+                blackKingCheckLine = blackKingCheckLine and southWestTargets
+            }
+        } else if ((northEastTargets and diagonalEnemyCheckPieces) != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = whiteKingCheckLine and northEastTargets
+            } else {
+                blackKingCheckLine = blackKingCheckLine and northEastTargets
+            }
+        } else if ((southEastTargets and diagonalEnemyCheckPieces) != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = whiteKingCheckLine and southEastTargets
+            } else {
+                blackKingCheckLine = blackKingCheckLine and southEastTargets
+            }
+        }
+
+        // add attacking knights to check
+        var knightAndPawnsAttacks =
+            knightAttacksMask[kingPosition] and enemyKnights
+
+
+        // add attacking pawns to check
+        if (color == Piece.WHITE) {
+            knightAndPawnsAttacks = knightAndPawnsAttacks or (northWest(kingMask) and enemyPawns)
+            knightAndPawnsAttacks = knightAndPawnsAttacks or (northEast(kingMask) and enemyPawns)
+        } else {
+            knightAndPawnsAttacks = knightAndPawnsAttacks or (southWest(kingMask) and enemyPawns)
+            knightAndPawnsAttacks = knightAndPawnsAttacks or (southEast(kingMask) and enemyPawns)
+        }
+
+        if (knightAndPawnsAttacks != 0L) {
+            if (color == Piece.WHITE) {
+                whiteKingCheckLine = whiteKingCheckLine and knightAndPawnsAttacks
+
+            } else {
+                blackKingCheckLine = blackKingCheckLine and knightAndPawnsAttacks
+
+            }
+        }
+
+        //Log.d(ChessEngine.DEBUG_TAG, BitMath.print(whiteKingCheckLine))
+
+        if (color == Piece.WHITE) {
+            whiteKingNorthConnectedPieces = northTargets and chessBoard.allWhitePieces
+            whiteKingNorthWestConnectedPieces = northWestTargets and chessBoard.allWhitePieces
+            whiteKingWestConnectedPieces = westTargets and chessBoard.allWhitePieces
+            whiteKingSouthWestConnectedPieces = southWestTargets and chessBoard.allWhitePieces
+            whiteKingSouthConnectedPieces = southTargets and chessBoard.allWhitePieces
+            whiteKingSouthEastConnectedPieces = southEastTargets and chessBoard.allWhitePieces
+            whiteKingEastConnectedPieces = eastTargets and chessBoard.allWhitePieces
+            whiteKingNorthEastConnectedPieces = northEastTargets and chessBoard.allWhitePieces
+
+        } else {
+            blackKingNorthConnectedPieces = northTargets and chessBoard.allBlackPieces
+            blackKingNorthWestConnectedPieces = northWestTargets and chessBoard.allBlackPieces
+            blackKingWestConnectedPieces = westTargets and chessBoard.allBlackPieces
+            blackKingSouthWestConnectedPieces = southWestTargets and chessBoard.allBlackPieces
+            blackKingSouthConnectedPieces = southTargets and chessBoard.allBlackPieces
+            blackKingSouthEastConnectedPieces = southEastTargets and chessBoard.allBlackPieces
+            blackKingEastConnectedPieces = eastTargets and chessBoard.allBlackPieces
+            blackKingNorthEastConnectedPieces = northEastTargets and chessBoard.allBlackPieces
+        }
+        //-------------------------------------------------------------
+
+        val opponentColor = Piece.GetOppositeColor(color)
+        var rooks: Long = 0
+        var bishops: Long = 0
+        var queens: Long = 0
+        if (opponentColor == Piece.WHITE) {
+            rooks = chessBoard.whiteRooks
+            bishops = chessBoard.whiteBishops
+            queens = chessBoard.whiteQueens
+        } else {
+            rooks = chessBoard.blackRooks
+            bishops = chessBoard.blackBishops
+            queens = chessBoard.blackQueens
+
+        }
+        //check rooks and queens
+        var rooksAndQueens = rooks or queens
+        val rooksAndQueensCount = BitMath.countSetBits(rooksAndQueens)
+        var rookPosition = 0
+        for (rook in 0 until rooksAndQueensCount) {
+            rookPosition = BitMath.getLSBitIndex(rooksAndQueens)
+            rooksAndQueens = BitMath.popBit(rooksAndQueens, rookPosition)
+            val southAttacks =
+                rookAttacks(NORTH, rookPosition, chessBoard.allPieces)
+            val northAttacks =
+                rookAttacks(SOUTH, rookPosition, chessBoard.allPieces)
+            val westAttacks =
+                rookAttacks(EAST, rookPosition, chessBoard.allPieces)
+            val eastAttacks =
+                rookAttacks(WEST, rookPosition, chessBoard.allPieces)
+
+            //update king pinned pieces
+            if (color == Piece.WHITE) {
+                val northPinnedPiece = northAttacks and whiteKingNorthConnectedPieces
+                if (northPinnedPiece != 0L) {
+                    whiteKingPinnedPieces[BitMath.getBitIndex(northPinnedPiece, SOUTH)] =
+                        northAttacks or (1L shl rookPosition)
+                }
+                val southPinnedPiece = southAttacks and whiteKingSouthConnectedPieces
+                if (southPinnedPiece != 0L) {
+                    whiteKingPinnedPieces[BitMath.getBitIndex(southPinnedPiece, NORTH)] =
+                        southAttacks or (1L shl rookPosition)
+                }
+                val westPinnedPiece = westAttacks and whiteKingWestConnectedPieces
+                if (westPinnedPiece != 0L) {
+                    whiteKingPinnedPieces[BitMath.getBitIndex(westPinnedPiece, EAST)] =
+                        westAttacks or (1L shl rookPosition)
+                }
+                val eastPinnedPiece = eastAttacks and whiteKingEastConnectedPieces
+                if (eastPinnedPiece != 0L) {
+                    whiteKingPinnedPieces[BitMath.getBitIndex(eastPinnedPiece, WEST)] =
+                        eastAttacks or (1L shl rookPosition)
+                }
+
+            } else {
+                val northPinnedPiece = northAttacks and blackKingNorthConnectedPieces
+                if (northPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(northPinnedPiece, SOUTH)] =
+                        northAttacks or (1L shl rookPosition)
+                }
+                val southPinnedPiece = southAttacks and blackKingSouthConnectedPieces
+                if (southPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(southPinnedPiece, NORTH)] =
+                        southAttacks or (1L shl rookPosition)
+                }
+                val westPinnedPiece = westAttacks and blackKingWestConnectedPieces
+                if (westPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(westPinnedPiece, EAST)] =
+                        westAttacks or (1L shl rookPosition)
+                }
+                val eastPinnedPiece = eastAttacks and blackKingEastConnectedPieces
+                if (eastPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(eastPinnedPiece, WEST)] =
+                        eastAttacks or (1L shl rookPosition)
+                }
+            }
+
+        }
+
+        //check bishops and queens
+        var bishopsAndQueens = bishops or queens
+        val bishopsAndQueensCount = BitMath.countSetBits(bishopsAndQueens)
+        var bishopPosition = 0
+        for (bishop in 0 until bishopsAndQueensCount) {
+            bishopPosition = BitMath.getLSBitIndex(bishopsAndQueens)
+            bishopsAndQueens = BitMath.popBit(bishopsAndQueens, bishopPosition)
+            val southEastAttacks = bishopAttacks(
+                NORTH_WEST,
+                bishopPosition,
+                chessBoard.allPieces
+            )
+            val northEastAttacks = bishopAttacks(
+                SOUTH_WEST,
+                bishopPosition,
+                chessBoard.allPieces
+            )
+            val southWestAttacks = bishopAttacks(
+                NORTH_EAST,
+                bishopPosition,
+                chessBoard.allPieces
+            )
+            val northWestAttacks = bishopAttacks(
+                SOUTH_EAST,
+                bishopPosition,
+                chessBoard.allPieces
+            )
+
+            //update king pinned pieces
+            if (color == Piece.WHITE) {
+                val southEastPinnedPiece = southEastAttacks and whiteKingSouthEastConnectedPieces
+                if (southEastPinnedPiece != 0L) {
+                    whiteKingPinnedPieces[BitMath.getBitIndex(southEastPinnedPiece, NORTH_WEST)] =
+                        southEastAttacks or (1L shl bishopPosition)
+                }
+                val northEastPinnedPiece = northEastAttacks and whiteKingNorthEastConnectedPieces
+                if (northEastPinnedPiece != 0L) {
+                    whiteKingPinnedPieces[BitMath.getBitIndex(northEastPinnedPiece, SOUTH_WEST)] =
+                        northEastAttacks or (1L shl bishopPosition)
+                }
+                val southWestPinnedPiece = southWestAttacks and whiteKingSouthWestConnectedPieces
+                if (southWestPinnedPiece != 0L) {
+                    whiteKingPinnedPieces[BitMath.getBitIndex(southWestPinnedPiece, NORTH_EAST)] =
+                        southWestAttacks or (1L shl bishopPosition)
+                }
+                val northWestPinnedPiece = northWestAttacks and whiteKingNorthWestConnectedPieces
+                if (northWestPinnedPiece != 0L) {
+                    whiteKingPinnedPieces[BitMath.getBitIndex(northWestPinnedPiece, SOUTH_EAST)] =
+                        northWestAttacks or (1L shl bishopPosition)
+                }
+            } else {
+                val southEastPinnedPiece = southEastAttacks and blackKingSouthEastConnectedPieces
+                if (southEastPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(southEastPinnedPiece, NORTH_WEST)] =
+                        southEastAttacks or (1L shl bishopPosition)
+                }
+                val northEastPinnedPiece = northEastAttacks and blackKingNorthEastConnectedPieces
+                if (northEastPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(northEastPinnedPiece, SOUTH_WEST)] =
+                        northEastAttacks or (1L shl bishopPosition)
+                }
+                val southWestPinnedPiece = southWestAttacks and blackKingSouthWestConnectedPieces
+                if (southWestPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(southWestPinnedPiece, NORTH_EAST)] =
+                        southWestAttacks or (1L shl bishopPosition)
+                }
+                val northWestPinnedPiece = northWestAttacks and blackKingNorthWestConnectedPieces
+                if (northWestPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(northWestPinnedPiece, SOUTH_EAST)] =
+                        northWestAttacks or (1L shl bishopPosition)
+                }
+            }
+        }
+    }
+
+
     companion object {
         //move operations
         //----------------------------------------------------------------------------
@@ -1236,15 +1861,15 @@ class MoveGenerator(
 
         //rook and bishop tables
         //bishop rays constants
-        private const val NORTH_WEST = 0
-        private const val NORTH_EAST = 1
+        const val NORTH_WEST = 0
+        const val NORTH_EAST = 1
         private const val SOUTH_WEST = 2
         private const val SOUTH_EAST = 3
 
         //rook rays constants
         private const val SOUTH = 0
-        private const val NORTH = 1
-        private const val EAST = 2
+        const val NORTH = 1
+        const val EAST = 2
         private const val WEST = 3
 
         //pawn moves

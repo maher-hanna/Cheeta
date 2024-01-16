@@ -58,8 +58,8 @@ class Piece(p: Piece) {
         @JvmField
         var KING_VALUE = 20000
         @JvmStatic
-        fun GetOppositeColor(color: Int): Int {
-            var color = color
+        fun GetOppositeColor(colorArg: Int): Int {
+            var color = colorArg
             return 1.let { color = color xor it; color }
         }
     }
