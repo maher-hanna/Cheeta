@@ -21,6 +21,18 @@ class Move {
         set(type) {
             bitValue = BitMath.setBitsValue(bitValue, TYPE_START, TYPE_MASK, type)
         }
+    val pieceName: String
+        get() =
+            when(pieceType){
+                Piece.PAWN -> "Pawn"
+                Piece.KNIGHT -> "Knight"
+                Piece.BISHOP -> "Bishop"
+                Piece.ROOK -> "Rook"
+                Piece.QUEEN -> "Queen"
+                Piece.KING -> "King"
+                else -> "Unknown"
+        }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false

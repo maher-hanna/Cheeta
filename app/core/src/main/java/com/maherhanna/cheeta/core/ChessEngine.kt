@@ -33,7 +33,7 @@ open class ChessEngine {
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var maxDepth = 0
         var timeLeft: Long
-        var moveIndex = 0
+        var move:Move = toPlayLegalMoves[0]
         alpha = LOSE_SCORE
         beta = WIN_SCORE
         do {
@@ -42,30 +42,29 @@ open class ChessEngine {
             timeLeft = startTime + maxSearchTime - System.nanoTime()
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
-            val currentDepthMoveIndex =
+            val currentSearchMove =
                 search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
 //            if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
 //                maxDepth--
 //                evaluations = previousEvaluations
 //                break
 //            } else {
-            if (currentDepthMoveIndex != ChessBoard.NO_SQUARE) {
-
-                moveIndex = currentDepthMoveIndex
+            if (currentSearchMove != null) {
+                move = currentSearchMove
             }
             //}
         } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
         Log.d(
-            DEBUG_TAG, "alpha beta evaluations: " + evaluations + " move " +
-                    moveIndex
+            DEBUG_TAG, "alpha beta evaluations: " + evaluations + " move " + move.pieceName + " from: " +
+                    move.from + " move to " + move.to
         )
         Log.d(
             DEBUG_TAG,
             "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
         )
-        return toPlayLegalMoves[moveIndex]
+        return move
 
     }
 
@@ -74,12 +73,10 @@ open class ChessEngine {
         moves: PlayerLegalMoves,
         timeLeft: Long,
         maxDepth: Int,
-
-        ): Int {
+        ): Move? {
         val searchStart = System.nanoTime()
         var score: Int
-        var currentMaxIndex = ChessBoard.NO_SQUARE
-
+        var bestMove:Move? = null
         for (i in 0 until moves.size()) {
             chessBoard.move(moves[i])
             score = -negaMax(
@@ -88,13 +85,13 @@ open class ChessEngine {
             )
             chessBoard.unMove()
             if (score >= beta) {
-                currentMaxIndex = i
+                bestMove = moves[i]
                 foundCheckMate = true
                 break
             }
             if (score > alpha) {
                 alpha = score
-                currentMaxIndex = i
+                bestMove = moves[i]
             }
             if (System.nanoTime() - searchStart > timeLeft) {
                 searchTimeFinished = true
@@ -102,7 +99,7 @@ open class ChessEngine {
             }
         }
 
-        return currentMaxIndex
+        return bestMove
     }
 
     private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {
