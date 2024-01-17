@@ -2,7 +2,6 @@ package com.maherhanna.cheeta.core
 
 import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
 import com.maherhanna.cheeta.core.Piece.Companion.WHITE
-import com.maherhanna.cheeta.core.util.Log
 
 class MoveGenerator(
     var blackPlayerLegalMoves: PlayerLegalMoves,
@@ -500,9 +499,13 @@ class MoveGenerator(
         val chessBoardWithoutKing = ChessBoard(chessBoard)
         chessBoardWithoutKing.removePiece(kingPosition)
 
-        val opponentAttackedSquaresWithoutKing = getAllAttackedSquaresForWithOwn(
+        val enemyPieces =
+            if (color == Piece.WHITE) chessBoard.allWhitePieces else chessBoard.allBlackPieces
+
+        val opponentAttackedSquaresWithoutKing = getAttacksWithCaptures(
             chessBoardWithoutKing,
-            Piece.GetOppositeColor(color)
+            Piece.GetOppositeColor(color),
+            enemyPieces
         )
 
         quietTargets = quietTargets and opponentAttackedSquaresWithoutKing.inv()
@@ -941,7 +944,7 @@ class MoveGenerator(
     }
 
     //*******************************************************************************
-    fun getAllAttackedSquaresFor(chessBoard: ChessBoard, color: Int): Long {
+    fun getAttacks(chessBoard: ChessBoard, color: Int): Long {
         var attackedSquares: Long = 0
         var pawns: Long = 0
         var rooks: Long = 0
@@ -1041,7 +1044,7 @@ class MoveGenerator(
         return attackedSquares
     }
 
-    fun getAllAttackedSquaresForWithOwn(chessBoard: ChessBoard, color: Int): Long {
+    fun getAttacksWithCaptures(chessBoard: ChessBoard, color: Int,occupied: Long): Long {
         var attackedSquares: Long = 0
         var pawns: Long = 0
         var rooks: Long = 0
@@ -1049,8 +1052,7 @@ class MoveGenerator(
         var knights: Long = 0
         var queens: Long = 0
         var king: Long = 0
-        val myPiece =
-            if (color == Piece.WHITE) chessBoard.allWhitePieces else chessBoard.allBlackPieces
+
         if (color == Piece.WHITE) {
             pawns = chessBoard.whitePawns
             rooks = chessBoard.whiteRooks
@@ -1059,7 +1061,7 @@ class MoveGenerator(
             queens = chessBoard.whiteQueens
             king = chessBoard.whiteKing
             attackedSquares =
-                (northWest(pawns) or northEast(pawns) and (chessBoard.emptySquares or myPiece))
+                (northWest(pawns) or northEast(pawns) and (chessBoard.emptySquares or occupied))
         } else {
             pawns = chessBoard.blackPawns
             rooks = chessBoard.blackRooks
@@ -1068,7 +1070,7 @@ class MoveGenerator(
             queens = chessBoard.blackQueens
             king = chessBoard.blackKing
             attackedSquares =
-                (southWest(pawns) or southEast(pawns) and (chessBoard.emptySquares or myPiece))
+                (southWest(pawns) or southEast(pawns) and (chessBoard.emptySquares or occupied))
         }
 
         //check rooks and queens
@@ -1083,25 +1085,25 @@ class MoveGenerator(
                     NORTH,
                     rookPosition,
                     chessBoard.allPieces
-                ) and (chessBoard.emptySquares or myPiece)
+                ) and (chessBoard.emptySquares or occupied)
             val southTargets =
                 rookAttacks(
                     SOUTH,
                     rookPosition,
                     chessBoard.allPieces
-                ) and (chessBoard.emptySquares or myPiece)
+                ) and (chessBoard.emptySquares or occupied)
             val eastTargets =
                 rookAttacks(
                     EAST,
                     rookPosition,
                     chessBoard.allPieces
-                ) and (chessBoard.emptySquares or myPiece)
+                ) and (chessBoard.emptySquares or occupied)
             val westTargets =
                 rookAttacks(
                     WEST,
                     rookPosition,
                     chessBoard.allPieces
-                ) and (chessBoard.emptySquares or myPiece)
+                ) and (chessBoard.emptySquares or occupied)
             attackedSquares =
                 attackedSquares or (northTargets or southTargets or eastTargets or westTargets)
         }
@@ -1117,22 +1119,22 @@ class MoveGenerator(
                 NORTH_WEST,
                 bishopPosition,
                 chessBoard.allPieces
-            ) and (chessBoard.emptySquares or myPiece)
+            ) and (chessBoard.emptySquares or occupied)
             val southWestTargets = bishopAttacks(
                 SOUTH_WEST,
                 bishopPosition,
                 chessBoard.allPieces
-            ) and (chessBoard.emptySquares or myPiece)
+            ) and (chessBoard.emptySquares or occupied)
             val northEastTargets = bishopAttacks(
                 NORTH_EAST,
                 bishopPosition,
                 chessBoard.allPieces
-            ) and (chessBoard.emptySquares or myPiece)
+            ) and (chessBoard.emptySquares or occupied)
             val southEastTargets = bishopAttacks(
                 SOUTH_EAST,
                 bishopPosition,
                 chessBoard.allPieces
-            ) and (chessBoard.emptySquares or myPiece)
+            ) and (chessBoard.emptySquares or occupied)
             attackedSquares =
                 attackedSquares or (northWestTargets or southWestTargets or northEastTargets or southEastTargets)
         }
@@ -1144,22 +1146,22 @@ class MoveGenerator(
             knightPosition = BitMath.getLSBitIndex(knights)
             knights = BitMath.popBit(knights, knightPosition)
             attackedSquares =
-                attackedSquares or (knightAttacksMask[knightPosition] and (chessBoard.emptySquares or myPiece))
+                attackedSquares or (knightAttacksMask[knightPosition] and (chessBoard.emptySquares or occupied))
         }
 
         //check king
         attackedSquares =
-            attackedSquares or (northWest(king) and (chessBoard.emptySquares or myPiece))
-        attackedSquares = attackedSquares or (north(king) and (chessBoard.emptySquares or myPiece))
+            attackedSquares or (northWest(king) and (chessBoard.emptySquares or occupied))
+        attackedSquares = attackedSquares or (north(king) and (chessBoard.emptySquares or occupied))
         attackedSquares =
-            attackedSquares or (northEast(king) and (chessBoard.emptySquares or myPiece))
-        attackedSquares = attackedSquares or (west(king) and (chessBoard.emptySquares or myPiece))
-        attackedSquares = attackedSquares or (east(king) and (chessBoard.emptySquares or myPiece))
+            attackedSquares or (northEast(king) and (chessBoard.emptySquares or occupied))
+        attackedSquares = attackedSquares or (west(king) and (chessBoard.emptySquares or occupied))
+        attackedSquares = attackedSquares or (east(king) and (chessBoard.emptySquares or occupied))
         attackedSquares =
-            attackedSquares or (southWest(king) and (chessBoard.emptySquares or myPiece))
-        attackedSquares = attackedSquares or (south(king) and (chessBoard.emptySquares or myPiece))
+            attackedSquares or (southWest(king) and (chessBoard.emptySquares or occupied))
+        attackedSquares = attackedSquares or (south(king) and (chessBoard.emptySquares or occupied))
         attackedSquares =
-            attackedSquares or (southEast(king) and (chessBoard.emptySquares or myPiece))
+            attackedSquares or (southEast(king) and (chessBoard.emptySquares or occupied))
         return attackedSquares
     }
 
@@ -1265,9 +1267,9 @@ class MoveGenerator(
 
     fun isSquareAttacked(chessBoard: ChessBoard, square: Int, attackingColor: Int): Boolean {
         return if (attackingColor == Piece.WHITE) {
-            getAllAttackedSquaresFor(chessBoard, Piece.WHITE) and (1L shl square) != 0L
+            getAttacks(chessBoard, Piece.WHITE) and (1L shl square) != 0L
         } else {
-            getAllAttackedSquaresFor(chessBoard, Piece.BLACK) and (1L shl square) != 0L
+            getAttacks(chessBoard, Piece.BLACK) and (1L shl square) != 0L
         }
     }
 
@@ -1278,7 +1280,7 @@ class MoveGenerator(
         val kingPosition = getKingPosition(chessBoard, kingColor)
         chessBoardWithoutKing.removeKing(kingColor)
         val isAttacked =
-            (getAllAttackedSquaresFor(chessBoardWithoutKing, GetOppositeColor(kingColor))
+            (getAttacks(chessBoardWithoutKing, GetOppositeColor(kingColor))
                     and (1L shl kingPosition)) != 0L
 //        Log.d(
 //            Game.DEBUG,
@@ -1305,9 +1307,9 @@ class MoveGenerator(
 
     fun isPieceAttacked(color: Int,position: Int): Boolean{
         return if(color == WHITE){
-            (whiteAttackedPieces and (1L shl position)) == 1L
+            (whiteAttackedPieces and (1L shl position)) != 0L
         }else {
-            (blackAttackedPieces and (1L shl position)) == 1L
+            (blackAttackedPieces and (1L shl position)) != 0L
         }
     }
 
@@ -1527,7 +1529,11 @@ class MoveGenerator(
         var blackKingEastConnectedPieces = 0L
         var blackKingNorthEastConnectedPieces = 0L
 
-        whiteAttackedPieces = getAllAttackedSquaresFor(chessBoard,Piece.BLACK)
+        if(color == Piece.WHITE){
+            whiteAttackedPieces = getAttacksWithCaptures(chessBoard,Piece.BLACK,chessBoard.allWhitePieces)
+        } else {
+            whiteAttackedPieces = getAttacksWithCaptures(chessBoard,Piece.BLACK,chessBoard.allBlackPieces)
+        }
 
         val kingPosition = getKingPosition(chessBoard, color)
         val northTargets =
