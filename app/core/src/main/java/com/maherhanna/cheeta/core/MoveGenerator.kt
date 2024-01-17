@@ -1366,6 +1366,11 @@ class MoveGenerator(
         val playerLegalMoves = PlayerLegalMoves()
         playerLegalMoves.addAll(moves)
         checkCastling(chessBoard, playerLegalMoves, Piece.WHITE)
+        if(whiteKingCheckLine != 0L.inv()){
+            playerLegalMoves.isKingChecked = true
+        }else{
+            playerLegalMoves.isKingChecked = false
+        }
         return playerLegalMoves
     }
 
@@ -1376,6 +1381,11 @@ class MoveGenerator(
         val playerLegalMoves = PlayerLegalMoves()
         playerLegalMoves.addAll(moves)
         checkCastling(chessBoard, playerLegalMoves, Piece.BLACK)
+        if(blackKingCheckLine != 0L.inv()){
+            playerLegalMoves.isKingChecked = true
+        }else{
+            playerLegalMoves.isKingChecked = false
+        }
         return playerLegalMoves
     }
 

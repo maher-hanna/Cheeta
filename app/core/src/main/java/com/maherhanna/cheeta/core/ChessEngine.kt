@@ -369,10 +369,8 @@ open class ChessEngine {
     fun checkStatus(chessBoard: ChessBoard, toPlayPlayerLegalMoves: PlayerLegalMoves): GameStatus {
         val lastPlayed = chessBoard.moves.lastPlayed
         var gameStatus = GameStatus.NOT_FINISHED
-        val currentToPlayColor = Piece.GetOppositeColor(lastPlayed)
         if (toPlayPlayerLegalMoves.size() == 0) {
-            val isKingInCheck = moveGenerator.isKingAttacked(chessBoard, currentToPlayColor)
-            gameStatus = if (isKingInCheck) {
+            gameStatus = if (toPlayPlayerLegalMoves.isKingChecked) {
                 //win
                 if (lastPlayed == Piece.WHITE) {
                     GameStatus.FINISHED_WIN_WHITE

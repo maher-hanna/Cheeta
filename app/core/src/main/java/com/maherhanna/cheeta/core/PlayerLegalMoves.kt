@@ -4,6 +4,7 @@ import com.maherhanna.cheeta.core.Move
 
 class PlayerLegalMoves {
     private val legalMoves: ArrayList<Move> = ArrayList()
+    var isKingChecked: Boolean = false
 
     fun getLegalTargetsFor(position: Int): ArrayList<Int> {
         val targetSquares = ArrayList<Int>()
