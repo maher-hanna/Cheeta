@@ -353,14 +353,16 @@ open class ChessEngine {
     }
 
     private fun isEndGame(chessBoard: ChessBoard): Boolean {
-        var endGame = false
-        val whitePiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.WHITE)
-        val blackPiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.BLACK)
-        if (abs(whitePiecesValue - blackPiecesValue) >= Piece.QUEEN_VALUE) {
-            if (whitePiecesValue < Piece.QUEEN_VALUE) endGame = true
-            if (blackPiecesValue < Piece.QUEEN_VALUE) endGame = true
-        }
-        return endGame
+//        var endGame = false
+//        val whitePiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.WHITE)
+//        val blackPiecesValue = getPiecesValueMinusKingFor(chessBoard, Piece.BLACK)
+//        if (abs(whitePiecesValue - blackPiecesValue) >= Piece.QUEEN_VALUE) {
+//            if (whitePiecesValue < Piece.QUEEN_VALUE) endGame = true
+//            if (blackPiecesValue < Piece.QUEEN_VALUE) endGame = true
+//        }
+        val whitePiecesCount = BitMath.countSetBits(chessBoard.allWhitePieces)
+        val blackPiecesCount = BitMath.countSetBits(chessBoard.allBlackPieces)
+        return (whitePiecesCount + blackPiecesCount) <= 7
     }
 
     fun checkStatus(chessBoard: ChessBoard, toPlayPlayerLegalMoves: PlayerLegalMoves): GameStatus {
