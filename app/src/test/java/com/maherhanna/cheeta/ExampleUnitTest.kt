@@ -20,7 +20,6 @@ class ExampleUnitTest {
     val chessBoard = ChessBoard(ChessBoard.positionInUse)
     val moveGenerator = MoveGenerator(PlayerLegalMoves(), PlayerLegalMoves())
 
-
     @Before
     fun setup() {
         chessBoard.toPlayColor = Piece.WHITE
@@ -144,8 +143,8 @@ class ExampleUnitTest {
         if (depth == 0) {
             return if (isCheck) 1UL else 0UL
         }
-
-        val move_list = moveGenerator.getLegalMovesFor(chessBoard, chessBoard.toPlayColor);
+        val toPlayColor = chessBoard.toPlayColor
+        val move_list = moveGenerator.getLegalMovesFor(chessBoard, toPlayColor);
         val n_moves = move_list.size()
         for (i in 0 until n_moves) {
             chessBoard.move(move_list[i]);
@@ -153,7 +152,7 @@ class ExampleUnitTest {
                 depth - 1,
                 chessBoard,
                 moveGenerator,
-                moveGenerator.isKingInCheck(chessBoard,Piece.GetOppositeColor(move_list[i].color))
+                moveGenerator.isKingAttacked(chessBoard,chessBoard.toPlayColor)
             )
             chessBoard.unMove()
         }

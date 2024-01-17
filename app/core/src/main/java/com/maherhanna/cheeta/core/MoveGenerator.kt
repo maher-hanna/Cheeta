@@ -1,6 +1,7 @@
 package com.maherhanna.cheeta.core
 
 import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
+import com.maherhanna.cheeta.core.Piece.Companion.WHITE
 import com.maherhanna.cheeta.core.util.Log
 
 class MoveGenerator(
@@ -13,6 +14,12 @@ class MoveGenerator(
 
     var whiteKingCheckLine: Long = 0L.inv()
     var blackKingCheckLine: Long = 0L.inv()
+
+    var whiteAttackedPieces: Long = 0L
+    var blackAttackedPieces: Long = 0L
+
+    var isWhiteKingChecked:Boolean = false
+    var isBlackKingChecked:Boolean = false
 
 
     //*****************************************************************************
@@ -154,6 +161,7 @@ class MoveGenerator(
         }
     }
 
+
     fun getLegalTargetsFor(chessBoard: ChessBoard, position: Int): ArrayList<Int> {
         return if (chessBoard.isPieceWhiteAt(position)) {
             whitePlayerLegalMoves.getLegalTargetsFor(position)
@@ -180,7 +188,7 @@ class MoveGenerator(
         whitePlayerLegalMoves = getWhiteLegalMoves(chessBoard)
     }
 
-    fun updateLegalMovesFor(chessBoard: ChessBoard, playerColor: Int, kingInCheck: Boolean) {
+    fun updateLegalMovesFor(chessBoard: ChessBoard, playerColor: Int) {
         if (playerColor == Piece.WHITE) {
             updateWhiteLegalMoves(chessBoard)
         } else {
@@ -476,8 +484,7 @@ class MoveGenerator(
         var quietTargets: Long = 0
         var captureTargets: Long = 0
         var kingPosition = ChessBoard.OUT
-        val kingPositionBit =
-            if (color == Piece.WHITE) chessBoard.whiteKing else chessBoard.blackPawns
+
         val moves = ArrayList<Move>()
         if (color == Piece.BLACK) {
             quietTargets = kingMovesQuite(chessBoard.blackKing, chessBoard.emptySquares)
@@ -488,8 +495,6 @@ class MoveGenerator(
             captureTargets = kingMovesCapture(chessBoard.whiteKing, chessBoard.allBlackPieces)
             kingPosition = BitMath.getLSBitIndex(chessBoard.whiteKing)
         }
-        val enemyPieces =
-            if (color == Piece.WHITE) chessBoard.allBlackPieces else chessBoard.allWhitePieces
 
 
         val chessBoardWithoutKing = ChessBoard(chessBoard)
@@ -1266,10 +1271,6 @@ class MoveGenerator(
         }
     }
 
-    fun isKingInCheck(chessBoard: ChessBoard, kingColor: Int): Boolean {
-        return isKingAttacked(chessBoard, kingColor)
-
-    }
 
     fun isKingAttacked(chessBoard: ChessBoard, kingColor: Int): Boolean {
         //val startTime = System.nanoTime()
@@ -1284,6 +1285,30 @@ class MoveGenerator(
 //            "isKingAttacked elapsedTme in nano seconds: ${System.nanoTime() - startTime}"
 //        )
         return isAttacked
+    }
+
+    fun isKingChecked(color: Int): Boolean{
+        return if(color == WHITE){
+            isWhiteKingChecked
+        }else {
+            isBlackKingChecked
+        }
+    }
+
+    fun getAttackedPieces(color: Int): Long{
+        return if(color == WHITE){
+            whiteAttackedPieces
+        }else {
+            blackAttackedPieces
+        }
+    }
+
+    fun isPieceAttacked(color: Int,position: Int): Boolean{
+        return if(color == WHITE){
+            (whiteAttackedPieces and (1L shl position)) == 1L
+        }else {
+            (blackAttackedPieces and (1L shl position)) == 1L
+        }
     }
 
     fun getKingPosition(chessBoard: ChessBoard, kingColor: Int): Int {
@@ -1343,22 +1368,6 @@ class MoveGenerator(
         return chessBoardAfterMove
     }
 
-    private fun removeMovesThatExposeKing(
-        chessBoard: ChessBoard,
-        pieceLegalMoves: ArrayList<Move>,
-        kingColor: Int
-    ) {
-        val itr = pieceLegalMoves.iterator()
-        var chessBoardAfterMove: ChessBoard
-        while (itr.hasNext()) {
-            val move = itr.next()
-            chessBoardAfterMove = movePiece(chessBoard, move)
-            if (isKingAttacked(chessBoardAfterMove, kingColor)) {
-                itr.remove()
-            }
-        }
-    }
-
     fun getWhiteLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
         updateKingPinnedPieces(chessBoard, Piece.WHITE)
         val moves = getWhitePseudoLegalMoves(chessBoard)
@@ -1366,11 +1375,6 @@ class MoveGenerator(
         val playerLegalMoves = PlayerLegalMoves()
         playerLegalMoves.addAll(moves)
         checkCastling(chessBoard, playerLegalMoves, Piece.WHITE)
-        if(whiteKingCheckLine != 0L.inv()){
-            playerLegalMoves.isKingChecked = true
-        }else{
-            playerLegalMoves.isKingChecked = false
-        }
         return playerLegalMoves
     }
 
@@ -1381,11 +1385,7 @@ class MoveGenerator(
         val playerLegalMoves = PlayerLegalMoves()
         playerLegalMoves.addAll(moves)
         checkCastling(chessBoard, playerLegalMoves, Piece.BLACK)
-        if(blackKingCheckLine != 0L.inv()){
-            playerLegalMoves.isKingChecked = true
-        }else{
-            playerLegalMoves.isKingChecked = false
-        }
+
         return playerLegalMoves
     }
 
@@ -1403,13 +1403,13 @@ class MoveGenerator(
     ) {
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
         var kingTarget = 0
-        if (canCastleKingSide(chessBoard, color, isKingInCheck(chessBoard, color))) {
+        if (canCastleKingSide(chessBoard, color, isKingChecked(color))) {
             kingTarget = initialKingPosition + 2
             val move = Move(Piece.KING, color, initialKingPosition, kingTarget)
             move.setCastling(Move.CastlingType.CASTLING_KING_SIDE)
             playerLegalMoves.add(move)
         }
-        if (canCastleQueenSide(chessBoard, color, isKingInCheck(chessBoard, color))) {
+        if (canCastleQueenSide(chessBoard, color, isKingChecked(color))) {
             kingTarget = initialKingPosition - 2
             val move = Move(Piece.KING, color, initialKingPosition, kingTarget)
             move.setCastling(Move.CastlingType.CASTLING_QUEEN_SIDE)
@@ -1445,12 +1445,12 @@ class MoveGenerator(
             !chessBoard.isSquareEmpty(initialKingPosition + 2)
         ) {
             false
-        } else !isSquareAttacked(
-            chessBoard,
+        } else !isPieceAttacked(
+            color,
             initialKingPosition + 1,
-            GetOppositeColor(color)
+
         ) &&
-                !isSquareAttacked(chessBoard, initialKingPosition + 2, GetOppositeColor(color))
+                !isPieceAttacked(color, initialKingPosition + 2)
     }
 
     private fun canCastleQueenSide(
@@ -1482,12 +1482,12 @@ class MoveGenerator(
             !chessBoard.isSquareEmpty(initialKingPosition - 3)
         ) {
             false
-        } else !isSquareAttacked(
-            chessBoard,
+        } else !isPieceAttacked(
+            color,
             initialKingPosition - 1,
-            GetOppositeColor(color)
+
         ) &&
-                !isSquareAttacked(chessBoard, initialKingPosition - 2, GetOppositeColor(color))
+                !isPieceAttacked(color, initialKingPosition - 2)
     }
 
     fun getInitialKingPosition(chessBoard: ChessBoard?, kingColor: Int): Int {
@@ -1505,6 +1505,7 @@ class MoveGenerator(
         //white
         whiteKingPinnedPieces.fill(0L.inv())
         whiteKingCheckLine = 0L.inv()
+        whiteAttackedPieces = 0L
         var whiteKingNorthConnectedPieces = 0L
         var whiteKingNorthWestConnectedPieces = 0L
         var whiteKingWestConnectedPieces = 0L
@@ -1516,6 +1517,7 @@ class MoveGenerator(
         //black
         blackKingPinnedPieces.fill(0L.inv())
         blackKingCheckLine = 0L.inv()
+        blackAttackedPieces = 0L
         var blackKingNorthConnectedPieces = 0L
         var blackKingNorthWestConnectedPieces = 0L
         var blackKingWestConnectedPieces = 0L
@@ -1524,6 +1526,8 @@ class MoveGenerator(
         var blackKingSouthEastConnectedPieces = 0L
         var blackKingEastConnectedPieces = 0L
         var blackKingNorthEastConnectedPieces = 0L
+
+        whiteAttackedPieces = getAllAttackedSquaresFor(chessBoard,Piece.BLACK)
 
         val kingPosition = getKingPosition(chessBoard, color)
         val northTargets =
@@ -1823,6 +1827,8 @@ class MoveGenerator(
                 }
             }
         }
+
+        isWhiteKingChecked = whiteKingCheckLine != 0L.inv()
     }
 
 

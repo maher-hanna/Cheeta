@@ -51,16 +51,15 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         humanMove = chessEngine.moveGenerator.getLegalMovesFor(humanPlayerColor).getMove(humanMove!!)
         chessBoard.move(humanMove)
         currentPlayer = GetOppositeColor(humanPlayerColor)
-        chessEngine.moveGenerator.updateLegalMovesFor(chessBoard,humanPlayerColor, false)
+        chessEngine.moveGenerator.updateLegalMovesFor(chessBoard,humanPlayerColor)
         val opponentColor = currentPlayer
-        val isOpponentKingInCheck = chessEngine.moveGenerator.isKingInCheck(chessBoard,opponentColor)
-        if (isOpponentKingInCheck) {
+        chessEngine.moveGenerator.updateLegalMovesFor(chessBoard,opponentColor)
+        if (chessEngine.moveGenerator.isKingChecked(opponentColor)) {
             drawing.kingInCheck = chessEngine.moveGenerator.getKingPosition(chessBoard, opponentColor)
         } else {
             drawing.kingInCheck = ChessBoard.NO_SQUARE
         }
         drawing.drawAllPieces()
-        chessEngine.moveGenerator.updateLegalMovesFor(chessBoard,opponentColor, isOpponentKingInCheck)
         val gameStatus = checkGameFinished(humanPlayerColor)
         if (gameStatus == GameStatus.NOT_FINISHED) {
             playComputer(opponentColor)
@@ -76,16 +75,15 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         //computerAi.cancel(true)
         chessBoard.move(computerMove)
         val color = computerMove.color
-        chessEngine.moveGenerator.updateLegalMovesFor(chessBoard,color, false)
+        chessEngine.moveGenerator.updateLegalMovesFor(chessBoard,color)
         val opponentColor = GetOppositeColor(color)
-        val isOpponentKingInCheck = chessEngine.moveGenerator.isKingInCheck(chessBoard,opponentColor)
-        if (isOpponentKingInCheck) {
+        chessEngine.moveGenerator.updateLegalMovesFor(chessBoard,opponentColor)
+        if (chessEngine.moveGenerator.isKingChecked(opponentColor)) {
             drawing.kingInCheck = chessEngine.moveGenerator.getKingPosition(chessBoard, opponentColor)
         } else {
             drawing.kingInCheck = ChessBoard.NO_SQUARE
         }
         drawing.drawAllPieces()
-        chessEngine.moveGenerator.updateLegalMovesFor(chessBoard,opponentColor, isOpponentKingInCheck)
         currentPlayer = GetOppositeColor(color)
         val gameStatus = checkGameFinished(color)
         if (gameStatus == GameStatus.NOT_FINISHED) {

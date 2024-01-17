@@ -370,7 +370,7 @@ open class ChessEngine {
         val lastPlayed = chessBoard.moves.lastPlayed
         var gameStatus = GameStatus.NOT_FINISHED
         if (toPlayPlayerLegalMoves.size() == 0) {
-            gameStatus = if (toPlayPlayerLegalMoves.isKingChecked) {
+            gameStatus = if (moveGenerator.isKingChecked(chessBoard.toPlayColor)) {
                 //win
                 if (lastPlayed == Piece.WHITE) {
                     GameStatus.FINISHED_WIN_WHITE
