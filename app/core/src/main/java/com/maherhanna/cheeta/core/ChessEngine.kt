@@ -274,15 +274,12 @@ open class ChessEngine {
         return getPiecesValueFor(chessBoard, Piece.WHITE)
     }
 
-    private fun getBlackScore(chessBoard: ChessBoard): Int {
-        return getPiecesValueFor(chessBoard, Piece.BLACK)
-    }
 
     private fun getScoreFor(chessBoard: ChessBoard, color: Int): Int {
         return if (color == Piece.WHITE) {
-            getWhiteScore(chessBoard) - getBlackScore(chessBoard)
+            getPiecesValueFor(chessBoard, Piece.WHITE) - getPiecesValueFor(chessBoard, Piece.BLACK)
         } else {
-            getBlackScore(chessBoard) - getWhiteScore(chessBoard)
+            getPiecesValueFor(chessBoard, Piece.BLACK) - getPiecesValueFor(chessBoard, Piece.WHITE)
         }
     }
 
@@ -291,9 +288,9 @@ open class ChessEngine {
             getGameFinishedScoreFor(gameStatus, color)
         } else {
             if (color == Piece.WHITE) {
-                getWhiteScore(chessBoard) - getBlackScore(chessBoard)
+                getPiecesValueFor(chessBoard, Piece.WHITE) - getPiecesValueFor(chessBoard, Piece.BLACK)
             } else {
-                getBlackScore(chessBoard) - getWhiteScore(chessBoard)
+                getPiecesValueFor(chessBoard, Piece.BLACK) - getPiecesValueFor(chessBoard, Piece.WHITE)
             }
         }
     }

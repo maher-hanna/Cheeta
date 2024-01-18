@@ -31,6 +31,16 @@ android {
     }
     namespace 'com.maherhanna.cheeta'
 
+    applicationVariants.configureEach {
+        variant ->
+            variant.outputs.each{
+                output->
+                    def name = "Cheeta.apk"
+
+                    output.outputFileName = name
+            }
+    }
+
 }
 
 dependencies {
