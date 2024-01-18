@@ -369,7 +369,7 @@ open class ChessEngine {
         val lastPlayed = chessBoard.moves.lastPlayed
         var gameStatus = GameStatus.NOT_FINISHED
         if (toPlayPlayerLegalMoves.size() == 0) {
-            gameStatus = if (moveGenerator.isKingChecked(chessBoard.toPlayColor)) {
+            return  if (moveGenerator.isKingChecked(chessBoard.toPlayColor)) {
                 //win
                 if (lastPlayed == Piece.WHITE) {
                     GameStatus.FINISHED_WIN_WHITE
@@ -386,8 +386,7 @@ open class ChessEngine {
             return gameStatus
         }
         if (chessBoard.fiftyMovesDrawCount == 50) {
-            gameStatus = GameStatus.FINISHED_DRAW
-            return gameStatus
+            return GameStatus.FINISHED_DRAW
         }
 
         //check for third repetition draw
@@ -397,8 +396,8 @@ open class ChessEngine {
             if (lastState == chessBoard.states[i]) {
                 repeatedPositionCount++
                 if (repeatedPositionCount == 3) {
-                    gameStatus = GameStatus.FINISHED_DRAW
-                    break
+                    return GameStatus.FINISHED_DRAW
+
                 }
             }
         }
