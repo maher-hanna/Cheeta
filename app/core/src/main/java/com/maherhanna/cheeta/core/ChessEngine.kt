@@ -3,12 +3,13 @@ package com.maherhanna.cheeta.core
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetFile
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
-import com.maherhanna.cheeta.core.util.Log
-import kotlin.math.abs
+import java.util.logging.Level
+import java.util.logging.Logger
 
 open class ChessEngine {
     private var foundCheckMate = false
     private var evaluations: Long = 0
+    private var betaCutOffs: Long = 0
     private var maxingPlayer = 0
     private var searchTimeFinished = false
     private var alpha = LOSE_SCORE
@@ -24,6 +25,7 @@ open class ChessEngine {
         val maxSearchTime = COMPUTER_MAX_SEARCH_TIME * 1000000000
         foundCheckMate = false
         evaluations = 0
+        betaCutOffs = 0
         searchTimeFinished = false
         maxingPlayer = chessBoard.toPlayColor
         var toPlayLegalMoves = moveGenerator.getLegalMovesFor(
@@ -37,33 +39,32 @@ open class ChessEngine {
         alpha = LOSE_SCORE
         beta = WIN_SCORE
         do {
-            //val previousEvaluations = evaluations
-            //evaluations = 0
             timeLeft = startTime + maxSearchTime - System.nanoTime()
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
             val currentSearchMove =
                 search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
-//            if (currentDepthMoveIndex == ChessBoard.NO_SQUARE) {
-//                maxDepth--
-//                evaluations = previousEvaluations
-//                break
-//            } else {
+
             if (currentSearchMove != null) {
                 move = currentSearchMove
             }
-            //}
         } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
-        Log.d(
-            DEBUG_TAG, "alpha beta evaluations: " + evaluations + " move " + move.pieceName + " from: " +
-                    move.from + " move to " + move.to
+        Logger.getLogger(DEBUG_TAG).log(Level.INFO,"Evaluations: " + evaluations +
+                "\nBeta cutoffs: " + betaCutOffs +
+                "\nMove " + move.pieceName + " from: " + move.from + " move to " + move.to +
+                "\nDuration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
         )
-        Log.d(
-            DEBUG_TAG,
-            "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
-        )
+//        Log.d(
+//            DEBUG_TAG, "evaluations: " + evaluations +
+//                    "\n beta cutoffs: " + betaCutOffs +
+//                    "\n move " + move.pieceName + " from: " + move.from + " move to " + move.to
+//        )
+//        Log.d(
+//            DEBUG_TAG,
+//            "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
+//        )
         return move
 
     }
@@ -104,7 +105,6 @@ open class ChessEngine {
 
     private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {
         var quiescenceAlpha = alphaArg
-        //evaluations++
         val toPlayColor = chessBoard.toPlayColor
         val eval = getScoreFor(chessBoard, toPlayColor)
         if (eval >= betaArg) {
@@ -124,7 +124,6 @@ open class ChessEngine {
             toPlayLegalMoves.removeNonTake()
         }
         if (toPlayLegalMoves.size() == 0) {
-            //evaluations++
             return getScoreFor(chessBoard, toPlayColor)
         }
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
@@ -159,8 +158,8 @@ open class ChessEngine {
             toPlayColor
         )
         val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
+        evaluations++
         if (depth == 0f) {
-            evaluations++
             return if (isGameFinished(gameStatus)) {
                 getGameFinishedScoreFor(gameStatus, toPlayColor)
             } else {
@@ -168,11 +167,9 @@ open class ChessEngine {
             }
         }
         if (isGameFinished(gameStatus)) {
-            evaluations++
             return getGameFinishedScoreFor(gameStatus, toPlayColor)
         }
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
-        evaluations++
         var maxScore = LOSE_SCORE
         for (i in 0 until toPlayLegalMoves.size()) {
             chessBoard.move(toPlayLegalMoves[i])
@@ -187,6 +184,7 @@ open class ChessEngine {
                 //killer moves
                 killerMove[1][ply] = killerMove[0][ply]
                 killerMove[0][ply] = Move(toPlayLegalMoves[i])
+                betaCutOffs++
                 return beta
             }
             if (score > alpha) {
