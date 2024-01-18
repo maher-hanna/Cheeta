@@ -683,6 +683,7 @@ class ChessBoard {
         const val CASTLING_QUEEN_SIDE = 2
         const val CASTLING_BOTH_SIDES = 3
 
+
         @JvmStatic
         fun GetPosition(file: Int, rank: Int): Int {
             if (file < FILE_A || file > FILE_H) return OUT
@@ -729,6 +730,34 @@ class ChessBoard {
         @JvmStatic
         fun GetRank(position: Int): Int {
             return position / 8
+        }
+
+        fun GetRankNotation(position: Int): String {
+            return when(position / 8){
+                RANK_1 -> "1"
+                RANK_2 -> "2"
+                RANK_3 -> "3"
+                RANK_4 -> "4"
+                RANK_5 -> "5"
+                RANK_6 -> "6"
+                RANK_7 -> "7"
+                RANK_8 -> "8"
+                else -> "?"
+            }
+        }
+
+        fun GetFileNotation(position: Int): String {
+            return when(position % 8){
+                FILE_A -> "a"
+                FILE_B -> "b"
+                FILE_C -> "c"
+                FILE_D -> "d"
+                FILE_E -> "e"
+                FILE_F -> "f"
+                FILE_G -> "g"
+                FILE_H -> "h"
+                else -> "?"
+            }
         }
 
         fun offset(square: Int, file: Int, rank: Int): Int {

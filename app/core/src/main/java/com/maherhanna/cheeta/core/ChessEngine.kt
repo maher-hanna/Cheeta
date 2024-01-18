@@ -51,10 +51,10 @@ open class ChessEngine {
         } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
-        Logger.getLogger(DEBUG_TAG).log(Level.INFO,"Evaluations: " + evaluations +
-                "\nBeta cutoffs: " + betaCutOffs +
-                "\nMove " + move.pieceName + " from: " + move.from + " move to " + move.to +
-                "\nDuration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
+        Logger.getLogger(DEBUG_TAG).log(Level.INFO,"evaluations " + evaluations +
+                " depth " + maxDepth +
+                "\nmove " + move.pieceName + " " + move.fromNotation + " to " + move.toNotation
+                + "\ntime " + duration.toFloat() / 1000000
         )
 //        Log.d(
 //            DEBUG_TAG, "evaluations: " + evaluations +

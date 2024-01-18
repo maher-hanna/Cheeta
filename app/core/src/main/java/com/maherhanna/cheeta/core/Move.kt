@@ -9,6 +9,13 @@ class Move {
         set(position) {
             bitValue = BitMath.setBitsValue(bitValue, FROM_START, FROM_MASK, position)
         }
+
+    val fromNotation: String
+        get() = ChessBoard.GetFileNotation(from) + ChessBoard.GetRankNotation(from)
+
+    val toNotation: String
+        get() = ChessBoard.GetFileNotation(to) + ChessBoard.GetRankNotation(to)
+
     var to: Int
         get() = BitMath.getBitsValue(bitValue, TO_START, TO_MASK).toInt()
         set(position) {
