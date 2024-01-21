@@ -1449,6 +1449,7 @@ class MoveGenerator(
             }
         }
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
+        val initialRookPosition = getInitialRookKingSide(color)
         return if (!chessBoard.isSquareEmpty(initialKingPosition + 1) ||
             !chessBoard.isSquareEmpty(initialKingPosition + 2)
         ) {
@@ -1459,6 +1460,7 @@ class MoveGenerator(
 
             ) &&
                 !isPieceAttacked(color, initialKingPosition + 2)
+                && !isPieceAttacked(color,initialRookPosition)
     }
 
     private fun canCastleQueenSide(
@@ -1485,6 +1487,7 @@ class MoveGenerator(
             }
         }
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
+        val initialRookPosition = getInitialRookQueenSide(color)
         return if (!chessBoard.isSquareEmpty(initialKingPosition - 1) ||
             !chessBoard.isSquareEmpty(initialKingPosition - 2) ||
             !chessBoard.isSquareEmpty(initialKingPosition - 3)
@@ -1496,6 +1499,7 @@ class MoveGenerator(
 
             ) &&
                 !isPieceAttacked(color, initialKingPosition - 2)
+                && !isPieceAttacked(color,initialRookPosition)
     }
 
     fun getInitialKingPosition(chessBoard: ChessBoard?, kingColor: Int): Int {
@@ -1847,6 +1851,7 @@ class MoveGenerator(
         }
 
         isWhiteKingChecked = whiteKingCheckLine != 0L.inv()
+        isBlackKingChecked = blackKingCheckLine != 0L.inv()
     }
 
 
