@@ -400,8 +400,6 @@ open class ChessEngine {
     }
 
 
-
-
     companion object {
         const val DEBUG_TAG = "Cheeta_Debug"
         const val COMPUTER_MAX_SEARCH_TIME: Long = 4
