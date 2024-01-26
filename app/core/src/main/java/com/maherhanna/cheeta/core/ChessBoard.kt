@@ -350,7 +350,7 @@ class ChessBoard {
         }
 
 
-    fun move(move: Move) {
+    fun makeMove(move: Move) {
         val fromSquare = move.from
         val toSquare = move.to
         val moveColor = move.color
@@ -441,7 +441,7 @@ class ChessBoard {
         toPlayColor = if (toPlayColor == Piece.WHITE) Piece.BLACK else Piece.WHITE
     }
 
-    fun unMove() {
+    fun unMakeMove() {
         val lastMove = moves.lastMove ?: return
         val fromSquare = lastMove.from
         val toSquare = lastMove.to
@@ -491,9 +491,9 @@ class ChessBoard {
         moves.removeLastMove()
     }
 
-    fun unMove(numberOfSteps: Int) {
+    fun unMakeMove(numberOfSteps: Int) {
         for (i in 0 until numberOfSteps) {
-            unMove()
+            unMakeMove()
         }
     }
 
@@ -744,6 +744,32 @@ class ChessBoard {
                 RANK_8 -> "8"
                 else -> "?"
             }
+        }
+        fun GetPositionFromNotation(notation: String): Int {
+            val rank = when(notation[1]){
+                '1'  ->  RANK_1
+                '2'  ->  RANK_2
+                '3'  ->  RANK_3
+                '4'  ->  RANK_4
+                '5'  ->  RANK_5
+                '6'  ->  RANK_6
+                '7'  ->  RANK_7
+                '8'  ->  RANK_8
+                else -> -1
+            }
+
+            val file = when(notation[0]){
+                'a'  ->  FILE_A
+                'b'  ->  FILE_B
+                'c'  ->  FILE_C
+                'd'  ->  FILE_D
+                'e'  ->  FILE_E
+                'f'  ->  FILE_F
+                'g'  ->  FILE_G
+                'h'  ->  FILE_H
+                else -> -1
+            }
+            return GetPosition(file,rank)
         }
 
         fun GetFileNotation(position: Int): String {

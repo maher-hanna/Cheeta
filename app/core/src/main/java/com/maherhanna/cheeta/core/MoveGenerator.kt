@@ -4,8 +4,7 @@ import com.maherhanna.cheeta.core.Piece.Companion.GetOppositeColor
 import com.maherhanna.cheeta.core.Piece.Companion.WHITE
 
 class MoveGenerator(
-    var blackPlayerLegalMoves: PlayerLegalMoves,
-    var whitePlayerLegalMoves: PlayerLegalMoves
+
 ) {
     // king pinned pieces
     var whiteKingPinnedPieces = LongArray(64)
@@ -19,6 +18,9 @@ class MoveGenerator(
 
     var isWhiteKingChecked: Boolean = false
     var isBlackKingChecked: Boolean = false
+
+    var blackPlayerLegalMoves: PlayerLegalMoves = PlayerLegalMoves()
+    var whitePlayerLegalMoves: PlayerLegalMoves = PlayerLegalMoves()
 
 
     //*****************************************************************************
@@ -152,7 +154,24 @@ class MoveGenerator(
         }
     }
 
-    fun getLegalMovesFor(color: Int): PlayerLegalMoves {
+    fun reset(){
+        whitePlayerLegalMoves = PlayerLegalMoves()
+        blackPlayerLegalMoves = PlayerLegalMoves()
+
+        whiteKingPinnedPieces = LongArray(64)
+        blackKingPinnedPieces = LongArray(64)
+
+        whiteKingCheckLine =  0L.inv()
+        blackKingCheckLine = 0L.inv()
+
+        whiteAttackedPieces = 0L
+        blackAttackedPieces = 0L
+
+        isWhiteKingChecked = false
+        isBlackKingChecked = false
+    }
+
+    fun generateLegalMovesFor(color: Int): PlayerLegalMoves {
         return if (color == Piece.WHITE) {
             whitePlayerLegalMoves
         } else {
@@ -180,11 +199,11 @@ class MoveGenerator(
     }
 
     fun updateBlackLegalMoves(chessBoard: ChessBoard) {
-        blackPlayerLegalMoves = getBlackLegalMoves(chessBoard)
+        blackPlayerLegalMoves = generateBlackLegalMoves(chessBoard)
     }
 
     fun updateWhiteLegalMoves(chessBoard: ChessBoard) {
-        whitePlayerLegalMoves = getWhiteLegalMoves(chessBoard)
+        whitePlayerLegalMoves = generateWhiteLegalMoves(chessBoard)
     }
 
     fun updateLegalMovesFor(chessBoard: ChessBoard, playerColor: Int) {
@@ -1376,7 +1395,7 @@ class MoveGenerator(
         return chessBoardAfterMove
     }
 
-    fun getWhiteLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
+    fun generateWhiteLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
         updateKingPinnedPieces(chessBoard, Piece.WHITE)
         val moves = getWhitePseudoLegalMoves(chessBoard)
         //removeMovesThatExposeKing(chessBoard, moves, Piece.WHITE)
@@ -1386,7 +1405,7 @@ class MoveGenerator(
         return playerLegalMoves
     }
 
-    fun getBlackLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
+    fun generateBlackLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
         updateKingPinnedPieces(chessBoard, Piece.BLACK)
         val moves = getBlackPseudoLegalMoves(chessBoard)
         //removeMovesThatExposeKing(chessBoard, moves, Piece.BLACK)
@@ -1397,11 +1416,11 @@ class MoveGenerator(
         return playerLegalMoves
     }
 
-    fun getLegalMovesFor(chessBoard: ChessBoard, color: Int): PlayerLegalMoves {
+    fun generateLegalMovesFor(chessBoard: ChessBoard, color: Int): PlayerLegalMoves {
         return if (color == Piece.WHITE) {
-            getWhiteLegalMoves(chessBoard)
+            generateWhiteLegalMoves(chessBoard)
         } else {
-            getBlackLegalMoves(chessBoard)
+            generateBlackLegalMoves(chessBoard)
         }
     }
 

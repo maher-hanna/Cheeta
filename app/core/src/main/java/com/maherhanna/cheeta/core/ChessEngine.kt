@@ -14,12 +14,27 @@ open class ChessEngine {
     private var searchTimeFinished = false
     private var alpha = LOSE_SCORE
     private var beta = WIN_SCORE
-    var moveGenerator = MoveGenerator(PlayerLegalMoves(), PlayerLegalMoves())
+    var moveGenerator = MoveGenerator()
+    var isUciMode = false
 
     //killerMove[id][ply]
     private var killerMove = Array(2) { arrayOfNulls<Move>(64) }
-    fun getMove(chessBoard: ChessBoard): Move {
 
+    fun reset(){
+        foundCheckMate = false
+        evaluations = 0
+        betaCutOffs = 0
+        maxingPlayer = 0
+        searchTimeFinished = false
+        alpha = LOSE_SCORE
+        beta = WIN_SCORE
+        moveGenerator = MoveGenerator()
+        isUciMode = false
+
+        killerMove = Array(2) { arrayOfNulls<Move>(64) }
+        moveGenerator.reset()
+    }
+    fun getMove(chessBoard: ChessBoard): Move {
         val startTime = System.nanoTime()
         //convert maximum search time from seconds to nano seconds
         val maxSearchTime = COMPUTER_MAX_SEARCH_TIME * 1000000000
@@ -28,7 +43,7 @@ open class ChessEngine {
         betaCutOffs = 0
         searchTimeFinished = false
         maxingPlayer = chessBoard.toPlayColor
-        var toPlayLegalMoves = moveGenerator.getLegalMovesFor(
+        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             maxingPlayer
         )
@@ -51,11 +66,15 @@ open class ChessEngine {
         } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
-        Logger.getLogger(DEBUG_TAG).log(Level.INFO,"evaluations " + evaluations +
-                " depth " + maxDepth +
-                "\nmove " + move.pieceName + " " + move.fromNotation + " to " + move.toNotation
-                + "\ntime " + duration.toFloat() / 1000000
-        )
+        if(!isUciMode){
+            Logger.getLogger(DEBUG_TAG).log(
+                Level.INFO, "evaluations " + evaluations +
+                        " depth " + maxDepth +
+                        "\nmove " + move.pieceName + " " + move.fromNotation + " to " + move.toNotation
+                        + "\ntime " + duration.toFloat() / 1000000
+            )
+
+        }
 //        Log.d(
 //            DEBUG_TAG, "evaluations: " + evaluations +
 //                    "\n beta cutoffs: " + betaCutOffs +
@@ -69,6 +88,19 @@ open class ChessEngine {
 
     }
 
+    fun makeMove(chessBoard: ChessBoard,moveNotation:String): Move? {
+        val playerColor = chessBoard.toPlayColor
+        val toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
+            chessBoard,
+            playerColor
+        )
+        val move = toPlayLegalMoves.getMove(Move(moveNotation))
+        if (move != null) {
+            chessBoard.makeMove(move)
+        }
+        return move
+    }
+
     private fun search(
         chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
@@ -79,12 +111,12 @@ open class ChessEngine {
         var score: Int
         var bestMove:Move? = null
         for (i in 0 until moves.size()) {
-            chessBoard.move(moves[i])
+            chessBoard.makeMove(moves[i])
             score = -negaMax(
                 chessBoard, -beta,
                 -alpha, (maxDepth - 1).toFloat(), 1
             )
-            chessBoard.unMove()
+            chessBoard.unMakeMove()
             if (score >= beta) {
                 bestMove = moves[i]
                 foundCheckMate = true
@@ -113,11 +145,11 @@ open class ChessEngine {
         if (quiescenceAlpha < eval) {
             quiescenceAlpha = eval
         }
-        var toPlayLegalMoves = moveGenerator.getLegalMovesFor(
+        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             toPlayColor
         )
-        val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
+        val gameStatus = checkStatus(chessBoard)
         if (isGameFinished(gameStatus)) {
             return getScoreFor(chessBoard, toPlayColor, gameStatus)
         } else {
@@ -128,12 +160,12 @@ open class ChessEngine {
         }
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
         for (i in 0 until toPlayLegalMoves.size()) {
-            chessBoard.move(toPlayLegalMoves[i])
+            chessBoard.makeMove(toPlayLegalMoves[i])
             val score = -quiescence(
                 chessBoard, -betaArg, -quiescenceAlpha,
                 ply + 1
             )
-            chessBoard.unMove()
+            chessBoard.unMakeMove()
             if (score >= betaArg) {
                 return betaArg
             }
@@ -153,11 +185,11 @@ open class ChessEngine {
     ): Int {
         var alpha = alphaArg
         val toPlayColor = chessBoard.toPlayColor
-        var toPlayLegalMoves = moveGenerator.getLegalMovesFor(
+        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             toPlayColor
         )
-        val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
+        val gameStatus = checkStatus(chessBoard)
         evaluations++
         if (depth == 0f) {
             return if (isGameFinished(gameStatus)) {
@@ -172,12 +204,12 @@ open class ChessEngine {
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
         var maxScore = LOSE_SCORE
         for (i in 0 until toPlayLegalMoves.size()) {
-            chessBoard.move(toPlayLegalMoves[i])
+            chessBoard.makeMove(toPlayLegalMoves[i])
             val score = -negaMax(
                 chessBoard, -beta, -alpha,
                 depth - 1, ply + 1
             )
-            chessBoard.unMove()
+            chessBoard.unMakeMove()
             maxScore = maxScore.coerceAtLeast(score)
             alpha = alpha.coerceAtLeast(score)
             if (score >= beta) {
@@ -270,9 +302,7 @@ open class ChessEngine {
         }
     }
 
-    private fun getWhiteScore(chessBoard: ChessBoard): Int {
-        return getPiecesValueFor(chessBoard, Piece.WHITE)
-    }
+
 
 
     private fun getScoreFor(chessBoard: ChessBoard, color: Int): Int {
@@ -308,19 +338,6 @@ open class ChessEngine {
         return value
     }
 
-    private fun getPiecesValueMinusKingFor(chessboard: ChessBoard, color: Int): Int {
-        var value = 0
-        val squares = if (color == Piece.WHITE) {
-            moveGenerator.getWhitePositions(chessboard)
-        } else {
-            moveGenerator.getBlackPositions(chessboard)
-        }
-        for (square in squares) {
-            if (chessboard.pieceType(square) == Piece.KING) continue
-            value += getPositionalValue(chessboard, square)
-        }
-        return value
-    }
 
     private fun getPositionalValue(chessBoard: ChessBoard, square: Int): Int {
         var value = 0
@@ -360,9 +377,10 @@ open class ChessEngine {
         return (whitePiecesCount + blackPiecesCount) <= 7
     }
 
-    fun checkStatus(chessBoard: ChessBoard, toPlayPlayerLegalMoves: PlayerLegalMoves): GameStatus {
+    fun checkStatus(chessBoard: ChessBoard): GameStatus {
         val lastPlayed = chessBoard.moves.lastPlayed
         var gameStatus = GameStatus.NOT_FINISHED
+        val toPlayPlayerLegalMoves = moveGenerator.generateLegalMovesFor(chessBoard,chessBoard.toPlayColor)
         if (toPlayPlayerLegalMoves.size() == 0) {
             return  if (moveGenerator.isKingChecked(chessBoard.toPlayColor)) {
                 //win
