@@ -3,7 +3,7 @@ package com.maherhanna.cheeta.core
 import java.util.Objects
 
 class Move {
-    private var bitValue: Long
+    private var bitValue: Long = 0
     var from: Int
         get() = BitMath.getBitsValue(bitValue, FROM_START, FROM_MASK).toInt()
         set(position) {
@@ -15,6 +15,10 @@ class Move {
 
     val toNotation: String
         get() = ChessBoard.GetFileNotation(to) + ChessBoard.GetRankNotation(to)
+
+    val notation: String
+        get() = fromNotation + toNotation
+
 
     var to: Int
         get() = BitMath.getBitsValue(bitValue, TO_START, TO_MASK).toInt()
@@ -70,6 +74,10 @@ class Move {
 
     constructor(copy: Move) {
         bitValue = copy.bitValue
+    }
+    constructor(notation: String) {
+        from = ChessBoard.GetPositionFromNotation(notation.substring(0,2))
+        to = ChessBoard.GetPositionFromNotation(notation.substring(2,4))
     }
 
     val isCastling: Boolean

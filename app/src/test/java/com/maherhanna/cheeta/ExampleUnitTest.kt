@@ -18,7 +18,7 @@ import org.junit.Test
  */
 class ExampleUnitTest {
     val chessBoard = ChessBoard(ChessBoard.positionInUse)
-    val moveGenerator = MoveGenerator(PlayerLegalMoves(), PlayerLegalMoves())
+    val moveGenerator = MoveGenerator()
 
     @Before
     fun setup() {
@@ -99,12 +99,12 @@ class ExampleUnitTest {
         if (depth == 0)
             return 1UL;
 
-        val move_list = moveGenerator.getLegalMovesFor(chessBoard, chessBoard.toPlayColor);
+        val move_list = moveGenerator.generateLegalMovesFor(chessBoard, chessBoard.toPlayColor);
         val n_moves = move_list.size()
         for (i in 0 until n_moves) {
-            chessBoard.move(move_list[i]);
+            chessBoard.makeMove(move_list[i]);
             nodes += Perft(depth - 1, chessBoard, moveGenerator);
-            chessBoard.unMove();
+            chessBoard.unMakeMove();
         }
         return nodes;
     }
@@ -122,12 +122,12 @@ class ExampleUnitTest {
 
         }
 
-        val move_list = moveGenerator.getLegalMovesFor(chessBoard, chessBoard.toPlayColor);
+        val move_list = moveGenerator.generateLegalMovesFor(chessBoard, chessBoard.toPlayColor);
         val n_moves = move_list.size()
         for (i in 0 until n_moves) {
-            chessBoard.move(move_list[i]);
+            chessBoard.makeMove(move_list[i]);
             nodes += PerftCaptures(depth - 1, chessBoard, moveGenerator, move_list[i].isTake);
-            chessBoard.unMove();
+            chessBoard.unMakeMove();
         }
         return nodes;
     }
@@ -144,17 +144,17 @@ class ExampleUnitTest {
             return if (isCheck) 1UL else 0UL
         }
         val toPlayColor = chessBoard.toPlayColor
-        val move_list = moveGenerator.getLegalMovesFor(chessBoard, toPlayColor);
+        val move_list = moveGenerator.generateLegalMovesFor(chessBoard, toPlayColor);
         val n_moves = move_list.size()
         for (i in 0 until n_moves) {
-            chessBoard.move(move_list[i]);
+            chessBoard.makeMove(move_list[i]);
             nodes += PerftChecks(
                 depth - 1,
                 chessBoard,
                 moveGenerator,
                 moveGenerator.isKingAttacked(chessBoard,chessBoard.toPlayColor)
             )
-            chessBoard.unMove()
+            chessBoard.unMakeMove()
         }
         return nodes;
     }

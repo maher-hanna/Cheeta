@@ -37,15 +37,13 @@ class PlayerLegalMoves {
         legalMoves.addAll(moves!!)
     }
 
-    fun getMove(basicMove: Move): Move {
-        var legalMove = Move(basicMove)
+    fun getMove(basicMove: Move): Move? {
         for (move in legalMoves) {
             if (move.from == basicMove.from && move.to == basicMove.to) {
-                legalMove = Move(move)
-                break
+                return move
             }
         }
-        return legalMove
+        return null
     }
 
     fun removeNonTake() {
