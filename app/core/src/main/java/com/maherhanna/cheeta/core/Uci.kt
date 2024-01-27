@@ -5,7 +5,7 @@ class Uci {
     var chessBoard = ChessBoard(ChessBoard.startPosition)
     fun parseInput(input: String): String {
         var response = ""
-        val splitWords = input.split("\\s+".toRegex())
+        val splitWords = input.trim().split("\\s+".toRegex())
 
         when (splitWords[0]) {
             "uci" -> {
@@ -34,7 +34,10 @@ class Uci {
                 engine.isUciMode = true
                 chessBoard = ChessBoard(ChessBoard.startPosition)
                 if (splitWords[1] == "fen") {
-                    chessBoard = ChessBoard(splitWords[2])
+                    val fenStringIndex = input.indexOf("fen") + 3
+                    val fenStringEndIndex = if(input.contains("moves")) input.indexOf("moves") else input.length
+                    val fenString = input.substring(fenStringIndex,fenStringEndIndex)
+                    chessBoard = ChessBoard(fenString)
                 }
                 if(splitWords.contains("moves")){
                     val firstMoveIndex = splitWords.indexOf("moves") + 1

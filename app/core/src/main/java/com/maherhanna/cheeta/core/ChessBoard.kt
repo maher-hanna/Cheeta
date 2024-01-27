@@ -208,19 +208,25 @@ class ChessBoard {
 
 
         //parse En passant target square
-        if (fenString[currentChar] == '-') enPassantTarget = NO_SQUARE
-        enPassantTarget = Square(fenString.substring(currentChar, currentChar + 2))
+        enPassantTarget = if (fenString[currentChar] == '-')  NO_SQUARE
+        else Square(fenString.substring(currentChar, currentChar + 2))
         currentChar++
 
         //skip space
         currentChar++
-        val scanner = Scanner(fenString.substring(currentChar))
 
-        //parse number of half moves since last pawn or capture occured
-        fiftyMovesDrawCount = scanner.nextInt()
+        try{
+            val scanner = Scanner(fenString.substring(currentChar))
 
-        //parse full move count since start of game
-        fullMovesCount = scanner.nextInt()
+            //parse number of half moves since last pawn or capture occured
+            fiftyMovesDrawCount = scanner.nextInt()
+
+            //parse full move count since start of game
+            fullMovesCount = scanner.nextInt()
+        }catch (ex:Exception){
+            fiftyMovesDrawCount = 0
+            fullMovesCount = 0
+        }
         val startState = State(allPieces, enPassantTarget, blackCastlingRights, whiteCastlingRights)
         states.add(startState)
 

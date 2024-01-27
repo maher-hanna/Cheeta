@@ -48,14 +48,14 @@ class ExampleUnitTest {
                 val randomPlayerIndex = random.nextInt(2)
                 var currentPlayerIndex = randomPlayerIndex
                 if(currentPlayerIndex == 0){
-                    uci.parseInput("position startpos")
+                        uci.parseInput("position fen r1bqk2r/4npbp/p2p1p2/1p1Np3/4P3/N2B4/PPP2PPP/R2QK2R w KQkq -")
                     val move = uci.parseInput("go infinite")
                     val splits = move.trim().split("\\s+".toRegex())
                     if(splits.size > 1){
                         movesList += splits[1] + " "
                     }
                 } else {
-                    uci.parseInput("position startpos")
+                    uci.parseInput("position fen r1bqk2r/4npbp/p2p1p2/1p1Np3/4P3/N2B4/PPP2PPP/R2QK2R w KQkq -")
                     val move = uci.parseInput("go infinite")
                     val splits = move.trim().split("\\s+".toRegex())
                     if(splits.size > 1){
@@ -67,14 +67,14 @@ class ExampleUnitTest {
                     currentPlayerIndex = currentPlayerIndex xor 1
 
                     if(currentPlayerIndex == 0){
-                        uci.parseInput("position startpos moves $movesList")
+                        uci.parseInput("position fen r1bqk2r/4npbp/p2p1p2/1p1Np3/4P3/N2B4/PPP2PPP/R2QK2R w KQkq - moves $movesList")
                         val move = uci.parseInput("go infinite")
                         val splits = move.trim().split("\\s+".toRegex())
                         if(splits.size > 1){
                             movesList += splits[1] + " "
                         }
                     } else{
-                        uci.parseInput("position startpos moves $movesList")
+                        uci.parseInput("position fen r1bqk2r/4npbp/p2p1p2/1p1Np3/4P3/N2B4/PPP2PPP/R2QK2R w KQkq - moves $movesList")
                         val move = uci.parseInput("go infinite")
                         val splits = move.trim().split("\\s+".toRegex())
                         if(splits.size > 1){
