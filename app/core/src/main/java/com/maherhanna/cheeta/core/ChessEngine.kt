@@ -20,7 +20,7 @@ open class ChessEngine {
     //killerMove[id][ply]
     private var killerMove = Array(2) { arrayOfNulls<Move>(64) }
 
-    fun reset(){
+    fun reset() {
         foundCheckMate = false
         evaluations = 0
         betaCutOffs = 0
@@ -34,6 +34,7 @@ open class ChessEngine {
         killerMove = Array(2) { arrayOfNulls<Move>(64) }
         moveGenerator.reset()
     }
+
     fun getMove(chessBoard: ChessBoard): Move {
         val startTime = System.nanoTime()
         //convert maximum search time from seconds to nano seconds
@@ -50,7 +51,7 @@ open class ChessEngine {
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var maxDepth = 0
         var timeLeft: Long
-        var move:Move = toPlayLegalMoves[0]
+        var move: Move = toPlayLegalMoves[0]
         alpha = LOSE_SCORE
         beta = WIN_SCORE
         do {
@@ -66,7 +67,7 @@ open class ChessEngine {
         } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
-        if(!isUciMode){
+        if (!isUciMode) {
             Logger.getLogger(DEBUG_TAG).log(
                 Level.INFO, "evaluations " + evaluations +
                         " depth " + maxDepth +
@@ -88,7 +89,7 @@ open class ChessEngine {
 
     }
 
-    fun makeMove(chessBoard: ChessBoard,moveNotation:String): Move? {
+    fun makeMove(chessBoard: ChessBoard, moveNotation: String): Move? {
         val playerColor = chessBoard.toPlayColor
         val toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
@@ -106,10 +107,10 @@ open class ChessEngine {
         moves: PlayerLegalMoves,
         timeLeft: Long,
         maxDepth: Int,
-        ): Move? {
+    ): Move? {
         val searchStart = System.nanoTime()
         var score: Int
-        var bestMove:Move? = null
+        var bestMove: Move? = null
         for (i in 0 until moves.size()) {
             chessBoard.makeMove(moves[i])
             score = -negaMax(
@@ -138,25 +139,26 @@ open class ChessEngine {
     private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {
         var quiescenceAlpha = alphaArg
         val toPlayColor = chessBoard.toPlayColor
-        val eval = getScoreFor(chessBoard, toPlayColor)
+        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
+            chessBoard,
+            toPlayColor
+        )
+        val gameStatus = checkStatus(chessBoard)
+        val eval = evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
         if (eval >= betaArg) {
             return betaArg
         }
         if (quiescenceAlpha < eval) {
             quiescenceAlpha = eval
         }
-        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
-            chessBoard,
-            toPlayColor
-        )
-        val gameStatus = checkStatus(chessBoard)
+
         if (isGameFinished(gameStatus)) {
-            return getScoreFor(chessBoard, toPlayColor, gameStatus)
+            return evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
         } else {
             toPlayLegalMoves.removeNonTake()
         }
         if (toPlayLegalMoves.size() == 0) {
-            return getScoreFor(chessBoard, toPlayColor)
+            return evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
         }
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
         for (i in 0 until toPlayLegalMoves.size()) {
@@ -303,39 +305,65 @@ open class ChessEngine {
     }
 
 
+    private fun evaluate(
+        chessBoard: ChessBoard,
+        color: Int,
+        whiteLegalMoves: PlayerLegalMoves,
+        blackLegalMoves: PlayerLegalMoves
+    ): Int {
+        val numWhiteKings = BitMath.countSetBits(chessBoard.whiteKing)
+        val numBlackKings = BitMath.countSetBits(chessBoard.blackKing)
+        val numWhiteQueens = BitMath.countSetBits(chessBoard.whiteQueens)
+        val numBlackQueues = BitMath.countSetBits(chessBoard.blackQueens)
+        val numWhiteRooks = BitMath.countSetBits(chessBoard.whiteRooks)
+        val numBlackRooks = BitMath.countSetBits(chessBoard.blackRooks)
+        val numWhiteBishops = BitMath.countSetBits(chessBoard.whiteBishops)
+        val numBlackBishops = BitMath.countSetBits(chessBoard.blackBishops)
+        val numWhiteKnights = BitMath.countSetBits(chessBoard.whiteKnights)
+        val numBlackKnights = BitMath.countSetBits(chessBoard.blackKnights)
+        val numWhitePawns = BitMath.countSetBits(chessBoard.whitePawns)
+        val numBlackPawns = BitMath.countSetBits(chessBoard.blackPawns)
 
+        val numPiecesScore = Piece.KING_VALUE * (numWhiteKings - numBlackKings) +
+                Piece.QUEEN_VALUE * (numWhiteQueens - numBlackQueues) +
+                Piece.ROOK_VALUE * (numWhiteRooks - numBlackRooks) +
+                Piece.BISHOP_VALUE * (numWhiteBishops - numBlackBishops) +
+                Piece.KNIGHT_VALUE * (numWhiteKnights - numBlackKnights) +
+                Piece.PAWN_VALUE * (numWhitePawns - numBlackPawns)
 
-    private fun getScoreFor(chessBoard: ChessBoard, color: Int): Int {
+        val whitePiecePositionValue = getPiecesPositionalValueFor(chessBoard, Piece.WHITE)
+        val blackPiecePositionValue = getPiecesPositionalValueFor(chessBoard, Piece.BLACK)
+
+        val piecesPositionalValue = whitePiecePositionValue - blackPiecePositionValue
+
+        val mobilityScore = MOBILITY_SCORE * (whiteLegalMoves.size() - blackLegalMoves.size())
+        val score = numPiecesScore + piecesPositionalValue + mobilityScore
+
         return if (color == Piece.WHITE) {
-            getPiecesValueFor(chessBoard, Piece.WHITE) - getPiecesValueFor(chessBoard, Piece.BLACK)
+            score
         } else {
-            getPiecesValueFor(chessBoard, Piece.BLACK) - getPiecesValueFor(chessBoard, Piece.WHITE)
+            -score
         }
     }
 
-    private fun getScoreFor(chessBoard: ChessBoard, color: Int, gameStatus: GameStatus): Int {
+    private fun evaluate(
+        chessBoard: ChessBoard,
+        color: Int,
+        gameStatus: GameStatus,
+        toPlayLegalMoves: PlayerLegalMoves
+    ): Int {
         return if (isGameFinished(gameStatus)) {
             getGameFinishedScoreFor(gameStatus, color)
         } else {
             if (color == Piece.WHITE) {
-                getPiecesValueFor(chessBoard, Piece.WHITE) - getPiecesValueFor(chessBoard, Piece.BLACK)
+                val blackLegalMoves = moveGenerator.generateBlackLegalMoves(chessBoard)
+                evaluate(chessBoard, color,toPlayLegalMoves,blackLegalMoves)
             } else {
-                getPiecesValueFor(chessBoard, Piece.BLACK) - getPiecesValueFor(chessBoard, Piece.WHITE)
+                val whiteLegalMoves = moveGenerator.generateWhiteLegalMoves(chessBoard)
+                evaluate(chessBoard, color,whiteLegalMoves,toPlayLegalMoves)
+
             }
         }
-    }
-
-    private fun getPiecesValueFor(chessboard: ChessBoard, color: Int): Int {
-        var value = 0
-        val squares = if (color == Piece.WHITE) {
-            moveGenerator.getWhitePositions(chessboard)
-        } else {
-            moveGenerator.getBlackPositions(chessboard)
-        }
-        for (square in squares) {
-            value += getPositionalValue(chessboard, square)
-        }
-        return value
     }
 
 
@@ -350,16 +378,29 @@ open class ChessEngine {
         }
         val piecePositionOnTable = GetPosition(file, rank)
         when (chessBoard.pieceType(square)) {
-            Piece.PAWN -> value += Piece.PAWN_VALUE + PAWN_SQUARES_TABLE[piecePositionOnTable]
-            Piece.ROOK -> value += Piece.ROOK_VALUE + ROOK_SQUARES_TABLE[piecePositionOnTable]
-            Piece.KNIGHT -> value += Piece.KNIGHT_VALUE + KNIGHT_SQUARES_TABLE[piecePositionOnTable]
-            Piece.BISHOP -> value += Piece.BISHOP_VALUE + BISHOP_SQUARES_TABLE[piecePositionOnTable]
-            Piece.QUEEN -> value += Piece.QUEEN_VALUE + QUEEN_SQUARES_TABLE[piecePositionOnTable]
+            Piece.PAWN -> value += PAWN_SQUARES_TABLE[piecePositionOnTable]
+            Piece.ROOK -> value += ROOK_SQUARES_TABLE[piecePositionOnTable]
+            Piece.KNIGHT -> value += KNIGHT_SQUARES_TABLE[piecePositionOnTable]
+            Piece.BISHOP -> value += BISHOP_SQUARES_TABLE[piecePositionOnTable]
+            Piece.QUEEN -> value += QUEEN_SQUARES_TABLE[piecePositionOnTable]
             Piece.KING -> value += if (isEndGame(chessBoard)) {
-                Piece.KING_VALUE + KING_END_GAME_SQUARES_TABLE[piecePositionOnTable]
+                KING_END_GAME_SQUARES_TABLE[piecePositionOnTable]
             } else {
-                Piece.KING_VALUE + KING_MIDDLE_GAME_SQUARES_TABLE[piecePositionOnTable]
+                KING_MIDDLE_GAME_SQUARES_TABLE[piecePositionOnTable]
             }
+        }
+        return value
+    }
+
+    private fun getPiecesPositionalValueFor(chessboard: ChessBoard, color: Int): Int {
+        var value = 0
+        val squares = if (color == Piece.WHITE) {
+            moveGenerator.getWhitePositions(chessboard)
+        } else {
+            moveGenerator.getBlackPositions(chessboard)
+        }
+        for (square in squares) {
+            value += getPositionalValue(chessboard, square)
         }
         return value
     }
@@ -380,9 +421,10 @@ open class ChessEngine {
     fun checkStatus(chessBoard: ChessBoard): GameStatus {
         val lastPlayed = chessBoard.moves.lastPlayed
         var gameStatus = GameStatus.NOT_FINISHED
-        val toPlayPlayerLegalMoves = moveGenerator.generateLegalMovesFor(chessBoard,chessBoard.toPlayColor)
+        val toPlayPlayerLegalMoves =
+            moveGenerator.generateLegalMovesFor(chessBoard, chessBoard.toPlayColor)
         if (toPlayPlayerLegalMoves.size() == 0) {
-            return  if (moveGenerator.isKingChecked(chessBoard.toPlayColor)) {
+            return if (moveGenerator.isKingChecked(chessBoard.toPlayColor)) {
                 //win
                 if (lastPlayed == Piece.WHITE) {
                     GameStatus.FINISHED_WIN_WHITE
@@ -425,6 +467,8 @@ open class ChessEngine {
 
         private const val LOSE_SCORE = -1000000
         private const val WIN_SCORE = 1000000
+
+        private const val MOBILITY_SCORE = 10
 
         // pieces start game value tables
         var PAWN_SQUARES_TABLE = intArrayOf(
