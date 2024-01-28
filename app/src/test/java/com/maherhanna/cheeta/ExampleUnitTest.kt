@@ -21,6 +21,7 @@ import java.util.Random
  */
 class ExampleUnitTest {
     val chessBoard = ChessBoard(ChessBoard.positionInUse)
+    val chessBoard2 = ChessBoard(ChessBoard.KiwipetePosition)
     val moveGenerator = MoveGenerator()
 
     @Before
@@ -145,6 +146,27 @@ class ExampleUnitTest {
     }
 
     @Test
+    fun moveGeneratorMoves2() {
+
+        val perftResults = listOf<ULong>(
+            48UL,
+            2039UL,
+            97862UL,
+            4085603UL,
+            193690690UL,
+            8031647685UL,
+        )
+
+        for (i in 1 until 7) {
+            val perftResult = Perft(i, chessBoard2, moveGenerator)
+            if(perftResults[i - 1] != perftResult){
+                Log.d(ChessEngine.DEBUG_TAG,"depth: ${i}")
+            }
+            assertEquals(perftResults[i - 1], perftResult)
+
+        }
+    }
+    @Test
     fun moveGeneratorCaptures() {
         val perftCaptureResults = listOf<ULong>(
             0UL,
@@ -160,6 +182,24 @@ class ExampleUnitTest {
         for (i in 1 until 7) {
             val perftResult = PerftCaptures(i, chessBoard, moveGenerator, false)
             assertEquals(perftCaptureResults[i], perftResult)
+
+        }
+    }
+
+    @Test
+    fun moveGeneratorCaptures2() {
+        val perftCaptureResults = listOf<ULong>(
+            8UL,
+            351UL,
+            17102UL,
+            757163UL,
+            35043416UL,
+            1558445089UL,
+
+        )
+        for (i in 1 until 7) {
+            val perftResult = PerftCaptures(i, chessBoard2, moveGenerator, false)
+            assertEquals(perftCaptureResults[i - 1], perftResult)
 
         }
     }
