@@ -104,7 +104,9 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
         val engineThread = object : Thread() {
             override fun run() {
                 val move = chessEngine.getMove(ChessBoard(chessBoard))
-                computerPlayed(move)
+                if (move != null) {
+                    computerPlayed(move)
+                }
             }
         }
         engineThread.start()

@@ -35,7 +35,7 @@ open class ChessEngine {
         moveGenerator.reset()
     }
 
-    fun getMove(chessBoard: ChessBoard): Move {
+    fun getMove(chessBoard: ChessBoard): Move? {
         val startTime = System.nanoTime()
         //convert maximum search time from seconds to nano seconds
         val maxSearchTime = COMPUTER_MAX_SEARCH_TIME * 1000000000
@@ -51,7 +51,7 @@ open class ChessEngine {
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var maxDepth = 0
         var timeLeft: Long
-        var move: Move = toPlayLegalMoves[0]
+        var move: Move? = null
         alpha = LOSE_SCORE
         beta = WIN_SCORE
         do {
@@ -71,7 +71,7 @@ open class ChessEngine {
             Logger.getLogger(DEBUG_TAG).log(
                 Level.INFO, "evaluations " + evaluations +
                         " depth " + maxDepth +
-                        "\nmove " + move.pieceName + " " + move.fromNotation + " to " + move.toNotation
+                        "\nmove " + move?.pieceName.toString() + " " + move?.fromNotation.toString() + " to " + move?.toNotation.toString()
                         + "\ntime " + duration.toFloat() / 1000000
             )
 

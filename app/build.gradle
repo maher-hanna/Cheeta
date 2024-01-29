@@ -29,6 +29,14 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+    sourceSets {
+
+        test {
+            resources {
+                srcDirs 'src/test/res/assets'
+            }
+        }
+    }
     namespace 'com.maherhanna.cheeta'
 
     applicationVariants.configureEach {

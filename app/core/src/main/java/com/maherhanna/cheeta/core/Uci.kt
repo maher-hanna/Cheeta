@@ -48,7 +48,7 @@ class Uci {
 
             "go" -> {
                 val move = engine.getMove(chessBoard)
-                response = "bestmove ${move.notation}\n"
+                response = "bestmove ${move?.notation}\n"
             }
 
             "check_status" -> {
