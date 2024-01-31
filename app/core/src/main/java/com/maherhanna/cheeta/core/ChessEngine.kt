@@ -59,7 +59,7 @@ open class ChessEngine {
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
             val currentSearchMove =
-                search(chessBoard, toPlayLegalMoves, timeLeft,maxSearchTime, maxDepth)
+                search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
 
             if (currentSearchMove != null) {
                 move = currentSearchMove
@@ -106,10 +106,9 @@ open class ChessEngine {
         chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
         timeLeft: Long,
-        maxSearchTime : Long,
         maxDepth: Int,
     ): Move? {
-        if(timeLeft > maxSearchTime){
+        if(timeLeft < 0){
             searchTimeFinished = true
             return null
         }
