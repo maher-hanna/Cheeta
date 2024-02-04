@@ -13,5 +13,7 @@
     <string name="play_as_black">Black</string>
     <string name="finish_game_yes">Yes</string>
     <string name="finish_game_no">No</string>
+    <string name="chessboard">Chess Board</string>
+    <string name="chess_piece">Chess piece</string>
 
 </resources>

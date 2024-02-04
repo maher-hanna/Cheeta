@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         supportActionBar!!.hide()
         setContentView(R.layout.activity_main)
-        btn_start = findViewById(R.id.btn_start) as Button
+        btn_start = findViewById<Button>(R.id.btn_start)
         rb_white = findViewById(R.id.rb_white)
         rb_black = findViewById(R.id.rb_black)
         btn_start.setOnClickListener(View.OnClickListener {

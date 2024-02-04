@@ -13,6 +13,10 @@
             android:name=".GameActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".GameActivityNewUi"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait" />
         <activity android:name=".MainActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait"
@@ -23,6 +27,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>
