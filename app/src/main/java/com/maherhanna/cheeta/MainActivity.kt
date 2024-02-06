@@ -25,23 +25,27 @@ class MainActivity : AppCompatActivity() {
     private final var TAG = "MainActivity"
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        MobileAds.initialize(this) {  }
+        MobileAds.initialize(this) { }
 
         var adRequest = AdRequest.Builder().build()
 
-        InterstitialAd.load(this,"ca-app-pub-3940256099942544/1033173712", adRequest, object : InterstitialAdLoadCallback() {
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.d(TAG, adError.toString())
-                mInterstitialAd = null
-            }
+        InterstitialAd.load(
+            this,
+            "ca-app-pub-3940256099942544/1033173712",
+            adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.d(TAG, adError.toString())
+                    mInterstitialAd = null
+                }
 
-            override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                Log.d(TAG, "Ad was loaded.")
-                mInterstitialAd = interstitialAd
-            }
-        })
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    Log.d(TAG, "Ad was loaded.")
+                    mInterstitialAd = interstitialAd
+                }
+            })
 
-        mInterstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
+        mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdClicked() {
                 // Called when a click is recorded for an ad.
                 Log.d(TAG, "Ad was clicked.")
@@ -75,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         rb_white = findViewById(R.id.rb_white)
         rb_black = findViewById(R.id.rb_black)
         btn_start.setOnClickListener(View.OnClickListener {
-            val gameIntent = Intent(this@MainActivity, GameActivity::class.java)
+            val gameIntent = Intent(this@MainActivity, GameActivityNewUi::class.java)
             var humanPiecesColor = Piece.WHITE
             if (rb_black.isChecked()) humanPiecesColor = Piece.BLACK
             gameIntent.putExtra("humanPiecesColor", humanPiecesColor)

@@ -16,7 +16,7 @@ class GameActivityNewUi : ComponentActivity() {
         val humanPlayerColor = intent.getIntExtra("humanPiecesColor", Piece.WHITE)
         setContent{
             MaterialTheme{
-                GameScreen()
+                GameScreen(humanPlayerColor = humanPlayerColor)
             }
         }
     }
