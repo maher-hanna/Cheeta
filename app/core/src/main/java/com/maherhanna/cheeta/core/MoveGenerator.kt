@@ -171,7 +171,7 @@ class MoveGenerator(
         isBlackKingChecked = false
     }
 
-    fun generateLegalMovesFor(color: Int): PlayerLegalMoves {
+    fun getLegalMovesFor(color: Int): PlayerLegalMoves {
         return if (color == Piece.WHITE) {
             whitePlayerLegalMoves
         } else {

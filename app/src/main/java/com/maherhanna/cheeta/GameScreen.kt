@@ -1,8 +1,10 @@
 package com.maherhanna.cheeta
 
-import android.view.MotionEvent
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,18 +13,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -30,29 +34,88 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.toSize
 import com.maherhanna.cheeta.core.ChessBoard
+import com.maherhanna.cheeta.core.Move
 import com.maherhanna.cheeta.core.MoveGenerator
 import com.maherhanna.cheeta.core.Piece
+import com.maherhanna.cheeta.core.PlayerLegalMoves
+import com.maherhanna.cheeta.core.Uci
+import kotlinx.coroutines.launch
 import kotlin.math.floor
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun GameScreen(humanPlayerColor: Int) {
-    val chessBoard = ChessBoard(ChessBoard.positionInUse)
+fun GameScreen(playerColor: Int) {
+    val computerColor = Piece.GetOppositeColor(playerColor)
+    val chessBoard by remember {
+        mutableStateOf(ChessBoard(ChessBoard.positionInUse))
+    }
     val moveGenerator = MoveGenerator()
-    var humanTurn by remember { mutableStateOf(humanPlayerColor == Piece.WHITE) }
+    var playerTurn by remember { mutableStateOf(playerColor == Piece.WHITE) }
+    var playerLegalMoves by remember {
+        mutableStateOf(PlayerLegalMoves())
+    }
+    var computerLegalMoves by remember {
+        mutableStateOf(PlayerLegalMoves())
+    }
+    var playerSelectedPieceLegalTargets by remember {
+        mutableStateOf(emptyList<Int>())
+    }
+    val uci by remember {
+        mutableStateOf(Uci())
+    }
     var chessBoardImageSize by remember { mutableStateOf(Size.Zero) }
     val squareSize by remember {
         derivedStateOf { chessBoardImageSize.width / 8 }
     }
-    var draggedPieceIndex by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
+    var fromIndex by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
+    var touchStartPosition by remember {
+        mutableStateOf(Offset(0f, 0f))
+    }
+    var dragXOffset by remember {
+        mutableFloatStateOf(0f)
+    }
+    var dragYOffset by remember {
+        mutableFloatStateOf(0f)
+    }
+    val scope = rememberCoroutineScope()
 
+    LaunchedEffect(true) {
+        playerLegalMoves = moveGenerator.generateLegalMovesFor(chessBoard, playerColor)
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(Unit) {
+                    detectTapGestures(onPress = { offset ->
+                        touchStartPosition = Offset(
+                            offset.x,
+                            offset.y
+                        )
+                        fromIndex = getTouchSquare(
+                            chessBoardHeight = chessBoardImageSize.height,
+                            x = offset.x,
+                            y = offset.y,
+                            squareSize = squareSize,
+                        )
+                        if (!canSelect(
+                                chessBoard = chessBoard,
+                                position = fromIndex,
+                                playerColor = playerColor
+                            )
+                        ) {
+                            fromIndex = ChessBoard.NO_SQUARE
+                        }
+
+                        playerSelectedPieceLegalTargets =
+                            playerLegalMoves.getLegalTargetsFor(
+                                fromIndex
+                            )
+                    })
+                },
         ) {
             Image(
                 modifier = Modifier
@@ -66,17 +129,15 @@ fun GameScreen(humanPlayerColor: Int) {
 
             for (i in ChessBoard.MIN_POSITION..ChessBoard.MAX_POSITION) {
                 if (!chessBoard.isSquareEmpty(i)) {
-                    val index = if (humanPlayerColor == Piece.WHITE) {
+                    val index = if (playerColor == Piece.WHITE) {
                         ChessBoard.MAX_POSITION - i
                     } else {
                         i
                     }
-                    var pieceXOffset by remember {
-                        mutableFloatStateOf(0f)
-                    }
-                    var pieceYOffset by remember {
-                        mutableFloatStateOf(0f)
-                    }
+                    Log.d(
+                        TAG,
+                        "GameScreen: i: $i fromIndex: $fromIndex dragXOffset $dragXOffset dragYOffset $dragYOffset"
+                    )
 
                     Image(
                         modifier = Modifier
@@ -84,48 +145,79 @@ fun GameScreen(humanPlayerColor: Int) {
                                 x = with(LocalDensity.current) {
                                     (ChessBoard.GetFile(
                                         i
-                                    ) * squareSize + pieceXOffset).toDp()
+                                    ) * squareSize + if (i == fromIndex) dragXOffset else 0f).toDp()
                                 },
                                 y = with(LocalDensity.current) {
                                     (ChessBoard.GetRank(
-                                        i
-                                    ) * squareSize + pieceYOffset).toDp()
+                                        index
+                                    ) * squareSize + if (i == fromIndex) dragYOffset else 0f).toDp()
                                 }
                             )
                             .size(with(LocalDensity.current) { squareSize.toDp() })
                             .pointerInput(Unit) {
                                 detectDragGestures(onDrag = { change, offset ->
                                     change.consume()
-                                    if (draggedPieceIndex != ChessBoard.NO_SQUARE) {
-                                        pieceXOffset += offset.x
-                                        pieceYOffset += offset.y
+                                    if (fromIndex != ChessBoard.NO_SQUARE) {
+                                        dragXOffset += offset.x
+                                        dragYOffset += offset.y
                                     }
 
                                 }, onDragStart = {
-                                    draggedPieceIndex = getTouchSquare(
-                                        chessBoardHeight = chessBoardImageSize.height,
-                                        x = it.x + (ChessBoard.GetFile(i) * squareSize),
-                                        y = it.y + (ChessBoard.GetRank(i) * squareSize),
-                                        squareSize = squareSize,
-                                        humanPlayerColor = humanPlayerColor
-                                    )
-                                    if (!canSelect(
-                                            chessBoard = chessBoard,
-                                            position = draggedPieceIndex,
-                                            humanPlayerColor = humanPlayerColor
-                                        )
-                                    ) {
-                                        draggedPieceIndex = ChessBoard.NO_SQUARE
-                                    }
-                                    if (draggedPieceIndex == ChessBoard.NO_SQUARE) {
-                                        pieceXOffset = 0f
-                                        pieceYOffset = 0f
+
+                                    if (!playerTurn || fromIndex == ChessBoard.NO_SQUARE) {
+                                        dragXOffset = 0f
+                                        dragYOffset = 0f
+
                                     }
 
                                 },
                                     onDragEnd = {
-                                        pieceXOffset = 0f
-                                        pieceYOffset = 0f
+                                        val toIndex = getTouchSquare(
+                                            chessBoardHeight = chessBoardImageSize.height,
+                                            x = touchStartPosition.x + dragXOffset,
+                                            y = touchStartPosition.y + dragYOffset,
+                                            squareSize = squareSize,
+                                        )
+                                        if (playerSelectedPieceLegalTargets.contains(toIndex)) {
+                                            dragXOffset = 0f
+                                            dragYOffset = 0f
+                                            val playerMove = playerLegalMoves
+                                                .searchMove(fromIndex, toIndex)
+                                            if (playerMove != null) {
+                                                chessBoard.makeMove(playerMove)
+                                                playerTurn = !playerTurn
+                                                computerLegalMoves =
+                                                    moveGenerator.generateLegalMovesFor(
+                                                        chessBoard,
+                                                        computerColor
+                                                    )
+
+                                            }
+                                            scope.launch {
+                                                uci.parseInput("position startpos moves " + chessBoard.moves.notation)
+                                                var computerMoveNotation =
+                                                    uci.parseInput("go infinite")
+                                                computerMoveNotation = computerMoveNotation
+                                                    .removePrefix("bestmove")
+                                                    .trim()
+                                                val computerMove = computerLegalMoves.searchMove(
+                                                    Move(computerMoveNotation)
+                                                )
+                                                if (computerMove != null) {
+                                                    chessBoard.makeMove(computerMove)
+                                                    playerTurn = !playerTurn
+                                                    playerLegalMoves =
+                                                        moveGenerator.generateLegalMovesFor(
+                                                            chessBoard,
+                                                            playerColor
+                                                        )
+                                                }
+
+                                            }
+                                        } else {
+                                            dragXOffset = 0f
+                                            dragYOffset = 0f
+                                        }
 
                                     }
 
@@ -133,8 +225,8 @@ fun GameScreen(humanPlayerColor: Int) {
                             },
                         painter = painterResource(
                             id = getPieceDrawableId(
-                                chessBoard.pieceType(index),
-                                chessBoard.pieceColor(index)
+                                chessBoard.pieceType(i),
+                                chessBoard.pieceColor(i)
                             )
                         ),
                         contentDescription = stringResource(
@@ -185,15 +277,14 @@ private fun getTouchSquare(
     x: Float,
     y: Float,
     squareSize: Float,
-    humanPlayerColor: Int
 ): Int {
-    val yMirrored = if (humanPlayerColor == Piece.WHITE) chessBoardHeight - y - 1 else y
+    val yMirrored = chessBoardHeight - y - 1
     val touchFile = floor((x / squareSize).toDouble()).toInt()
     val touchRank = floor((yMirrored / squareSize).toDouble()).toInt()
     return ChessBoard.GetPosition(touchFile, touchRank)
 }
 
-fun canSelect(chessBoard: ChessBoard, position: Int, humanPlayerColor: Int): Boolean {
+fun canSelect(chessBoard: ChessBoard, position: Int, playerColor: Int): Boolean {
     return !chessBoard.isSquareEmpty(position) &&
-            chessBoard.pieceColor(position) == humanPlayerColor
+            chessBoard.pieceColor(position) == playerColor
 }

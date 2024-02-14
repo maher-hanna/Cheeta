@@ -46,7 +46,7 @@ class Game(private val drawing: Drawing, humanPlayerColor: Int) {
     fun humanPlayed(humanMoveArg: Move?) {
         var humanMove = humanMoveArg
         humanMove =
-            chessEngine.moveGenerator.generateLegalMovesFor(humanPlayerColor).getMove(humanMove!!)
+            chessEngine.moveGenerator.getLegalMovesFor(humanPlayerColor).getMove(humanMove!!)
         if (humanMove != null) {
             chessBoard.makeMove(humanMove)
         }

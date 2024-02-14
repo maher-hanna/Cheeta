@@ -1,7 +1,5 @@
 package com.maherhanna.cheeta.core
 
-import com.maherhanna.cheeta.core.Move
-
 class PlayerLegalMoves {
     private val legalMoves: ArrayList<Move> = ArrayList()
 
@@ -46,6 +44,22 @@ class PlayerLegalMoves {
         return null
     }
 
+    fun searchMove(from: Int , to: Int): Move? {
+        for (move in legalMoves) {
+            if (move.from == from && move.to == to) {
+                return move
+            }
+        }
+        return null
+    }
+    fun searchMove(pseudoMove:Move): Move? {
+        for (move in legalMoves) {
+            if (move.from == pseudoMove.from && move.to == pseudoMove.to) {
+                return move
+            }
+        }
+        return null
+    }
     fun removeNonTake() {
         val itr = legalMoves.iterator()
         while (itr.hasNext()) {

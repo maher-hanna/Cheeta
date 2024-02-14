@@ -95,7 +95,7 @@ open class ChessEngine {
             chessBoard,
             playerColor
         )
-        val move = toPlayLegalMoves.getMove(Move(moveNotation))
+        val move = toPlayLegalMoves.searchMove(Move(moveNotation))
         if (move != null) {
             chessBoard.makeMove(move)
         }

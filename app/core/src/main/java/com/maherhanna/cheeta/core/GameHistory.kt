@@ -19,6 +19,9 @@ class GameHistory {
         moves.removeAt(moves.size - 1)
     }
 
+    val notation : String
+        get() = moves.joinToString(" ") { it.notation }
+
     val lastMove: Move?
         get() = if (moves.size == 0) {
             null
