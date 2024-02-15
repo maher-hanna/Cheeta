@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.zIndex
 import com.maherhanna.cheeta.core.ChessBoard
 import com.maherhanna.cheeta.core.Move
 import com.maherhanna.cheeta.core.MoveGenerator
@@ -130,19 +131,20 @@ fun GameScreen(playerColor: Int) {
                         i
                     }
 
-
+                    val isPieceDragged = i == fromIndex
                     Image(
                         modifier = Modifier
+                            .zIndex(zIndex = if(isPieceDragged) 1f else 0f)
                             .offset(
                                 x = with(LocalDensity.current) {
                                     (ChessBoard.GetFile(
                                         i
-                                    ) * squareSize + if (i == fromIndex) dragOffset.x else 0f).toDp()
+                                    ) * squareSize + if (isPieceDragged) dragOffset.x else 0f).toDp()
                                 },
                                 y = with(LocalDensity.current) {
                                     (ChessBoard.GetRank(
                                         index
-                                    ) * squareSize + if (i == fromIndex) dragOffset.y else 0f).toDp()
+                                    ) * squareSize + if (isPieceDragged) dragOffset.y else 0f).toDp()
                                 }
                             )
                             .size(with(LocalDensity.current) { squareSize.toDp() })
