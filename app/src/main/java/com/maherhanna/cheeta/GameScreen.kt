@@ -1,6 +1,8 @@
 package com.maherhanna.cheeta
 
 
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -21,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
@@ -29,6 +32,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.maherhanna.cheeta.core.ChessBoard
@@ -69,7 +73,11 @@ fun GameScreen(playerColor: Int) {
         mutableStateOf(Offset(0f, 0f))
     }
     var dragOffset by remember {
-        mutableStateOf(Offset(0f,0f))
+        mutableStateOf(Offset(0f, 0f))
+    }
+
+    var isDragging by remember {
+        mutableStateOf(false)
     }
 
     val scope = rememberCoroutineScope()
@@ -77,6 +85,7 @@ fun GameScreen(playerColor: Int) {
     LaunchedEffect(true) {
         playerLegalMoves = moveGenerator.generateLegalMovesFor(chessBoard, playerColor)
     }
+    Log.d(TAG, "isDragging: $isDragging")
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -131,44 +140,52 @@ fun GameScreen(playerColor: Int) {
                         i
                     }
 
-                    val isPieceDragged = i == fromIndex
+                    val isPieceSelected = i == fromIndex
                     Image(
                         modifier = Modifier
-                            .zIndex(zIndex = if(isPieceDragged) 1f else 0f)
+                            .zIndex(zIndex = if (isPieceSelected && isDragging) 1f else 0f)
                             .offset(
                                 x = with(LocalDensity.current) {
                                     (ChessBoard.GetFile(
                                         i
-                                    ) * squareSize + if (isPieceDragged) dragOffset.x else 0f).toDp()
+                                    ) * squareSize + if (isPieceSelected && isDragging) dragOffset.x else 0f).toDp()
                                 },
                                 y = with(LocalDensity.current) {
                                     (ChessBoard.GetRank(
                                         index
-                                    ) * squareSize + if (isPieceDragged) dragOffset.y else 0f).toDp()
+                                    ) * squareSize + if (isPieceSelected && isDragging) dragOffset.y else 0f).toDp()
                                 }
                             )
-                            .size(with(LocalDensity.current) { squareSize.toDp() })
+                            .size(with(LocalDensity.current) { squareSize.toDp() *  if(isPieceSelected && isDragging) 1.5f else 1f})
                             .pointerInput(Unit) {
                                 detectDragGestures(onDrag = { change, offset ->
                                     change.consume()
                                     if (fromIndex != ChessBoard.NO_SQUARE) {
+                                        isDragging = true
+
                                         // limit dragged piece inside chess board borders
                                         val summed = dragOffset + offset
                                         dragOffset = Offset(
-                                            x = if((ChessBoard.GetFile(i) * squareSize + summed.x) < 0f || ((ChessBoard.GetFile(i) + 1) * squareSize + summed.x) > chessBoardImageSize.width) dragOffset.x else summed.x,
-                                            y = if((ChessBoard.GetRank(index) * squareSize + summed.y) < 0f || ((ChessBoard.GetRank(index) + 1) * squareSize + summed.y) > chessBoardImageSize.height) dragOffset.y else summed.y
+                                            x = if ((ChessBoard.GetFile(i) * squareSize + summed.x) < 0f || ((ChessBoard.GetFile(
+                                                    i
+                                                ) + 1) * squareSize + summed.x) > chessBoardImageSize.width
+                                            ) dragOffset.x else summed.x,
+                                            y = if ((ChessBoard.GetRank(index) * squareSize + summed.y) < 0f || ((ChessBoard.GetRank(
+                                                    index
+                                                ) + 1) * squareSize + summed.y) > chessBoardImageSize.height
+                                            ) dragOffset.y else summed.y
                                         )
                                     }
 
                                 }, onDragStart = {
-
                                     if (!playerTurn || fromIndex == ChessBoard.NO_SQUARE) {
-                                        dragOffset = Offset(0f,0f)
+                                        dragOffset = Offset(0f, 0f)
 
                                     }
 
                                 },
                                     onDragEnd = {
+                                        isDragging = false
                                         val toIndex = getTouchSquare(
                                             chessBoardHeight = chessBoardImageSize.height,
                                             x = touchStartPosition.x + dragOffset.x,
@@ -176,7 +193,7 @@ fun GameScreen(playerColor: Int) {
                                             squareSize = squareSize,
                                         )
                                         if (playerSelectedPieceLegalTargets.contains(toIndex)) {
-                                            dragOffset = Offset(0f,0f)
+                                            dragOffset = Offset(0f, 0f)
                                             val playerMove = playerLegalMoves
                                                 .searchMove(fromIndex, toIndex)
                                             if (playerMove != null) {
@@ -211,7 +228,7 @@ fun GameScreen(playerColor: Int) {
 
                                             }
                                         } else {
-                                            dragOffset = Offset(0f,0f)
+                                            dragOffset = Offset(0f, 0f)
                                         }
 
                                     }
