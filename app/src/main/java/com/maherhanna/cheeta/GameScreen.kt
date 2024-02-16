@@ -133,17 +133,17 @@ fun GameScreen(playerColor: Int) {
             )
 
             for (i in ChessBoard.MIN_POSITION..ChessBoard.MAX_POSITION) {
+                val index = if (playerColor == Piece.WHITE) {
+                    ChessBoard.MAX_POSITION - i
+                } else {
+                    i
+                }
                 if (!chessBoard.isSquareEmpty(i)) {
-                    val index = if (playerColor == Piece.WHITE) {
-                        ChessBoard.MAX_POSITION - i
-                    } else {
-                        i
-                    }
-
                     val isPieceSelected = i == fromIndex
                     Image(
                         modifier = Modifier
                             .zIndex(zIndex = if (isPieceSelected && isDragging) 1f else 0f)
+                            .size(with(LocalDensity.current) { squareSize.toDp()  })
                             .offset(
                                 x = with(LocalDensity.current) {
                                     (ChessBoard.GetFile(
@@ -156,7 +156,6 @@ fun GameScreen(playerColor: Int) {
                                     ) * squareSize + if (isPieceSelected && isDragging) dragOffset.y else 0f).toDp()
                                 }
                             )
-                            .size(with(LocalDensity.current) { squareSize.toDp() *  if(isPieceSelected && isDragging) 1.5f else 1f})
                             .pointerInput(Unit) {
                                 detectDragGestures(onDrag = { change, offset ->
                                     change.consume()
@@ -204,6 +203,8 @@ fun GameScreen(playerColor: Int) {
                                                         chessBoard,
                                                         computerColor
                                                     )
+                                                touchStartPosition = Offset(0f, 0f)
+                                                fromIndex = ChessBoard.NO_SQUARE
 
                                             }
                                             scope.launch {
@@ -234,7 +235,10 @@ fun GameScreen(playerColor: Int) {
                                     }
 
                                 )
-                            },
+                            }
+                            .scale(if (isPieceSelected && isDragging) 1.5f else 1f)
+
+                        ,
                         painter = painterResource(
                             id = getPieceDrawableId(
                                 chessBoard.pieceType(i),
@@ -245,6 +249,37 @@ fun GameScreen(playerColor: Int) {
                             id = R.string.chess_piece
                         )
                     )
+                }
+                var isSquareLegalTarget = false
+                if (fromIndex != ChessBoard.NO_SQUARE) {
+                    isSquareLegalTarget = playerSelectedPieceLegalTargets.contains(i)
+                }
+                val isSquareEmpty = chessBoard.isSquareEmpty(i)
+                if (isSquareLegalTarget) {
+                    Image(
+                        modifier = Modifier
+                            .offset(
+                                x = with(LocalDensity.current) {
+                                    (ChessBoard.GetFile(
+                                        i
+                                    ) * squareSize).toDp()
+                                },
+                                y = with(LocalDensity.current) {
+                                    (ChessBoard.GetRank(
+                                        index
+                                    ) * squareSize).toDp()
+                                }
+                            )
+                            .size(with(LocalDensity.current) { squareSize.toDp() }),
+                        painter = painterResource(
+                            if (isSquareEmpty) R.drawable.legal_move_quite else
+                                R.drawable.legal_move_capture
+                        ),
+                        contentDescription = stringResource(
+                            id = R.string.legal_move
+                        )
+                    )
+
                 }
             }
         }
