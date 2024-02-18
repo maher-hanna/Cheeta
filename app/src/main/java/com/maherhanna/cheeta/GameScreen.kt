@@ -1,8 +1,6 @@
 package com.maherhanna.cheeta
 
 
-import android.content.ContentValues.TAG
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -32,7 +30,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.maherhanna.cheeta.core.ChessBoard
@@ -41,12 +38,17 @@ import com.maherhanna.cheeta.core.MoveGenerator
 import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.PlayerLegalMoves
 import com.maherhanna.cheeta.core.Uci
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.math.floor
 
 @Composable
 fun GameScreen(playerColor: Int) {
     val computerColor = Piece.GetOppositeColor(playerColor)
+    val isChessBoardFlipped = playerColor == Piece.BLACK
     val chessBoard by remember {
         mutableStateOf(ChessBoard(ChessBoard.positionInUse))
     }
@@ -68,7 +70,8 @@ fun GameScreen(playerColor: Int) {
     val squareSize by remember {
         derivedStateOf { chessBoardImageSize.width / 8 }
     }
-    var fromIndex by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
+    var fromSquare by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
+    var toSquare by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
     var touchStartPosition by remember {
         mutableStateOf(Offset(0f, 0f))
     }
@@ -85,8 +88,24 @@ fun GameScreen(playerColor: Int) {
 
     LaunchedEffect(true) {
         playerLegalMoves = moveGenerator.generateLegalMovesFor(chessBoard, playerColor)
+        computerLegalMoves = moveGenerator.generateLegalMovesFor(chessBoard, computerColor)
+        if (playerColor == Piece.BLACK) {
+            scope.launch {
+                playComputer(
+                    uci = uci, chessBoard = chessBoard,
+                    computerLegalMoves = computerLegalMoves
+                ) {
+                    playerTurn = !playerTurn
+                    playerLegalMoves =
+                        moveGenerator.generateLegalMovesFor(
+                            chessBoard,
+                            playerColor
+                        )
+                }
+
+            }
+        }
     }
-    Log.d(TAG, "isDragging: $isDragging")
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -101,7 +120,8 @@ fun GameScreen(playerColor: Int) {
                             offset.x,
                             offset.y
                         )
-                        fromIndex = getTouchSquare(
+                        fromSquare = getTouchSquare(
+                            isChessBoardFlipped = isChessBoardFlipped,
                             chessBoardHeight = chessBoardImageSize.height,
                             x = offset.x,
                             y = offset.y,
@@ -109,16 +129,16 @@ fun GameScreen(playerColor: Int) {
                         )
                         if (!canSelect(
                                 chessBoard = chessBoard,
-                                position = fromIndex,
+                                position = fromSquare,
                                 playerColor = playerColor
                             )
                         ) {
-                            fromIndex = ChessBoard.NO_SQUARE
+                            fromSquare = ChessBoard.NO_SQUARE
                         }
 
                         playerSelectedPieceLegalTargets =
                             playerLegalMoves.getLegalTargetsFor(
-                                fromIndex
+                                fromSquare
                             )
                     })
                 },
@@ -140,7 +160,7 @@ fun GameScreen(playerColor: Int) {
                     i
                 }
                 if (!chessBoard.isSquareEmpty(i)) {
-                    val isPieceSelected = i == fromIndex
+                    val isPieceSelected = i == fromSquare
                     Image(
                         modifier = Modifier
                             .zIndex(zIndex = if (isPieceSelected && isDragging) 1f else 0f)
@@ -160,9 +180,7 @@ fun GameScreen(playerColor: Int) {
                             .pointerInput(Unit) {
                                 detectDragGestures(onDrag = { change, offset ->
                                     change.consume()
-                                    if (fromIndex != ChessBoard.NO_SQUARE) {
-                                        isDragging = true
-
+                                    if (fromSquare != ChessBoard.NO_SQUARE && isDragging) {
                                         // limit dragged piece inside chess board borders
                                         val summed = dragOffset + offset
                                         dragOffset = Offset(
@@ -178,25 +196,29 @@ fun GameScreen(playerColor: Int) {
                                     }
 
                                 }, onDragStart = {
-                                    if (!playerTurn || fromIndex == ChessBoard.NO_SQUARE) {
+                                    if (!playerTurn || fromSquare == ChessBoard.NO_SQUARE) {
                                         dragOffset = Offset(0f, 0f)
-
+                                        isDragging = false
+                                    } else {
+                                        isDragging = true
                                     }
 
                                 },
                                     onDragEnd = {
                                         isDragging = false
-                                        val toIndex = getTouchSquare(
+                                        toSquare = getTouchSquare(
+                                            isChessBoardFlipped = isChessBoardFlipped,
                                             chessBoardHeight = chessBoardImageSize.height,
                                             x = touchStartPosition.x + dragOffset.x,
                                             y = touchStartPosition.y + dragOffset.y,
                                             squareSize = squareSize,
                                         )
-                                        if (playerSelectedPieceLegalTargets.contains(toIndex)) {
+                                        if (playerSelectedPieceLegalTargets.contains(toSquare)) {
                                             dragOffset = Offset(0f, 0f)
                                             val playerMove = playerLegalMoves
-                                                .searchMove(fromIndex, toIndex)
+                                                .searchMove(fromSquare, toSquare)
                                             if (playerMove != null) {
+
                                                 chessBoard.makeMove(playerMove)
                                                 playerTurn = !playerTurn
                                                 computerLegalMoves =
@@ -205,27 +227,23 @@ fun GameScreen(playerColor: Int) {
                                                         computerColor
                                                     )
                                                 touchStartPosition = Offset(0f, 0f)
-                                                fromIndex = ChessBoard.NO_SQUARE
+                                                fromSquare = ChessBoard.NO_SQUARE
 
                                             }
-                                            scope.launch {
-                                                uci.parseInput("position startpos moves " + chessBoard.moves.notation)
-                                                var computerMoveNotation =
-                                                    uci.parseInput("go infinite")
-                                                computerMoveNotation = computerMoveNotation
-                                                    .removePrefix("bestmove")
-                                                    .trim()
-                                                val computerMove = computerLegalMoves.searchMove(
-                                                    Move(computerMoveNotation)
-                                                )
-                                                if (computerMove != null) {
-                                                    chessBoard.makeMove(computerMove)
+                                            scope.launch() {
+                                                playComputer(
+                                                    uci = uci, chessBoard = chessBoard,
+                                                    computerLegalMoves = computerLegalMoves
+                                                ) {
+
                                                     playerTurn = !playerTurn
                                                     playerLegalMoves =
                                                         moveGenerator.generateLegalMovesFor(
                                                             chessBoard,
                                                             playerColor
                                                         )
+
+
                                                 }
 
                                             }
@@ -237,9 +255,7 @@ fun GameScreen(playerColor: Int) {
 
                                 )
                             }
-                            .scale(if (isPieceSelected && isDragging) 1.5f else 1f)
-
-                        ,
+                            .scale(if (isPieceSelected && isDragging) 1.5f else 1f),
                         painter = painterResource(
                             id = getPieceDrawableId(
                                 chessBoard.pieceType(i),
@@ -252,7 +268,7 @@ fun GameScreen(playerColor: Int) {
                     )
                 }
                 var isSquareLegalTarget = false
-                if (fromIndex != ChessBoard.NO_SQUARE) {
+                if (fromSquare != ChessBoard.NO_SQUARE) {
                     isSquareLegalTarget = playerSelectedPieceLegalTargets.contains(i)
                 }
                 val isSquareEmpty = chessBoard.isSquareEmpty(i)
@@ -285,6 +301,35 @@ fun GameScreen(playerColor: Int) {
             }
         }
 
+    }
+}
+
+
+suspend fun playComputer(
+    uci: Uci,
+    chessBoard: ChessBoard,
+    computerLegalMoves: PlayerLegalMoves,
+    finished: () -> Unit
+) {
+    withContext(Dispatchers.IO) {
+        if (chessBoard.moves.isEmpty()) {
+            uci.parseInput("position startpos")
+
+        } else {
+            uci.parseInput("position startpos moves " + chessBoard.moves.notation)
+        }
+        var computerMoveNotation =
+            uci.parseInput("go infinite")
+        computerMoveNotation = computerMoveNotation
+            .removePrefix("bestmove")
+            .trim()
+        val computerMove = computerLegalMoves.searchMove(
+            Move(computerMoveNotation)
+        )
+        if (computerMove != null) {
+            chessBoard.makeMove(computerMove)
+            finished()
+        }
     }
 }
 
@@ -321,15 +366,21 @@ fun getPieceDrawableId(pieceType: Int, pieceColor: Int): Int {
 }
 
 private fun getTouchSquare(
+    isChessBoardFlipped: Boolean,
     chessBoardHeight: Float,
     x: Float,
     y: Float,
     squareSize: Float,
 ): Int {
     val yMirrored = chessBoardHeight - y - 1
-    val touchFile = floor((x / squareSize).toDouble()).toInt()
+    val xMirrored = if (isChessBoardFlipped) chessBoardHeight - x - 1 else x
+    val touchFile = floor((xMirrored / squareSize).toDouble()).toInt()
     val touchRank = floor((yMirrored / squareSize).toDouble()).toInt()
-    return ChessBoard.GetPosition(touchFile, touchRank)
+    return if (isChessBoardFlipped) ChessBoard.MAX_POSITION - ChessBoard.GetPosition(
+        touchFile,
+        touchRank
+    ) else
+        ChessBoard.GetPosition(touchFile, touchRank)
 }
 
 fun canSelect(chessBoard: ChessBoard, position: Int, playerColor: Int): Boolean {

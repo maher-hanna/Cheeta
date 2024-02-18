@@ -18,6 +18,9 @@ class GameHistory {
     fun removeLastMove() {
         moves.removeAt(moves.size - 1)
     }
+    fun isEmpty():Boolean{
+        return moves.isEmpty()
+    }
 
     val notation : String
         get() = moves.joinToString(" ") { it.notation }
