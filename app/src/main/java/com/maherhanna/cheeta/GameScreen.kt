@@ -120,21 +120,71 @@ fun GameScreen(playerColor: Int) {
                             offset.x,
                             offset.y
                         )
-                        fromSquare = getTouchSquare(
+
+                        val touchedSquare = getTouchSquare(
                             isChessBoardFlipped = isChessBoardFlipped,
                             chessBoardHeight = chessBoardImageSize.height,
                             x = offset.x,
                             y = offset.y,
                             squareSize = squareSize,
                         )
-                        if (!canSelect(
-                                chessBoard = chessBoard,
-                                position = fromSquare,
-                                playerColor = playerColor
-                            )
-                        ) {
-                            fromSquare = ChessBoard.NO_SQUARE
+
+                        if (fromSquare != ChessBoard.NO_SQUARE) {
+                            if (touchedSquare != fromSquare) {
+                                val playerMove = playerLegalMoves
+                                    .searchMove(fromSquare, touchedSquare)
+                                if (playerMove != null) {
+                                    chessBoard.makeMove(playerMove)
+                                    playerTurn = !playerTurn
+                                    computerLegalMoves =
+                                        moveGenerator.generateLegalMovesFor(
+                                            chessBoard,
+                                            computerColor
+                                        )
+                                    touchStartPosition = Offset(0f, 0f)
+                                    fromSquare = ChessBoard.NO_SQUARE
+                                    scope.launch() {
+                                        playComputer(
+                                            uci = uci, chessBoard = chessBoard,
+                                            computerLegalMoves = computerLegalMoves
+                                        ) {
+
+                                            playerTurn = !playerTurn
+                                            playerLegalMoves =
+                                                moveGenerator.generateLegalMovesFor(
+                                                    chessBoard,
+                                                    playerColor
+                                                )
+
+
+                                        }
+
+                                    }
+                                } else {
+                                    if (canSelect(
+                                            chessBoard = chessBoard,
+                                            position = touchedSquare,
+                                            playerColor = playerColor
+                                        )
+                                    ) {
+
+                                        fromSquare = touchedSquare
+                                    }
+                                }
+
+                            }
+                        } else {
+                            if (canSelect(
+                                    chessBoard = chessBoard,
+                                    position = touchedSquare,
+                                    playerColor = playerColor
+                                )
+                            ) {
+
+                                fromSquare = touchedSquare
+                            }
                         }
+
 
                         playerSelectedPieceLegalTargets =
                             playerLegalMoves.getLegalTargetsFor(
@@ -229,23 +279,23 @@ fun GameScreen(playerColor: Int) {
                                                 touchStartPosition = Offset(0f, 0f)
                                                 fromSquare = ChessBoard.NO_SQUARE
 
-                                            }
-                                            scope.launch() {
-                                                playComputer(
-                                                    uci = uci, chessBoard = chessBoard,
-                                                    computerLegalMoves = computerLegalMoves
-                                                ) {
+                                                scope.launch() {
+                                                    playComputer(
+                                                        uci = uci, chessBoard = chessBoard,
+                                                        computerLegalMoves = computerLegalMoves
+                                                    ) {
 
-                                                    playerTurn = !playerTurn
-                                                    playerLegalMoves =
-                                                        moveGenerator.generateLegalMovesFor(
-                                                            chessBoard,
-                                                            playerColor
-                                                        )
+                                                        playerTurn = !playerTurn
+                                                        playerLegalMoves =
+                                                            moveGenerator.generateLegalMovesFor(
+                                                                chessBoard,
+                                                                playerColor
+                                                            )
 
+
+                                                    }
 
                                                 }
-
                                             }
                                         } else {
                                             dragOffset = Offset(0f, 0f)
