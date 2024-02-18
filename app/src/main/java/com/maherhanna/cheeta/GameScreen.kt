@@ -79,6 +79,7 @@ fun GameScreen(playerColor: Int) {
     var isDragging by remember {
         mutableStateOf(false)
     }
+    val pieceScaleDownFactor = 0.85f
 
     val scope = rememberCoroutineScope()
 
@@ -143,17 +144,17 @@ fun GameScreen(playerColor: Int) {
                     Image(
                         modifier = Modifier
                             .zIndex(zIndex = if (isPieceSelected && isDragging) 1f else 0f)
-                            .size(with(LocalDensity.current) { squareSize.toDp()  })
+                            .size(with(LocalDensity.current) { squareSize.toDp() * pieceScaleDownFactor })
                             .offset(
                                 x = with(LocalDensity.current) {
                                     (ChessBoard.GetFile(
                                         i
-                                    ) * squareSize + if (isPieceSelected && isDragging) dragOffset.x else 0f).toDp()
+                                    ) * squareSize + ((1 - pieceScaleDownFactor) / 2 * squareSize) + if (isPieceSelected && isDragging) dragOffset.x else 0f).toDp()
                                 },
                                 y = with(LocalDensity.current) {
                                     (ChessBoard.GetRank(
                                         index
-                                    ) * squareSize + if (isPieceSelected && isDragging) dragOffset.y else 0f).toDp()
+                                    ) * squareSize + ((1 - pieceScaleDownFactor) / 2 * squareSize) + if (isPieceSelected && isDragging) (dragOffset.y - squareSize / 2) else 0f).toDp()
                                 }
                             )
                             .pointerInput(Unit) {
