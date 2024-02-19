@@ -149,15 +149,12 @@ fun GameScreen(playerColor: Int) {
                                             uci = uci, chessBoard = chessBoard,
                                             computerLegalMoves = computerLegalMoves
                                         ) {
-
                                             playerTurn = !playerTurn
                                             playerLegalMoves =
                                                 moveGenerator.generateLegalMovesFor(
                                                     chessBoard,
                                                     playerColor
                                                 )
-
-
                                         }
 
                                     }
@@ -359,7 +356,6 @@ fun GameScreen(playerColor: Int) {
                     )
 
                 }
-                Log.d(TAG, "touchSquare: $touchSquare")
                 // for highlighting from,touch squares
                 if (i == fromSquare || i == touchSquare) {
                     Image(
@@ -383,6 +379,34 @@ fun GameScreen(playerColor: Int) {
                         ),
                         contentDescription = stringResource(
                             id = R.string.from_square
+                        )
+                    )
+
+                }
+
+                // for highlighting last move squares
+                if (i == chessBoard.moves.lastMove?.from || i == chessBoard.moves.lastMove?.to) {
+                    Image(
+                        modifier = Modifier
+                            .zIndex(0f)
+                            .offset(
+                                x = with(LocalDensity.current) {
+                                    (ChessBoard.GetFile(
+                                        i
+                                    ) * squareSize).toDp()
+                                },
+                                y = with(LocalDensity.current) {
+                                    (ChessBoard.GetRank(
+                                        index
+                                    ) * squareSize).toDp()
+                                }
+                            )
+                            .size(with(LocalDensity.current) { squareSize.toDp() }),
+                        painter = painterResource(
+                            R.drawable.transparent_red_square
+                        ),
+                        contentDescription = stringResource(
+                            id = R.string.last_move
                         )
                     )
 
