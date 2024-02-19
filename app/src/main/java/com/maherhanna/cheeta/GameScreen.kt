@@ -171,6 +171,11 @@ fun GameScreen(playerColor: Int) {
                                             chessBoard,
                                             computerColor
                                         )
+                                    playerLegalMoves =
+                                        moveGenerator.generateLegalMovesFor(
+                                            chessBoard,
+                                            playerColor
+                                        )
                                     touchStartPosition = Offset(0f, 0f)
                                     fromSquare = ChessBoard.NO_SQUARE
                                     scope.launch() {
@@ -311,6 +316,11 @@ fun GameScreen(playerColor: Int) {
                                                     moveGenerator.generateLegalMovesFor(
                                                         chessBoard,
                                                         computerColor
+                                                    )
+                                                playerLegalMoves =
+                                                    moveGenerator.generateLegalMovesFor(
+                                                        chessBoard,
+                                                        playerColor
                                                     )
                                                 touchStartPosition = Offset(0f, 0f)
                                                 fromSquare = ChessBoard.NO_SQUARE
