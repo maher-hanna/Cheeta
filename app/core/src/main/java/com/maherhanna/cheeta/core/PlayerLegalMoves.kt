@@ -69,4 +69,8 @@ class PlayerLegalMoves {
             }
         }
     }
+
+    fun isOpponentKingInCheck(opponentKingPosition: Int): Boolean {
+        return legalMoves.map { it.to }.contains(opponentKingPosition)
+    }
 }

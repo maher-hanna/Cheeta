@@ -18,5 +18,6 @@
     <string name="legal_move">Legal Move</string>
     <string name="from_square">From Square</string>
     <string name="last_move">Last Move</string>
+    <string name="king_checked">King Checked</string>
 
 </resources>

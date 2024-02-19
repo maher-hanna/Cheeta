@@ -113,6 +113,9 @@ fun GameScreen(playerColor: Int) {
                             chessBoard,
                             playerColor
                         )
+                    computerLegalMoves =
+                        moveGenerator.generateLegalMovesFor(chessBoard, computerColor)
+
                 }
 
             }
@@ -127,9 +130,9 @@ fun GameScreen(playerColor: Int) {
     }
 
     BackHandler {
-        if(gameStatus == GameStatus.NOT_FINISHED){
+        if (gameStatus == GameStatus.NOT_FINISHED) {
             showCancelGameDialog = true
-        }else {
+        } else {
             (context as Activity).finish()
 
         }
@@ -190,6 +193,12 @@ fun GameScreen(playerColor: Int) {
                                                     chessBoard,
                                                     playerColor
                                                 )
+                                            computerLegalMoves =
+                                                moveGenerator.generateLegalMovesFor(
+                                                    chessBoard,
+                                                    computerColor
+                                                )
+
                                         }
 
                                     }
@@ -338,6 +347,11 @@ fun GameScreen(playerColor: Int) {
                                                                 chessBoard,
                                                                 playerColor
                                                             )
+                                                        computerLegalMoves =
+                                                            moveGenerator.generateLegalMovesFor(
+                                                                chessBoard,
+                                                                computerColor
+                                                            )
 
 
                                                     }
@@ -448,6 +462,35 @@ fun GameScreen(playerColor: Int) {
                         ),
                         contentDescription = stringResource(
                             id = R.string.last_move
+                        )
+                    )
+
+                }
+                // for highlighting last move squares
+                val playerKingPosition = moveGenerator.getKingPosition(chessBoard, playerColor)
+                if (computerLegalMoves.isOpponentKingInCheck(playerKingPosition) && i == playerKingPosition
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .zIndex(0f)
+                            .offset(
+                                x = with(LocalDensity.current) {
+                                    (ChessBoard.GetFile(
+                                        i
+                                    ) * squareSize).toDp()
+                                },
+                                y = with(LocalDensity.current) {
+                                    (ChessBoard.GetRank(
+                                        index
+                                    ) * squareSize).toDp()
+                                }
+                            )
+                            .size(with(LocalDensity.current) { squareSize.toDp() }),
+                        painter = painterResource(
+                            R.drawable.red_gradient
+                        ),
+                        contentDescription = stringResource(
+                            id = R.string.king_checked
                         )
                     )
 
