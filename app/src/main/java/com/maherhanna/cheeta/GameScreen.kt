@@ -2,8 +2,6 @@ package com.maherhanna.cheeta
 
 
 import android.app.Activity
-import android.content.ContentValues.TAG
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -41,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.maherhanna.cheeta.core.ChessBoard
+import com.maherhanna.cheeta.core.GameStatus
 import com.maherhanna.cheeta.core.Move
 import com.maherhanna.cheeta.core.MoveGenerator
 import com.maherhanna.cheeta.core.Piece
@@ -61,6 +60,7 @@ fun GameScreen(playerColor: Int) {
     val moveGenerator = MoveGenerator()
     var playerTurn by remember { mutableStateOf(playerColor == Piece.WHITE) }
     var showCancelGameDialog by remember { mutableStateOf(false) }
+    var showGameFinishedDialog by remember { mutableStateOf(false) }
 
     var playerLegalMoves by remember {
         mutableStateOf(PlayerLegalMoves())
@@ -80,6 +80,7 @@ fun GameScreen(playerColor: Int) {
     }
     var fromSquare by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
     var touchSquare by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
+    var gameStatus by remember { mutableStateOf(GameStatus.NOT_FINISHED) }
 
     var touchStartPosition by remember {
         mutableStateOf(Offset(0f, 0f))
@@ -118,8 +119,20 @@ fun GameScreen(playerColor: Int) {
         }
     }
 
+    LaunchedEffect(chessBoard) {
+        gameStatus = moveGenerator.checkStatus(chessBoard)
+        if (gameStatus != GameStatus.NOT_FINISHED) {
+            showGameFinishedDialog = true
+        }
+    }
+
     BackHandler {
-        showCancelGameDialog = true
+        if(gameStatus == GameStatus.NOT_FINISHED){
+            showCancelGameDialog = true
+        }else {
+            (context as Activity).finish()
+
+        }
     }
 
     Column(
@@ -150,6 +163,8 @@ fun GameScreen(playerColor: Int) {
                                     .searchMove(fromSquare, tappedSquare)
                                 if (playerMove != null) {
                                     chessBoard.makeMove(playerMove)
+                                    // force jetpack compose to recompose by coping chessboard
+                                    chessBoard = ChessBoard(chessBoard)
                                     playerTurn = !playerTurn
                                     computerLegalMoves =
                                         moveGenerator.generateLegalMovesFor(
@@ -288,8 +303,9 @@ fun GameScreen(playerColor: Int) {
                                             val playerMove = playerLegalMoves
                                                 .searchMove(fromSquare, toSquare)
                                             if (playerMove != null) {
-
                                                 chessBoard.makeMove(playerMove)
+                                                // force jetpack compose to recompose by coping chessboard
+                                                chessBoard = ChessBoard(chessBoard)
                                                 playerTurn = !playerTurn
                                                 computerLegalMoves =
                                                     moveGenerator.generateLegalMovesFor(
@@ -435,16 +451,48 @@ fun GameScreen(playerColor: Int) {
     if (showCancelGameDialog) {
         AlertDialog(
             onDismissRequest = { showCancelGameDialog = false },
-            title = { Text("End Game") },
-            text = { Text("Do you want to end this game ?") },
+            title = { Text(stringResource(id = R.string.start_a_new_game)) },
+            text = { Text(stringResource(id = R.string.finish_game_message)) },
             confirmButton = {
                 TextButton(onClick = { (context as Activity).finish() }) {
-                    Text("Yes")
+                    Text(stringResource(id = R.string.finish_game_yes))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCancelGameDialog = false }) {
-                    Text("No")
+                    Text(stringResource(id = R.string.finish_game_no))
+                }
+            },
+        )
+    }
+    if (showGameFinishedDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showGameFinishedDialog = false
+                (context as Activity).finish()
+            },
+            title = {
+                Text(
+                    stringResource(
+                        id = getGameStatusStringResourceId(
+                            playerColor = playerColor,
+                            gameStatus = gameStatus
+                        )
+                    )
+                )
+            },
+            text = { Text(stringResource(id = R.string.start_a_new_game)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showGameFinishedDialog = false
+                    (context as Activity).recreate()
+                }) {
+                    Text(stringResource(id = R.string.finish_game_yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGameFinishedDialog = false }) {
+                    Text(stringResource(id = R.string.finish_game_no))
                 }
             },
         )
@@ -478,6 +526,26 @@ suspend fun playComputer(
             // pass chessboard to copy it to original chessboard to force jetpack compose to recompose
             // to fix view not updating when computer finishes the move
             finished(chessBoard)
+        }
+    }
+}
+
+fun getGameStatusStringResourceId(playerColor: Int, gameStatus: GameStatus): Int {
+    return if (gameStatus === GameStatus.FINISHED_DRAW) {
+        R.string.message_draw
+    } else {
+        if (playerColor == Piece.WHITE) {
+            if (gameStatus === GameStatus.FINISHED_WIN_WHITE) {
+                R.string.message_you_won
+            } else {
+                R.string.message_computer_won
+            }
+        } else {
+            if (gameStatus === GameStatus.FINISHED_WIN_BLACK) {
+                R.string.message_you_won
+            } else {
+                R.string.message_computer_won
+            }
         }
     }
 }

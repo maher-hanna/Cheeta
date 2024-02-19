@@ -423,44 +423,7 @@ open class ChessEngine {
     }
 
     fun checkStatus(chessBoard: ChessBoard): GameStatus {
-        val lastPlayed = chessBoard.moves.lastPlayed
-        var gameStatus = GameStatus.NOT_FINISHED
-        val toPlayPlayerLegalMoves =
-            moveGenerator.generateLegalMovesFor(chessBoard, chessBoard.toPlayColor)
-        if (toPlayPlayerLegalMoves.size() == 0) {
-            return if (moveGenerator.isKingChecked(chessBoard.toPlayColor)) {
-                //win
-                if (lastPlayed == Piece.WHITE) {
-                    GameStatus.FINISHED_WIN_WHITE
-                } else {
-                    GameStatus.FINISHED_WIN_BLACK
-                }
-            } else {
-                //draw stalemate
-                GameStatus.FINISHED_DRAW
-            }
-        }
-        if (chessBoard.insufficientMaterial()) {
-            gameStatus = GameStatus.FINISHED_DRAW
-            return gameStatus
-        }
-        if (chessBoard.fiftyMovesDrawCount == 50) {
-            return GameStatus.FINISHED_DRAW
-        }
-
-        //check for third repetition draw
-        var repeatedPositionCount = 1
-        val lastState = chessBoard.states[chessBoard.states.size - 1]
-        for (i in 0 until chessBoard.states.size - 1) {
-            if (lastState == chessBoard.states[i]) {
-                repeatedPositionCount++
-                if (repeatedPositionCount == 3) {
-                    return GameStatus.FINISHED_DRAW
-
-                }
-            }
-        }
-        return gameStatus
+        return moveGenerator.checkStatus(chessBoard)
     }
 
 
