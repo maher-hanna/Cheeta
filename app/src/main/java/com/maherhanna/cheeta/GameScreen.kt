@@ -1,6 +1,8 @@
 package com.maherhanna.cheeta
 
 
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -38,10 +40,8 @@ import com.maherhanna.cheeta.core.MoveGenerator
 import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.PlayerLegalMoves
 import com.maherhanna.cheeta.core.Uci
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlin.math.floor
 
@@ -71,7 +71,8 @@ fun GameScreen(playerColor: Int) {
         derivedStateOf { chessBoardImageSize.width / 8 }
     }
     var fromSquare by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
-    var toSquare by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
+    var touchSquare by remember { mutableIntStateOf(ChessBoard.NO_SQUARE) }
+
     var touchStartPosition by remember {
         mutableStateOf(Offset(0f, 0f))
     }
@@ -121,7 +122,7 @@ fun GameScreen(playerColor: Int) {
                             offset.y
                         )
 
-                        val touchedSquare = getTouchSquare(
+                        val tappedSquare = getTouchSquare(
                             isChessBoardFlipped = isChessBoardFlipped,
                             chessBoardHeight = chessBoardImageSize.height,
                             x = offset.x,
@@ -130,9 +131,9 @@ fun GameScreen(playerColor: Int) {
                         )
 
                         if (fromSquare != ChessBoard.NO_SQUARE) {
-                            if (touchedSquare != fromSquare) {
+                            if (tappedSquare != fromSquare) {
                                 val playerMove = playerLegalMoves
-                                    .searchMove(fromSquare, touchedSquare)
+                                    .searchMove(fromSquare, tappedSquare)
                                 if (playerMove != null) {
                                     chessBoard.makeMove(playerMove)
                                     playerTurn = !playerTurn
@@ -163,12 +164,12 @@ fun GameScreen(playerColor: Int) {
                                 } else {
                                     if (canSelect(
                                             chessBoard = chessBoard,
-                                            position = touchedSquare,
+                                            position = tappedSquare,
                                             playerColor = playerColor
                                         )
                                     ) {
 
-                                        fromSquare = touchedSquare
+                                        fromSquare = tappedSquare
                                     }
                                 }
 
@@ -176,12 +177,12 @@ fun GameScreen(playerColor: Int) {
                         } else {
                             if (canSelect(
                                     chessBoard = chessBoard,
-                                    position = touchedSquare,
+                                    position = tappedSquare,
                                     playerColor = playerColor
                                 )
                             ) {
 
-                                fromSquare = touchedSquare
+                                fromSquare = tappedSquare
                             }
                         }
 
@@ -213,7 +214,7 @@ fun GameScreen(playerColor: Int) {
                     val isPieceSelected = i == fromSquare
                     Image(
                         modifier = Modifier
-                            .zIndex(zIndex = if (isPieceSelected && isDragging) 1f else 0f)
+                            .zIndex(zIndex = if (isPieceSelected && isDragging) 2f else 1f)
                             .size(with(LocalDensity.current) { squareSize.toDp() * pieceScaleDownFactor })
                             .offset(
                                 x = with(LocalDensity.current) {
@@ -243,6 +244,13 @@ fun GameScreen(playerColor: Int) {
                                                 ) + 1) * squareSize + summed.y) > chessBoardImageSize.height
                                             ) dragOffset.y else summed.y
                                         )
+                                        touchSquare = getTouchSquare(
+                                            isChessBoardFlipped = isChessBoardFlipped,
+                                            chessBoardHeight = chessBoardImageSize.height,
+                                            x = touchStartPosition.x + dragOffset.x,
+                                            y = touchStartPosition.y + dragOffset.y,
+                                            squareSize = squareSize,
+                                        )
                                     }
 
                                 }, onDragStart = {
@@ -256,7 +264,7 @@ fun GameScreen(playerColor: Int) {
                                 },
                                     onDragEnd = {
                                         isDragging = false
-                                        toSquare = getTouchSquare(
+                                        val toSquare = getTouchSquare(
                                             isChessBoardFlipped = isChessBoardFlipped,
                                             chessBoardHeight = chessBoardImageSize.height,
                                             x = touchStartPosition.x + dragOffset.x,
@@ -278,6 +286,7 @@ fun GameScreen(playerColor: Int) {
                                                     )
                                                 touchStartPosition = Offset(0f, 0f)
                                                 fromSquare = ChessBoard.NO_SQUARE
+                                                touchSquare = ChessBoard.NO_SQUARE
 
                                                 scope.launch() {
                                                     playComputer(
@@ -299,6 +308,7 @@ fun GameScreen(playerColor: Int) {
                                             }
                                         } else {
                                             dragOffset = Offset(0f, 0f)
+
                                         }
 
                                     }
@@ -322,6 +332,7 @@ fun GameScreen(playerColor: Int) {
                     isSquareLegalTarget = playerSelectedPieceLegalTargets.contains(i)
                 }
                 val isSquareEmpty = chessBoard.isSquareEmpty(i)
+                // for highlighting legal target squares
                 if (isSquareLegalTarget) {
                     Image(
                         modifier = Modifier
@@ -348,7 +359,36 @@ fun GameScreen(playerColor: Int) {
                     )
 
                 }
+                Log.d(TAG, "touchSquare: $touchSquare")
+                // for highlighting from,touch squares
+                if (i == fromSquare || i == touchSquare) {
+                    Image(
+                        modifier = Modifier
+                            .zIndex(0f)
+                            .offset(
+                                x = with(LocalDensity.current) {
+                                    (ChessBoard.GetFile(
+                                        i
+                                    ) * squareSize).toDp()
+                                },
+                                y = with(LocalDensity.current) {
+                                    (ChessBoard.GetRank(
+                                        index
+                                    ) * squareSize).toDp()
+                                }
+                            )
+                            .size(with(LocalDensity.current) { squareSize.toDp() }),
+                        painter = painterResource(
+                            R.drawable.transparent_yellow_square
+                        ),
+                        contentDescription = stringResource(
+                            id = R.string.from_square
+                        )
+                    )
+
+                }
             }
+
         }
 
     }

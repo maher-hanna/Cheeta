@@ -16,5 +16,6 @@
     <string name="chessboard">Chess Board</string>
     <string name="chess_piece">Chess piece</string>
     <string name="legal_move">Legal Move</string>
+    <string name="from_square">From Square</string>
 
 </resources>
