@@ -1,8 +1,10 @@
 package com.maherhanna.cheeta
 
 
+import android.app.Activity
 import android.content.ContentValues.TAG
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -13,6 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -29,6 +34,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -54,6 +60,8 @@ fun GameScreen(playerColor: Int) {
     }
     val moveGenerator = MoveGenerator()
     var playerTurn by remember { mutableStateOf(playerColor == Piece.WHITE) }
+    var showCancelGameDialog by remember { mutableStateOf(false) }
+
     var playerLegalMoves by remember {
         mutableStateOf(PlayerLegalMoves())
     }
@@ -86,6 +94,7 @@ fun GameScreen(playerColor: Int) {
     val pieceScaleDownFactor = 0.85f
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(true) {
         playerLegalMoves = moveGenerator.generateLegalMovesFor(chessBoard, playerColor)
@@ -95,7 +104,7 @@ fun GameScreen(playerColor: Int) {
                 playComputer(
                     uci = uci, chessBoard = chessBoard,
                     computerLegalMoves = computerLegalMoves
-                ) {newChessBoard ->
+                ) { newChessBoard ->
                     chessBoard = ChessBoard(newChessBoard)
                     playerTurn = !playerTurn
                     playerLegalMoves =
@@ -107,6 +116,10 @@ fun GameScreen(playerColor: Int) {
 
             }
         }
+    }
+
+    BackHandler {
+        showCancelGameDialog = true
     }
 
     Column(
@@ -149,7 +162,7 @@ fun GameScreen(playerColor: Int) {
                                         playComputer(
                                             uci = uci, chessBoard = chessBoard,
                                             computerLegalMoves = computerLegalMoves
-                                        ) {newChessBoard ->
+                                        ) { newChessBoard ->
                                             chessBoard = ChessBoard(newChessBoard)
                                             playerTurn = !playerTurn
                                             playerLegalMoves =
@@ -291,7 +304,7 @@ fun GameScreen(playerColor: Int) {
                                                     playComputer(
                                                         uci = uci, chessBoard = chessBoard,
                                                         computerLegalMoves = computerLegalMoves
-                                                    ) {newChessBoard ->
+                                                    ) { newChessBoard ->
                                                         chessBoard = ChessBoard(newChessBoard)
                                                         playerTurn = !playerTurn
                                                         playerLegalMoves =
@@ -418,6 +431,24 @@ fun GameScreen(playerColor: Int) {
         }
 
     }
+
+    if (showCancelGameDialog) {
+        AlertDialog(
+            onDismissRequest = { showCancelGameDialog = false },
+            title = { Text("End Game") },
+            text = { Text("Do you want to end this game ?") },
+            confirmButton = {
+                TextButton(onClick = { (context as Activity).finish() }) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelGameDialog = false }) {
+                    Text("No")
+                }
+            },
+        )
+    }
 }
 
 
@@ -425,7 +456,7 @@ suspend fun playComputer(
     uci: Uci,
     chessBoard: ChessBoard,
     computerLegalMoves: PlayerLegalMoves,
-    finished: (newChessBoard : ChessBoard) -> Unit
+    finished: (newChessBoard: ChessBoard) -> Unit
 ) {
     withContext(Dispatchers.IO) {
         if (chessBoard.moves.isEmpty()) {
