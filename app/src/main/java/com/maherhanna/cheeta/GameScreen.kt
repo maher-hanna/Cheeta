@@ -49,7 +49,7 @@ import kotlin.math.floor
 fun GameScreen(playerColor: Int) {
     val computerColor = Piece.GetOppositeColor(playerColor)
     val isChessBoardFlipped = playerColor == Piece.BLACK
-    val chessBoard by remember {
+    var chessBoard by remember {
         mutableStateOf(ChessBoard(ChessBoard.positionInUse))
     }
     val moveGenerator = MoveGenerator()
@@ -95,7 +95,8 @@ fun GameScreen(playerColor: Int) {
                 playComputer(
                     uci = uci, chessBoard = chessBoard,
                     computerLegalMoves = computerLegalMoves
-                ) {
+                ) {newChessBoard ->
+                    chessBoard = ChessBoard(newChessBoard)
                     playerTurn = !playerTurn
                     playerLegalMoves =
                         moveGenerator.generateLegalMovesFor(
@@ -148,7 +149,8 @@ fun GameScreen(playerColor: Int) {
                                         playComputer(
                                             uci = uci, chessBoard = chessBoard,
                                             computerLegalMoves = computerLegalMoves
-                                        ) {
+                                        ) {newChessBoard ->
+                                            chessBoard = ChessBoard(newChessBoard)
                                             playerTurn = !playerTurn
                                             playerLegalMoves =
                                                 moveGenerator.generateLegalMovesFor(
@@ -289,8 +291,8 @@ fun GameScreen(playerColor: Int) {
                                                     playComputer(
                                                         uci = uci, chessBoard = chessBoard,
                                                         computerLegalMoves = computerLegalMoves
-                                                    ) {
-
+                                                    ) {newChessBoard ->
+                                                        chessBoard = ChessBoard(newChessBoard)
                                                         playerTurn = !playerTurn
                                                         playerLegalMoves =
                                                             moveGenerator.generateLegalMovesFor(
@@ -423,7 +425,7 @@ suspend fun playComputer(
     uci: Uci,
     chessBoard: ChessBoard,
     computerLegalMoves: PlayerLegalMoves,
-    finished: () -> Unit
+    finished: (newChessBoard : ChessBoard) -> Unit
 ) {
     withContext(Dispatchers.IO) {
         if (chessBoard.moves.isEmpty()) {
@@ -442,7 +444,9 @@ suspend fun playComputer(
         )
         if (computerMove != null) {
             chessBoard.makeMove(computerMove)
-            finished()
+            // pass chessboard to copy it to original chessboard to force jetpack compose to recompose
+            // to fix view not updating when computer finishes the move
+            finished(chessBoard)
         }
     }
 }
