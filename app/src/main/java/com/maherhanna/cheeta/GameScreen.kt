@@ -2,6 +2,8 @@ package com.maherhanna.cheeta
 
 
 import android.app.Activity
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -88,7 +90,9 @@ fun GameScreen(playerColor: Int) {
     var dragOffset by remember {
         mutableStateOf(Offset(0f, 0f))
     }
-
+    var summedDrag by remember {
+        mutableStateOf(Offset(0f, 0f))
+    }
     var isDragging by remember {
         mutableStateOf(false)
     }
@@ -274,16 +278,16 @@ fun GameScreen(playerColor: Int) {
                                     change.consume()
                                     if (fromSquare != ChessBoard.NO_SQUARE && isDragging) {
                                         // limit dragged piece inside chess board borders
-                                        val summed = dragOffset + offset
+                                        summedDrag += offset
                                         dragOffset = Offset(
-                                            x = if ((ChessBoard.GetFile(i) * squareSize + summed.x) < 0f || ((ChessBoard.GetFile(
+                                            x = if ((ChessBoard.GetFile(i) * squareSize + summedDrag.x) <= 0f || ((ChessBoard.GetFile(
                                                     i
-                                                ) + 1) * squareSize + summed.x) > chessBoardImageSize.width
-                                            ) dragOffset.x else summed.x,
-                                            y = if ((ChessBoard.GetRank(index) * squareSize + summed.y) < 0f || ((ChessBoard.GetRank(
+                                                ) + 1) * squareSize + summedDrag.x) >= chessBoardImageSize.width
+                                            ) dragOffset.x else summedDrag.x,
+                                            y = if ((ChessBoard.GetRank(index) * squareSize + summedDrag.y) <= 0f || ((ChessBoard.GetRank(
                                                     index
-                                                ) + 1) * squareSize + summed.y) > chessBoardImageSize.height
-                                            ) dragOffset.y else summed.y
+                                                ) + 1) * squareSize + summedDrag.y) >= chessBoardImageSize.height
+                                            ) dragOffset.y else summedDrag.y
                                         )
                                         touchSquare = getTouchSquare(
                                             isChessBoardFlipped = isChessBoardFlipped,
@@ -305,6 +309,7 @@ fun GameScreen(playerColor: Int) {
                                 },
                                     onDragEnd = {
                                         isDragging = false
+                                        summedDrag = Offset(0f,0f)
                                         val toSquare = getTouchSquare(
                                             isChessBoardFlipped = isChessBoardFlipped,
                                             chessBoardHeight = chessBoardImageSize.height,
