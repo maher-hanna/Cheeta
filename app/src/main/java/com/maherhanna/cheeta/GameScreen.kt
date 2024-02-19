@@ -463,7 +463,7 @@ fun GameScreen(playerColor: Int) {
                             )
                             .size(with(LocalDensity.current) { squareSize.toDp() }),
                         painter = painterResource(
-                            R.drawable.transparent_red_square
+                            R.drawable.transparent_yellow_square
                         ),
                         contentDescription = stringResource(
                             id = R.string.last_move
