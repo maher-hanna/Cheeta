@@ -468,7 +468,36 @@ fun GameScreen(playerColor: Int) {
                 }
                 // for highlighting last move squares
                 val playerKingPosition = moveGenerator.getKingPosition(chessBoard, playerColor)
+                val computerKingPosition = moveGenerator.getKingPosition(chessBoard, computerColor)
+                // for highlighting king check
                 if (computerLegalMoves.isOpponentKingInCheck(playerKingPosition) && i == playerKingPosition
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .zIndex(0f)
+                            .offset(
+                                x = with(LocalDensity.current) {
+                                    (ChessBoard.GetFile(
+                                        i
+                                    ) * squareSize).toDp()
+                                },
+                                y = with(LocalDensity.current) {
+                                    (ChessBoard.GetRank(
+                                        index
+                                    ) * squareSize).toDp()
+                                }
+                            )
+                            .size(with(LocalDensity.current) { squareSize.toDp() }),
+                        painter = painterResource(
+                            R.drawable.red_gradient
+                        ),
+                        contentDescription = stringResource(
+                            id = R.string.king_checked
+                        )
+                    )
+
+                }
+                if (playerLegalMoves.isOpponentKingInCheck(computerKingPosition) && i == computerKingPosition
                 ) {
                     Image(
                         modifier = Modifier
