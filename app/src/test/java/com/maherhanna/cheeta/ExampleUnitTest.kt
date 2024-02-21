@@ -33,7 +33,7 @@ class ExampleUnitTest {
 
     @Test(expected = Test.None::class)
     fun testUciProtocol() {
-        val numberOfGames = 1
+        val numberOfGames = 20
         var currentGameNumber = 1
         var isCurrentGameFinished: Boolean
         var movesList: String
@@ -121,7 +121,7 @@ class ExampleUnitTest {
                             movesList += splits[1] + " "
                         }
                     }
-                    println(movesList)
+                    println("position fen $randomPosition moves $movesList")
                     val gameStatusResponse = uci.parseInput("check_status")
                     // game status : 0 not finished, 1 draw, 2 white winds, 3 black wins
                     val statusCode = gameStatusResponse.toInt()

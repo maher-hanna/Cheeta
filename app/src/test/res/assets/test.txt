@@ -1,0 +1,1 @@
+position fen 8/6R1/7p/1PK1r2P/5kn1/8/8/8 w - - c0 Carlsen,M-Caruana,F 2nd Norway Chess 2014 Stavanger NOR 2014.06.05; c1 1/2-1/2; moves c5d4 e5b5 g7f7 f4g3 f7f1 b5h5 d4c3 g4e3 f1f6 e3d5 c3b3 d5f6 b3a2 h5b5 a2a1 g3f4 a1a2 f6e4 a2a1 e4d2 a1a2 d2c4 a2a1 f4e3 a1a2 e3d2 a2a1 d2c2 a1a2 b5a5

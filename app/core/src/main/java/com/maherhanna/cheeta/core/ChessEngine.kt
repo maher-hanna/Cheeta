@@ -51,7 +51,7 @@ open class ChessEngine {
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var maxDepth = 0
         var timeLeft: Long
-        var move: Move? = null
+        var move: Move? = toPlayLegalMoves[0]
         alpha = LOSE_SCORE
         beta = WIN_SCORE
         do {
