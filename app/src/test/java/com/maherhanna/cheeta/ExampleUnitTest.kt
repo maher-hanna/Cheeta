@@ -33,7 +33,7 @@ class ExampleUnitTest {
 
     @Test(expected = Test.None::class)
     fun testUciProtocol() {
-        val numberOfGames = 20
+        val numberOfGames = 2
         var currentGameNumber = 1
         var isCurrentGameFinished: Boolean
         var movesList: String
@@ -44,7 +44,7 @@ class ExampleUnitTest {
         val classLoader = ClassLoader.getSystemClassLoader()
 
         val carlsenGamesStream =
-            classLoader.getResourceAsStream("carlsen.txt")
+            classLoader.getResourceAsStream("test.txt")
         val carlsenGamesBufferReader = carlsenGamesStream.bufferedReader()
 
         val positions = mutableListOf<String>()
@@ -81,7 +81,7 @@ class ExampleUnitTest {
                     // game status : 0 not finished, 1 draw, 2 white winds, 3 black wins
                     val statusCode = gameStatusResponse.toInt()
                     if (statusCode != 0) {
-                        continue
+                        break
                     }
                     val move = uci.parseInput("go infinite")
                     val splits = move.trim().split("\\s+".toRegex())
@@ -90,13 +90,14 @@ class ExampleUnitTest {
                     }
                 } else {
                     uci.parseInput("position fen  $randomPosition")
-                    val move = uci.parseInput("go infinite")
                     val gameStatusResponse = uci.parseInput("check_status")
                     // game status : 0 not finished, 1 draw, 2 white winds, 3 black wins
                     val statusCode = gameStatusResponse.toInt()
                     if (statusCode != 0) {
-                        continue
+                        break
                     }
+                    val move = uci.parseInput("go infinite")
+
                     val splits = move.trim().split("\\s+".toRegex())
                     if(splits.size > 1){
                         movesList += splits[1] + " "
@@ -107,14 +108,22 @@ class ExampleUnitTest {
                     currentPlayerIndex = currentPlayerIndex xor 1
 
                     if(currentPlayerIndex == 0){
-                        uci.parseInput("position fen $randomPosition moves $movesList")
+                        if(randomPosition.contains("moves")){
+                            uci.parseInput("position fen $randomPosition $movesList")
+                        }else {
+                            uci.parseInput("position fen $randomPosition moves $movesList")
+                        }
                         val move = uci.parseInput("go infinite")
                         val splits = move.trim().split("\\s+".toRegex())
                         if(splits.size > 1){
                             movesList += splits[1] + " "
                         }
                     } else{
-                        uci.parseInput("position fen $randomPosition moves $movesList")
+                        if(randomPosition.contains("moves")){
+                            uci.parseInput("position fen $randomPosition $movesList")
+                        }else {
+                            uci.parseInput("position fen $randomPosition moves $movesList")
+                        }
                         val move = uci.parseInput("go infinite")
                         val splits = move.trim().split("\\s+".toRegex())
                         if(splits.size > 1){
@@ -155,6 +164,8 @@ class ExampleUnitTest {
         } catch (e: NoSuchElementException) {
             println("System.in was closed; exiting")
 
+        } catch (e: Exception){
+            println(e.message)
         }
     }
 

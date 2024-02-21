@@ -154,14 +154,14 @@ class MoveGenerator(
         }
     }
 
-    fun reset(){
+    fun reset() {
         whitePlayerLegalMoves = PlayerLegalMoves()
         blackPlayerLegalMoves = PlayerLegalMoves()
 
         whiteKingPinnedPieces = LongArray(64)
         blackKingPinnedPieces = LongArray(64)
 
-        whiteKingCheckLine =  0L.inv()
+        whiteKingCheckLine = 0L.inv()
         blackKingCheckLine = 0L.inv()
 
         whiteAttackedPieces = 0L
@@ -1423,6 +1423,7 @@ class MoveGenerator(
             generateBlackLegalMoves(chessBoard)
         }
     }
+
     fun checkStatus(chessBoard: ChessBoard): GameStatus {
         val lastPlayed = chessBoard.moves.lastPlayed
         var gameStatus = GameStatus.NOT_FINISHED
@@ -1519,7 +1520,7 @@ class MoveGenerator(
 
             ) &&
                 !isPieceAttacked(color, initialKingPosition + 2)
-                && !isPieceAttacked(color,initialRookPosition)
+                && !isPieceAttacked(color, initialRookPosition)
     }
 
     private fun canCastleQueenSide(
@@ -1558,7 +1559,7 @@ class MoveGenerator(
 
             ) &&
                 !isPieceAttacked(color, initialKingPosition - 2)
-                && !isPieceAttacked(color,initialRookPosition)
+                && !isPieceAttacked(color, initialRookPosition)
     }
 
     fun getInitialKingPosition(chessBoard: ChessBoard?, kingColor: Int): Int {
@@ -1635,23 +1636,26 @@ class MoveGenerator(
             } else {
                 blackKingCheckLine = northTargets
             }
-        } else if ((southTargets and straitEnemyCheckPieces) != 0L) {
+        }
+        if ((southTargets and straitEnemyCheckPieces) != 0L) {
             if (color == Piece.WHITE) {
-                whiteKingCheckLine = southTargets
+                whiteKingCheckLine = whiteKingCheckLine and southTargets
             } else {
-                blackKingCheckLine = southTargets
+                blackKingCheckLine = blackKingCheckLine and southTargets
             }
-        } else if ((eastTargets and straitEnemyCheckPieces) != 0L) {
+        }
+        if ((eastTargets and straitEnemyCheckPieces) != 0L) {
             if (color == Piece.WHITE) {
-                whiteKingCheckLine = eastTargets
+                whiteKingCheckLine = whiteKingCheckLine and eastTargets
             } else {
-                blackKingCheckLine = eastTargets
+                blackKingCheckLine = blackKingCheckLine and eastTargets
             }
-        } else if ((westTargets and straitEnemyCheckPieces) != 0L) {
+        }
+        if ((westTargets and straitEnemyCheckPieces) != 0L) {
             if (color == Piece.WHITE) {
-                whiteKingCheckLine = westTargets
+                whiteKingCheckLine = whiteKingCheckLine and westTargets
             } else {
-                blackKingCheckLine = westTargets
+                blackKingCheckLine = blackKingCheckLine and westTargets
             }
         }
 
@@ -1804,11 +1808,27 @@ class MoveGenerator(
                     whiteKingPinnedPieces[BitMath.getBitIndex(westPinnedPiece, EAST)] =
                         westAttacks or (1L shl rookPosition)
                 }
+                // check EnPassant capture reveal
+                if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
+                    if ((1L shl (chessBoard.enPassantTarget - 1)) and chessBoard.blackPawns and westAttacks != 0L) {
+                        whiteKingPinnedPieces[chessBoard.enPassantTarget - 1] =
+                            westAttacks or (1L shl rookPosition) or (1L shl (chessBoard.enPassantTarget - 1))
+                    }
+                }
                 val eastPinnedPiece = eastAttacks and whiteKingEastConnectedPieces
+
                 if (eastPinnedPiece != 0L) {
                     whiteKingPinnedPieces[BitMath.getBitIndex(eastPinnedPiece, WEST)] =
                         eastAttacks or (1L shl rookPosition)
                 }
+                // check EnPassant capture reveal
+                if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
+                    if ((1L shl (chessBoard.enPassantTarget + 1)) and chessBoard.blackPawns and eastAttacks != 0L) {
+                        whiteKingPinnedPieces[chessBoard.enPassantTarget + 1] =
+                            eastAttacks or (1L shl rookPosition) or (1L shl (chessBoard.enPassantTarget + 1))
+                    }
+                }
+
 
             } else {
                 val northPinnedPiece = northAttacks and blackKingNorthConnectedPieces
@@ -1826,10 +1846,26 @@ class MoveGenerator(
                     blackKingPinnedPieces[BitMath.getBitIndex(westPinnedPiece, EAST)] =
                         westAttacks or (1L shl rookPosition)
                 }
+                // check EnPassant capture reveal
+                if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
+                    if ((1L shl (chessBoard.enPassantTarget - 1)) and chessBoard.whitePawns and westAttacks != 0L) {
+                        blackKingPinnedPieces[chessBoard.enPassantTarget - 1] =
+                            westAttacks or (1L shl rookPosition) or (1L shl (chessBoard.enPassantTarget - 1))
+                    }
+                }
+
+
                 val eastPinnedPiece = eastAttacks and blackKingEastConnectedPieces
                 if (eastPinnedPiece != 0L) {
                     blackKingPinnedPieces[BitMath.getBitIndex(eastPinnedPiece, WEST)] =
                         eastAttacks or (1L shl rookPosition)
+                }
+                // check EnPassant capture reveal
+                if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
+                    if ((1L shl (chessBoard.enPassantTarget + 1)) and chessBoard.whitePawns and eastAttacks != 0L) {
+                        blackKingPinnedPieces[chessBoard.enPassantTarget + 1] =
+                            eastAttacks or (1L shl rookPosition) or (1L shl (chessBoard.enPassantTarget + 1))
+                    }
                 }
             }
 
