@@ -107,6 +107,10 @@ open class ChessEngine {
         timeLeft: Long,
         maxDepth: Int,
         ): Move? {
+        if(timeLeft < 0){
+            searchTimeFinished = true
+            return null
+        }
         val searchStart = System.nanoTime()
         var score: Int
         var bestMove:Move? = null
