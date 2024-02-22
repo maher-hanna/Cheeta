@@ -33,7 +33,7 @@ class ExampleUnitTest {
 
     @Test(expected = Test.None::class)
     fun testUciProtocol() {
-        val numberOfGames = 2
+        val numberOfGames = 20
         var currentGameNumber = 1
         var isCurrentGameFinished: Boolean
         var movesList: String
@@ -44,7 +44,7 @@ class ExampleUnitTest {
         val classLoader = ClassLoader.getSystemClassLoader()
 
         val carlsenGamesStream =
-            classLoader.getResourceAsStream("test.txt")
+            classLoader.getResourceAsStream("carlsen.txt")
         val carlsenGamesBufferReader = carlsenGamesStream.bufferedReader()
 
         val positions = mutableListOf<String>()
@@ -106,31 +106,11 @@ class ExampleUnitTest {
                 while (!isCurrentGameFinished){
                     // flip current player index from 0 to 1 and vice versa
                     currentPlayerIndex = currentPlayerIndex xor 1
-
-                    if(currentPlayerIndex == 0){
-                        if(randomPosition.contains("moves")){
-                            uci.parseInput("position fen $randomPosition $movesList")
-                        }else {
-                            uci.parseInput("position fen $randomPosition moves $movesList")
-                        }
-                        val move = uci.parseInput("go infinite")
-                        val splits = move.trim().split("\\s+".toRegex())
-                        if(splits.size > 1){
-                            movesList += splits[1] + " "
-                        }
-                    } else{
-                        if(randomPosition.contains("moves")){
-                            uci.parseInput("position fen $randomPosition $movesList")
-                        }else {
-                            uci.parseInput("position fen $randomPosition moves $movesList")
-                        }
-                        val move = uci.parseInput("go infinite")
-                        val splits = move.trim().split("\\s+".toRegex())
-                        if(splits.size > 1){
-                            movesList += splits[1] + " "
-                        }
+                    if(randomPosition.contains("moves")){
+                        uci.parseInput("position fen $randomPosition $movesList")
+                    }else {
+                        uci.parseInput("position fen $randomPosition moves $movesList")
                     }
-                    println("position fen $randomPosition moves $movesList")
                     val gameStatusResponse = uci.parseInput("check_status")
                     // game status : 0 not finished, 1 draw, 2 white winds, 3 black wins
                     val statusCode = gameStatusResponse.toInt()
@@ -153,7 +133,26 @@ class ExampleUnitTest {
                                 }
                             }
                         }
+                        break
                     }
+
+                    if(currentPlayerIndex == 0){
+
+                        val move = uci.parseInput("go infinite")
+                        val splits = move.trim().split("\\s+".toRegex())
+                        if(splits.size > 1){
+                            movesList += splits[1] + " "
+                        }
+                    } else{
+
+                        val move = uci.parseInput("go infinite")
+                        val splits = move.trim().split("\\s+".toRegex())
+                        if(splits.size > 1){
+                            movesList += splits[1] + " "
+                        }
+                    }
+                    println("position fen $randomPosition moves $movesList")
+
                 }
                 currentGameNumber += 1
             }
@@ -164,8 +163,6 @@ class ExampleUnitTest {
         } catch (e: NoSuchElementException) {
             println("System.in was closed; exiting")
 
-        } catch (e: Exception){
-            println(e.message)
         }
     }
 
