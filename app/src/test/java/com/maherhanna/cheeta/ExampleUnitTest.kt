@@ -33,7 +33,7 @@ class ExampleUnitTest {
 
     @Test(expected = Test.None::class)
     fun testUciProtocol() {
-        val numberOfGames = 20
+        val numberOfGames = 30
         var currentGameNumber = 1
         var isCurrentGameFinished: Boolean
         var movesList: String

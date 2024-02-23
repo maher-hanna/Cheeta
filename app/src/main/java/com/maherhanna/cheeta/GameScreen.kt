@@ -2,8 +2,6 @@ package com.maherhanna.cheeta
 
 
 import android.app.Activity
-import android.content.ContentValues.TAG
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -538,8 +536,8 @@ fun GameScreen(playerColor: Int) {
     if (showCancelGameDialog) {
         AlertDialog(
             onDismissRequest = { showCancelGameDialog = false },
-            title = { Text(stringResource(id = R.string.start_a_new_game)) },
-            text = { Text(stringResource(id = R.string.finish_game_message)) },
+            title = { Text(stringResource(id = R.string.cancel_game_title)) },
+            text = { Text(stringResource(id = R.string.cancel_game_message)) },
             confirmButton = {
                 TextButton(onClick = { (context as Activity).finish() }) {
                     Text(stringResource(id = R.string.finish_game_yes))
@@ -568,7 +566,7 @@ fun GameScreen(playerColor: Int) {
                     )
                 )
             },
-            text = { Text(stringResource(id = R.string.start_a_new_game)) },
+            text = { Text(stringResource(id = R.string.game_finished_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showGameFinishedDialog = false
