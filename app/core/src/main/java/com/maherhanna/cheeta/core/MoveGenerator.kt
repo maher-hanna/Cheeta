@@ -680,8 +680,8 @@ class MoveGenerator(
             }
             quietTargets = northTargets and chessBoard.emptySquares
             if (captureTarget != 0L) {
+                captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
-                    captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                     move = Move(pieceType, color, rookPosition, captureTargetIndex)
                     move.setTakes(chessBoard.pieceType(captureTargetIndex))
                     moves.add(move)
