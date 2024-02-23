@@ -1810,9 +1810,10 @@ class MoveGenerator(
                 }
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
-                    if ((1L shl (chessBoard.enPassantTarget - 1)) and chessBoard.blackPawns and westAttacks != 0L) {
-                        whiteKingPinnedPieces[chessBoard.enPassantTarget - 1] =
-                            westAttacks or (1L shl rookPosition) or (1L shl (chessBoard.enPassantTarget - 1))
+                    val enPassantPawn = chessBoard.enPassantTarget - 8
+                    if ((1L shl (enPassantPawn - 1)) and chessBoard.blackPawns and westAttacks != 0L) {
+                        whiteKingPinnedPieces[enPassantPawn - 1] =
+                            westAttacks or (1L shl rookPosition) or (1L shl (enPassantPawn - 1))
                     }
                 }
                 val eastPinnedPiece = eastAttacks and whiteKingEastConnectedPieces
@@ -1823,9 +1824,10 @@ class MoveGenerator(
                 }
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
-                    if ((1L shl (chessBoard.enPassantTarget + 1)) and chessBoard.blackPawns and eastAttacks != 0L) {
-                        whiteKingPinnedPieces[chessBoard.enPassantTarget + 1] =
-                            eastAttacks or (1L shl rookPosition) or (1L shl (chessBoard.enPassantTarget + 1))
+                    val enPassantPawn = chessBoard.enPassantTarget - 8
+                    if ((1L shl (enPassantPawn + 1)) and chessBoard.blackPawns and eastAttacks != 0L) {
+                        whiteKingPinnedPieces[enPassantPawn + 1] =
+                            eastAttacks or (1L shl rookPosition) or (1L shl (enPassantPawn + 1))
                     }
                 }
 
@@ -1848,9 +1850,10 @@ class MoveGenerator(
                 }
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
-                    if ((1L shl (chessBoard.enPassantTarget - 1)) and chessBoard.whitePawns and westAttacks != 0L) {
-                        blackKingPinnedPieces[chessBoard.enPassantTarget - 1] =
-                            westAttacks or (1L shl rookPosition) or (1L shl (chessBoard.enPassantTarget - 1))
+                    val enPassantPawn = chessBoard.enPassantTarget + 8
+                    if ((1L shl (enPassantPawn - 1)) and chessBoard.whitePawns and westAttacks != 0L) {
+                        blackKingPinnedPieces[enPassantPawn - 1] =
+                            westAttacks or (1L shl rookPosition) or (1L shl (enPassantPawn - 1))
                     }
                 }
 
@@ -1862,9 +1865,10 @@ class MoveGenerator(
                 }
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
-                    if ((1L shl (chessBoard.enPassantTarget + 1)) and chessBoard.whitePawns and eastAttacks != 0L) {
-                        blackKingPinnedPieces[chessBoard.enPassantTarget + 1] =
-                            eastAttacks or (1L shl rookPosition) or (1L shl (chessBoard.enPassantTarget + 1))
+                    val enPassantPawn = chessBoard.enPassantTarget + 8
+                    if ((1L shl (enPassantPawn + 1)) and chessBoard.whitePawns and eastAttacks != 0L) {
+                        blackKingPinnedPieces[enPassantPawn + 1] =
+                            eastAttacks or (1L shl rookPosition) or (1L shl (enPassantPawn + 1))
                     }
                 }
             }

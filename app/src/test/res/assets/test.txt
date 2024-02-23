@@ -1,1 +1,1 @@
-2r1r1k1/5p1p/2n1p1pP/2P1b3/2R1P1P1/5Q2/q4BK1/3R1B2 w - - c0 Radjabov,T-Carlsen,M VI World Blitz Moscow RUS 2010.11.16; c1 1/2-1/2; moves f1e2 c8d8 c4c1 d8d2 d1d2 a2d2 c1d1 d2h6 g2f1 e8b8 f1e1 h6g5 e2c4 c6a5 d1d7 g5c1 d7d1 c1c4 d1d7 b8b1 e1d2 c4a2 d2d3
+6r1/1r2bkpp/p1p5/1p6/3B4/1P6/1PP1R1PP/2K2R2 b - - moves e7f6 e2f2 f7e8 d4f6 g7f6 f2f6 g8g2 f6f8 e8d7 f1f7 d7e6 f7b7 g2g1 c1d2 g1g2 d2d1 g2g1 d1d2 g1g2 d2d1 g2g1 d1e2 g1g2 f8f2 g2g4 b7h7 b5b4 h7a7 g4e4 e2d1 e4d4 d1c1 d4e4 a7a6 e4e1 c1d2 e1e4
