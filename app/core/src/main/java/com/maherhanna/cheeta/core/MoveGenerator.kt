@@ -1697,7 +1697,7 @@ class MoveGenerator(
 
         if (color == Piece.WHITE) {
             val myPieces =
-                if (chessBoard.enPassantTarget == ChessBoard.NO_SQUARE) chessBoard.allWhitePieces else (chessBoard.allWhitePieces or (1L shl chessBoard.enPassantTarget))
+                if (chessBoard.enPassantTarget == ChessBoard.NO_SQUARE) chessBoard.allWhitePieces else (chessBoard.allWhitePieces or (1L shl (chessBoard.enPassantTarget - 8)))
             whiteKingNorthConnectedPieces = northTargets and myPieces
             whiteKingNorthWestConnectedPieces = northWestTargets and myPieces
             whiteKingWestConnectedPieces = westTargets and myPieces
@@ -1709,7 +1709,7 @@ class MoveGenerator(
 
         } else {
             val myPieces =
-                if (chessBoard.enPassantTarget == ChessBoard.NO_SQUARE) chessBoard.allBlackPieces else (chessBoard.allBlackPieces or (1L shl chessBoard.enPassantTarget))
+                if (chessBoard.enPassantTarget == ChessBoard.NO_SQUARE) chessBoard.allBlackPieces else (chessBoard.allBlackPieces or (1L shl (chessBoard.enPassantTarget + 8)))
             blackKingNorthConnectedPieces = northTargets and myPieces
             blackKingNorthWestConnectedPieces = northWestTargets and myPieces
             blackKingWestConnectedPieces = westTargets and myPieces
@@ -1771,9 +1771,9 @@ class MoveGenerator(
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
                     val enPassantPawn = chessBoard.enPassantTarget - 8
-                    if ((1L shl (enPassantPawn - 1)) and chessBoard.blackPawns and westAttacks != 0L) {
+                    if ((1L shl enPassantPawn) and whiteKingWestConnectedPieces != 0L && (1L shl (enPassantPawn - 1)) and chessBoard.whitePawns and westAttacks != 0L) {
                         whiteKingPinnedPieces[enPassantPawn - 1] =
-                            westAttacks or (1L shl rookPosition) or (1L shl (enPassantPawn - 1))
+                            westAttacks or (1L shl rookPosition)
                     }
                 }
                 val eastPinnedPiece = eastAttacks and whiteKingEastConnectedPieces
@@ -1785,9 +1785,9 @@ class MoveGenerator(
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
                     val enPassantPawn = chessBoard.enPassantTarget - 8
-                    if ((1L shl (enPassantPawn + 1)) and chessBoard.blackPawns and eastAttacks != 0L) {
+                    if ((1L shl enPassantPawn) and whiteKingEastConnectedPieces != 0L && (1L shl (enPassantPawn + 1)) and chessBoard.whitePawns and eastAttacks != 0L) {
                         whiteKingPinnedPieces[enPassantPawn + 1] =
-                            eastAttacks or (1L shl rookPosition) or (1L shl (enPassantPawn + 1))
+                            eastAttacks or (1L shl rookPosition)
                     }
                 }
             } else {
@@ -1809,9 +1809,9 @@ class MoveGenerator(
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
                     val enPassantPawn = chessBoard.enPassantTarget + 8
-                    if ((1L shl (enPassantPawn - 1)) and chessBoard.whitePawns and westAttacks != 0L) {
+                    if ((1L shl enPassantPawn) and blackKingWestConnectedPieces != 0L && (1L shl (enPassantPawn - 1)) and chessBoard.blackPawns and westAttacks != 0L) {
                         blackKingPinnedPieces[enPassantPawn - 1] =
-                            westAttacks or (1L shl rookPosition) or (1L shl (enPassantPawn - 1))
+                            westAttacks or (1L shl rookPosition)
                     }
                 }
                 val eastPinnedPiece = eastAttacks and blackKingEastConnectedPieces
@@ -1823,9 +1823,9 @@ class MoveGenerator(
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
                     val enPassantPawn = chessBoard.enPassantTarget + 8
-                    if ((1L shl (enPassantPawn + 1)) and chessBoard.whitePawns and eastAttacks != 0L) {
+                    if ((1L shl enPassantPawn) and blackKingEastConnectedPieces != 0L && (1L shl (enPassantPawn + 1)) and chessBoard.blackPawns and eastAttacks != 0L) {
                         blackKingPinnedPieces[enPassantPawn + 1] =
-                            eastAttacks or (1L shl rookPosition) or (1L shl (enPassantPawn + 1))
+                            eastAttacks or (1L shl rookPosition)
                     }
                 }
             }
