@@ -22,6 +22,7 @@ import kotlin.system.exitProcess
 class ExampleUnitTest {
     val chessBoard = ChessBoard(ChessBoard.positionInUse)
     val chessBoard2 = ChessBoard(ChessBoard.KiwipetePosition)
+    val chessBoard3 = ChessBoard("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -")
     val moveGenerator = MoveGenerator()
 
     @Before
@@ -206,6 +207,27 @@ class ExampleUnitTest {
 
         for (i in 1 until 7) {
             val perftResult = Perft(i, chessBoard2, moveGenerator)
+            if(perftResults[i - 1] != perftResult){
+                Log.d(ChessEngine.DEBUG_TAG,"depth: ${i}")
+            }
+            assertEquals(perftResults[i - 1], perftResult)
+
+        }
+    }
+
+    @Test
+    fun moveGeneratorMoves3() {
+        val perftResults = listOf<ULong>(
+            14UL,
+            191UL,
+            2812UL,
+            43238UL,
+            674624UL,
+            11030083UL,
+        )
+
+        for (i in 1 until 7) {
+            val perftResult = Perft(i, chessBoard3, moveGenerator)
             if(perftResults[i - 1] != perftResult){
                 Log.d(ChessEngine.DEBUG_TAG,"depth: ${i}")
             }
