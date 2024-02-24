@@ -49,14 +49,14 @@ class ExampleUnitTest {
                 val randomPlayerIndex = random.nextInt(2)
                 var currentPlayerIndex = randomPlayerIndex
                 if(currentPlayerIndex == 0){
-                        uci.parseInput("position fen r1bqk2r/4npbp/p2p1p2/1p1Np3/4P3/N2B4/PPP2PPP/R2QK2R w KQkq -")
+                        uci.parseInput("position fen 6R1/1P3p2/3K1k1p/8/4PpP1/8/1r6/8 b - -")
                     val move = uci.parseInput("go infinite")
                     val splits = move.trim().split("\\s+".toRegex())
                     if(splits.size > 1){
                         movesList += splits[1] + " "
                     }
                 } else {
-                    uci.parseInput("position fen r1bqk2r/4npbp/p2p1p2/1p1Np3/4P3/N2B4/PPP2PPP/R2QK2R w KQkq -")
+                    uci.parseInput("position fen 6R1/1P3p2/3K1k1p/8/4PpP1/8/1r6/8 b - -")
                     val move = uci.parseInput("go infinite")
                     val splits = move.trim().split("\\s+".toRegex())
                     if(splits.size > 1){
@@ -66,23 +66,7 @@ class ExampleUnitTest {
                 while (!isCurrentGameFinished){
                     // flip current player index from 0 to 1 and vice versa
                     currentPlayerIndex = currentPlayerIndex xor 1
-
-                    if(currentPlayerIndex == 0){
-                        uci.parseInput("position fen r1bqk2r/4npbp/p2p1p2/1p1Np3/4P3/N2B4/PPP2PPP/R2QK2R w KQkq - moves $movesList")
-                        val move = uci.parseInput("go infinite")
-                        val splits = move.trim().split("\\s+".toRegex())
-                        if(splits.size > 1){
-                            movesList += splits[1] + " "
-                        }
-                    } else{
-                        uci.parseInput("position fen r1bqk2r/4npbp/p2p1p2/1p1Np3/4P3/N2B4/PPP2PPP/R2QK2R w KQkq - moves $movesList")
-                        val move = uci.parseInput("go infinite")
-                        val splits = move.trim().split("\\s+".toRegex())
-                        if(splits.size > 1){
-                            movesList += splits[1] + " "
-                        }
-                    }
-                    println(movesList)
+                    uci.parseInput("position fen 6R1/1P3p2/3K1k1p/8/4PpP1/8/1r6/8 b - - moves $movesList")
                     val gameStatusResponse = uci.parseInput("check_status")
                     // game status : 0 not finished, 1 draw, 2 white winds, 3 black wins
                     val statusCode = gameStatusResponse.toInt()
@@ -105,7 +89,23 @@ class ExampleUnitTest {
                                 }
                             }
                         }
+                        break
                     }
+                    if(currentPlayerIndex == 0){
+                        val move = uci.parseInput("go infinite")
+                        val splits = move.trim().split("\\s+".toRegex())
+                        if(splits.size > 1){
+                            movesList += splits[1] + " "
+                        }
+                    } else{
+                        val move = uci.parseInput("go infinite")
+                        val splits = move.trim().split("\\s+".toRegex())
+                        if(splits.size > 1){
+                            movesList += splits[1] + " "
+                        }
+                    }
+                    println(movesList)
+
                 }
                 currentGameNumber += 1
             }
