@@ -1767,15 +1767,24 @@ class MoveGenerator(
                 if (westPinnedPiece != 0L) {
                     whiteKingPinnedPieces[BitMath.getBitIndex(westPinnedPiece, EAST)] =
                         westAttacks or (1L shl rookPosition)
+
                 }
+
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
                     val enPassantPawn = chessBoard.enPassantTarget - 8
-                    if ((1L shl enPassantPawn) and whiteKingWestConnectedPieces != 0L && (1L shl (enPassantPawn - 1)) and chessBoard.whitePawns and westAttacks != 0L) {
+                    if(westAttacks and (1L shl (enPassantPawn - 1)) and chessBoard.whitePawns != 0L && whiteKingWestConnectedPieces and (1L shl enPassantPawn) != 0L){
                         whiteKingPinnedPieces[enPassantPawn - 1] =
-                            westAttacks or (1L shl rookPosition)
+                            (1L shl chessBoard.enPassantTarget).inv()
                     }
+                    if(westAttacks and (1L shl (enPassantPawn)) != 0L && whiteKingWestConnectedPieces and (1L shl (enPassantPawn + 1)) and chessBoard.whitePawns != 0L){
+                        whiteKingPinnedPieces[enPassantPawn + 1] =
+                            (1L shl chessBoard.enPassantTarget).inv()
+
+                    }
+
                 }
+
                 val eastPinnedPiece = eastAttacks and whiteKingEastConnectedPieces
                 if (eastPinnedPiece != 0L) {
                     whiteKingPinnedPieces[BitMath.getBitIndex(eastPinnedPiece, WEST)] =
@@ -1785,11 +1794,18 @@ class MoveGenerator(
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
                     val enPassantPawn = chessBoard.enPassantTarget - 8
-                    if ((1L shl enPassantPawn) and whiteKingEastConnectedPieces != 0L && (1L shl (enPassantPawn + 1)) and chessBoard.whitePawns and eastAttacks != 0L) {
+                    if(eastAttacks and (1L shl (enPassantPawn + 1)) and chessBoard.whitePawns != 0L && whiteKingEastConnectedPieces and (1L shl enPassantPawn) != 0L){
                         whiteKingPinnedPieces[enPassantPawn + 1] =
-                            eastAttacks or (1L shl rookPosition)
+                            (1L shl chessBoard.enPassantTarget).inv()
                     }
+                    if(eastAttacks and (1L shl (enPassantPawn)) != 0L && whiteKingEastConnectedPieces and (1L shl (enPassantPawn - 1)) and chessBoard.whitePawns != 0L){
+                        whiteKingPinnedPieces[enPassantPawn - 1] =
+                            (1L shl chessBoard.enPassantTarget).inv()
+                    }
+
+
                 }
+
             } else {
                 val northPinnedPiece = northAttacks and blackKingNorthConnectedPieces
                 if (northPinnedPiece != 0L) {
@@ -1805,29 +1821,43 @@ class MoveGenerator(
                 if (westPinnedPiece != 0L) {
                     blackKingPinnedPieces[BitMath.getBitIndex(westPinnedPiece, EAST)] =
                         westAttacks or (1L shl rookPosition)
-                }
-                // check EnPassant capture reveal
-                if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
-                    val enPassantPawn = chessBoard.enPassantTarget + 8
-                    if ((1L shl enPassantPawn) and blackKingWestConnectedPieces != 0L && (1L shl (enPassantPawn - 1)) and chessBoard.blackPawns and westAttacks != 0L) {
-                        blackKingPinnedPieces[enPassantPawn - 1] =
-                            westAttacks or (1L shl rookPosition)
-                    }
-                }
-                val eastPinnedPiece = eastAttacks and blackKingEastConnectedPieces
-                if (eastPinnedPiece != 0L) {
-                    blackKingPinnedPieces[BitMath.getBitIndex(eastPinnedPiece, WEST)] =
-                        eastAttacks or (1L shl rookPosition)
+
                 }
 
                 // check EnPassant capture reveal
                 if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
                     val enPassantPawn = chessBoard.enPassantTarget + 8
-                    if ((1L shl enPassantPawn) and blackKingEastConnectedPieces != 0L && (1L shl (enPassantPawn + 1)) and chessBoard.blackPawns and eastAttacks != 0L) {
-                        blackKingPinnedPieces[enPassantPawn + 1] =
-                            eastAttacks or (1L shl rookPosition)
+                    if(westAttacks and (1L shl (enPassantPawn -1)) and chessBoard.blackPawns != 0L && blackKingWestConnectedPieces and (1L shl enPassantPawn) != 0L){
+                        blackKingPinnedPieces[enPassantPawn - 1] =
+                            (1L shl chessBoard.enPassantTarget).inv()
                     }
+                    if(westAttacks and (1L shl (enPassantPawn)) != 0L && blackKingWestConnectedPieces and (1L shl (enPassantPawn + 1)) and chessBoard.blackPawns != 0L){
+                        blackKingPinnedPieces[enPassantPawn + 1] =
+                            (1L shl chessBoard.enPassantTarget).inv()
+                    }
+
                 }
+                val eastPinnedPiece = eastAttacks and blackKingEastConnectedPieces
+                if (eastPinnedPiece != 0L) {
+                    blackKingPinnedPieces[BitMath.getBitIndex(eastPinnedPiece, WEST)] =
+                        eastAttacks or (1L shl rookPosition)
+
+                }
+
+                // check EnPassant capture reveal
+                if (chessBoard.enPassantTarget != ChessBoard.NO_SQUARE) {
+                    val enPassantPawn = chessBoard.enPassantTarget + 8
+                    if(eastAttacks and (1L shl (enPassantPawn + 1)) and chessBoard.blackPawns != 0L && blackKingEastConnectedPieces and (1L shl enPassantPawn) != 0L){
+                        blackKingPinnedPieces[enPassantPawn + 1] =
+                            (1L shl chessBoard.enPassantTarget).inv()
+                    }
+                    if(eastAttacks and (1L shl (enPassantPawn)) != 0L && blackKingEastConnectedPieces and (1L shl (enPassantPawn - 1)) and chessBoard.blackPawns != 0L){
+                        blackKingPinnedPieces[enPassantPawn - 1] =
+                            (1L shl chessBoard.enPassantTarget).inv()
+                    }
+
+                }
+
             }
 
         }
