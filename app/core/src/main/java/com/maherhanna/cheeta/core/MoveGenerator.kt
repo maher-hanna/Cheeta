@@ -1469,6 +1469,16 @@ class MoveGenerator(
         }
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
         val initialRookPosition = getInitialRookKingSide(color)
+
+        if (chessBoard.pieceType(initialKingPosition) != Piece.KING || chessBoard.pieceType(
+                initialRookPosition
+            ) != Piece.ROOK || chessBoard.pieceColor(initialKingPosition) != color || chessBoard.pieceColor(
+                initialRookPosition
+            ) != color
+        ) {
+            return false
+        }
+
         return if (!chessBoard.isSquareEmpty(initialKingPosition + 1) ||
             !chessBoard.isSquareEmpty(initialKingPosition + 2)
         ) {
