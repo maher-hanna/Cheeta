@@ -12,8 +12,6 @@ open class ChessEngine {
     private var betaCutOffs: Long = 0
     private var maxingPlayer = 0
     private var searchTimeFinished = false
-    private var alpha = LOSE_SCORE
-    private var beta = WIN_SCORE
     var moveGenerator = MoveGenerator()
     var isUciMode = false
 
@@ -26,8 +24,6 @@ open class ChessEngine {
         betaCutOffs = 0
         maxingPlayer = 0
         searchTimeFinished = false
-        alpha = LOSE_SCORE
-        beta = WIN_SCORE
         moveGenerator = MoveGenerator()
         isUciMode = false
 
@@ -52,8 +48,6 @@ open class ChessEngine {
         var maxDepth = 0
         var timeLeft: Long
         var move: Move? = toPlayLegalMoves[0]
-        alpha = LOSE_SCORE
-        beta = WIN_SCORE
         do {
             timeLeft = startTime + maxSearchTime - System.nanoTime()
             maxDepth++
@@ -108,6 +102,8 @@ open class ChessEngine {
         timeLeft: Long,
         maxDepth: Int,
     ): Move? {
+        var alpha = LOSE_SCORE
+        val beta = WIN_SCORE
         if(timeLeft < 0){
             searchTimeFinished = true
             return null
