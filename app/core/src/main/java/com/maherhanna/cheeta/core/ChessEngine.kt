@@ -12,8 +12,6 @@ open class ChessEngine {
     private var betaCutOffs: Long = 0
     private var maxingPlayer = 0
     private var searchTimeFinished = false
-    private var alpha = LOSE_SCORE
-    private var beta = WIN_SCORE
     var moveGenerator = MoveGenerator()
     var isUciMode = false
 
@@ -26,15 +24,13 @@ open class ChessEngine {
         betaCutOffs = 0
         maxingPlayer = 0
         searchTimeFinished = false
-        alpha = LOSE_SCORE
-        beta = WIN_SCORE
         moveGenerator = MoveGenerator()
         isUciMode = false
 
         killerMove = Array(2) { arrayOfNulls<Move>(64) }
         moveGenerator.reset()
     }
-    fun getMove(chessBoard: ChessBoard): Move {
+    fun getMove(chessBoard: ChessBoard): Move? {
         val startTime = System.nanoTime()
         //convert maximum search time from seconds to nano seconds
         val maxSearchTime = COMPUTER_MAX_SEARCH_TIME * 1000000000
@@ -50,9 +46,7 @@ open class ChessEngine {
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var maxDepth = 0
         var timeLeft: Long
-        var move:Move = toPlayLegalMoves[0]
-        alpha = LOSE_SCORE
-        beta = WIN_SCORE
+        var move: Move? = toPlayLegalMoves[0]
         do {
             timeLeft = startTime + maxSearchTime - System.nanoTime()
             maxDepth++
@@ -70,7 +64,7 @@ open class ChessEngine {
             Logger.getLogger(DEBUG_TAG).log(
                 Level.INFO, "evaluations " + evaluations +
                         " depth " + maxDepth +
-                        "\nmove " + move.pieceName + " " + move.fromNotation + " to " + move.toNotation
+                        "\nmove " + move?.pieceName + " " + move?.fromNotation + " to " + move?.toNotation
                         + "\ntime " + duration.toFloat() / 1000000
             )
 
@@ -106,7 +100,9 @@ open class ChessEngine {
         moves: PlayerLegalMoves,
         timeLeft: Long,
         maxDepth: Int,
-        ): Move? {
+    ): Move? {
+        var alpha = LOSE_SCORE
+        val beta = WIN_SCORE
         if(timeLeft < 0){
             searchTimeFinished = true
             return null
