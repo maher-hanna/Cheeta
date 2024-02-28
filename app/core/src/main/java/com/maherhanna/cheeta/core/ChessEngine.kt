@@ -61,15 +61,13 @@ open class ChessEngine {
         } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
-        if (!isUciMode) {
-            Logger.getLogger(DEBUG_TAG).log(
-                Level.INFO, "evaluations " + evaluations +
-                        " depth " + maxDepth +
-                        "\nmove " + move?.pieceName.toString() + " " + move?.fromNotation.toString() + " to " + move?.toNotation.toString()
-                        + "\ntime " + duration.toFloat() / 1000000
-            )
+        Logger.getLogger(DEBUG_TAG).log(
+            Level.INFO, "evaluations " + evaluations +
+                    " depth " + maxDepth +
+                    "\nmove " + move?.pieceName.toString() + " " + move?.fromNotation.toString() + " to " + move?.toNotation.toString()
+                    + "\ntime " + duration.toFloat() / 1000000
+        )
 
-        }
 //        Log.d(
 //            DEBUG_TAG, "evaluations: " + evaluations +
 //                    "\n beta cutoffs: " + betaCutOffs +
@@ -104,7 +102,7 @@ open class ChessEngine {
     ): Move? {
         var alpha = LOSE_SCORE
         val beta = WIN_SCORE
-        if(timeLeft < 0){
+        if (timeLeft < 0) {
             searchTimeFinished = true
             return null
         }
@@ -357,10 +355,10 @@ open class ChessEngine {
         } else {
             if (color == Piece.WHITE) {
                 val blackLegalMoves = moveGenerator.generateBlackLegalMoves(chessBoard)
-                evaluate(chessBoard, color,toPlayLegalMoves,blackLegalMoves)
+                evaluate(chessBoard, color, toPlayLegalMoves, blackLegalMoves)
             } else {
                 val whiteLegalMoves = moveGenerator.generateWhiteLegalMoves(chessBoard)
-                evaluate(chessBoard, color,whiteLegalMoves,toPlayLegalMoves)
+                evaluate(chessBoard, color, whiteLegalMoves, toPlayLegalMoves)
 
             }
         }
