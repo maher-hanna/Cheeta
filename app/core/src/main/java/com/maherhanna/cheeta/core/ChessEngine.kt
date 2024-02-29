@@ -16,7 +16,7 @@ open class ChessEngine {
     var isUciMode = false
 
     //killerMove[id][ply]
-    private var killerMove = Array(2) { arrayOfNulls<Move>(64) }
+    private var killerMove = Array(2) { arrayOfNulls<Move>(124) }
 
     fun reset(){
         foundCheckMate = false
@@ -27,7 +27,7 @@ open class ChessEngine {
         moveGenerator = MoveGenerator()
         isUciMode = false
 
-        killerMove = Array(2) { arrayOfNulls<Move>(64) }
+        killerMove = Array(2) { arrayOfNulls<Move>(124) }
         moveGenerator.reset()
     }
     fun getMove(chessBoard: ChessBoard): Move? {
