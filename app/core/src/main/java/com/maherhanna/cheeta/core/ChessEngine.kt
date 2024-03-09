@@ -239,7 +239,7 @@ open class ChessEngine {
                 killerMove[1][ply] = killerMove[0][ply]
                 killerMove[0][ply] = Move(toPlayLegalMoves[i])
                 betaCutOffs++
-                return ScoredMove(move = null, score = beta)
+                return ScoredMove(move = null, score = score)
             }
             if (score > alpha) {
                 alpha = score
