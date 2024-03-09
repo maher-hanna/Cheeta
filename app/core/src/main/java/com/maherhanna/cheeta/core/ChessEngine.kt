@@ -47,38 +47,24 @@ open class ChessEngine {
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var maxDepth = 0
         var timeLeft: Long
-        var bestMove: Move? = toPlayLegalMoves[0]
+        var move: Move? = toPlayLegalMoves[0]
         do {
-            val alpha = LOSE_SCORE
-            val beta = WIN_SCORE
-            if (System.nanoTime() - startTime > maxSearchTime) {
-                break  // Terminate search if time limit exceeded
-
-            }
+            timeLeft = startTime + maxSearchTime - System.nanoTime()
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
-//            val currentSearchMove =
-//                search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
-            val currentDepthMove = negaMax(
-                chessBoard = chessBoard,
-                alphaArg = alpha,
-                beta = beta,
-                depth = maxDepth.toFloat(),
-                ply = 1
-            )
+            val currentSearchMove =
+                search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
 
-            if (currentDepthMove.move != null) {
-                bestMove = currentDepthMove.move
-            } else {
-                break
+            if (currentSearchMove != null) {
+                move = currentSearchMove
             }
-        } while (!foundCheckMate)
+        } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
         duration /= 1000 // convert to milli second
         Logger.getLogger(DEBUG_TAG).log(
             Level.INFO, "evaluations " + evaluations +
                     " depth " + maxDepth +
-                    "\nmove " + bestMove?.pieceName.toString() + " " + bestMove?.fromNotation.toString() + " to " + bestMove?.toNotation.toString()
+                    "\nmove " + move?.pieceName.toString() + " " + move?.fromNotation.toString() + " to " + move?.toNotation.toString()
                     + "\ntime " + duration.toFloat() / 1000000
         )
 
@@ -91,7 +77,7 @@ open class ChessEngine {
 //            DEBUG_TAG,
 //            "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
 //        )
-        return bestMove
+        return move
 
     }
 
@@ -128,7 +114,7 @@ open class ChessEngine {
             score = -negaMax(
                 chessBoard, -beta,
                 -alpha, (maxDepth - 1).toFloat(), 1
-            ).score
+            )
             chessBoard.unMakeMove()
             if (score >= beta) {
                 bestMove = moves[i]
@@ -196,49 +182,48 @@ open class ChessEngine {
         beta: Int,
         depth: Float,
         ply: Int
-    ): ScoredMove {
+    ): Int {
         var alpha = alphaArg
         val toPlayColor = chessBoard.toPlayColor
-        val gameStatus = checkStatus(chessBoard)
-        evaluations++
-        if (depth == 0f) {
-            return if (isGameFinished(gameStatus)) {
-                ScoredMove(move = null, score = getGameFinishedScoreFor(gameStatus, toPlayColor))
-            } else {
-                ScoredMove(move = null, score = quiescence(chessBoard, alpha, beta, ply))
-            }
-        }
-        if (isGameFinished(gameStatus)) {
-            return ScoredMove(move = null, score = getGameFinishedScoreFor(gameStatus, toPlayColor))
-
-        }
         var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             toPlayColor
         )
+        val gameStatus = checkStatus(chessBoard)
+        evaluations++
+        if (depth == 0f) {
+            return if (isGameFinished(gameStatus)) {
+                getGameFinishedScoreFor(gameStatus, toPlayColor)
+            } else {
+                quiescence(chessBoard, alpha, beta, ply)
+            }
+        }
+        if (isGameFinished(gameStatus)) {
+            return getGameFinishedScoreFor(gameStatus, toPlayColor)
+        }
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
-        var bestMove: Move? = null
+        var maxScore = LOSE_SCORE
         for (i in 0 until toPlayLegalMoves.size()) {
             chessBoard.makeMove(toPlayLegalMoves[i])
-            val scoredMove = negaMax(
+            val score = -negaMax(
                 chessBoard, -beta, -alpha,
                 depth - 1, ply + 1
             )
-            val score = -scoredMove.score
             chessBoard.unMakeMove()
+            maxScore = maxScore.coerceAtLeast(score)
+            alpha = alpha.coerceAtLeast(score)
             if (score >= beta) {
                 //killer moves
                 killerMove[1][ply] = killerMove[0][ply]
                 killerMove[0][ply] = Move(toPlayLegalMoves[i])
                 betaCutOffs++
-                return ScoredMove(move = null, score = score)
+                return beta
             }
             if (score > alpha) {
                 alpha = score
-                bestMove = toPlayLegalMoves[i]
             }
         }
-        return ScoredMove(move = bestMove, score = alpha)
+        return alpha
     }
 
     private fun scoreMoves(moves: PlayerLegalMoves, ply: Int): ArrayList<MoveScore> {
