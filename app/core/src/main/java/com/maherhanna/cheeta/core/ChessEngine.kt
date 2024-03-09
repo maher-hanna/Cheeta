@@ -5,6 +5,8 @@ import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.concurrent.timer
+
 
 open class ChessEngine {
     private var foundCheckMate = false
@@ -35,6 +37,12 @@ open class ChessEngine {
         val startTime = System.nanoTime()
         //convert maximum search time from seconds to nano seconds
         val maxSearchTime = COMPUTER_MAX_SEARCH_TIME * 1000000000
+        timer(period = 100L) {
+            if(System.nanoTime() - startTime > maxSearchTime){
+                searchTimeFinished = true
+                cancel()
+            }
+        }
         foundCheckMate = false
         evaluations = 0
         betaCutOffs = 0
@@ -51,10 +59,7 @@ open class ChessEngine {
         do {
             val alpha = LOSE_SCORE
             val beta = WIN_SCORE
-            if (System.nanoTime() - startTime > maxSearchTime) {
-                break  // Terminate search if time limit exceeded
 
-            }
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
 //            val currentSearchMove =
@@ -197,6 +202,9 @@ open class ChessEngine {
         depth: Float,
         ply: Int
     ): ScoredMove {
+        if(searchTimeFinished){
+            return ScoredMove(move = null,score = 0)
+        }
         var alpha = alphaArg
         val toPlayColor = chessBoard.toPlayColor
         val gameStatus = checkStatus(chessBoard)
