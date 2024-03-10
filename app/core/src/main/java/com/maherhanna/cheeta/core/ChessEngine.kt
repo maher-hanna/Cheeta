@@ -46,17 +46,18 @@ open class ChessEngine {
         )
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var maxDepth = 0
-        var timeLeft: Long
         var move: Move? = toPlayLegalMoves[0]
         do {
-            timeLeft = startTime + maxSearchTime - System.nanoTime()
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
             val currentSearchMove =
-                search(chessBoard, toPlayLegalMoves, timeLeft, maxDepth)
+                search(chessBoard, toPlayLegalMoves, startTime, maxDepth)
 
             if (currentSearchMove != null) {
                 move = currentSearchMove
+            }else{
+                maxDepth--
+                break
             }
         } while (!foundCheckMate && !searchTimeFinished)
         var duration = System.nanoTime() - startTime
@@ -97,15 +98,11 @@ open class ChessEngine {
     private fun search(
         chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
-        timeLeft: Long,
+        startTime: Long,
         maxDepth: Int,
     ): Move? {
         var alpha = LOSE_SCORE
         val beta = WIN_SCORE
-        if (timeLeft < 0) {
-            searchTimeFinished = true
-            return null
-        }
         val searchStart = System.nanoTime()
         var score: Int
         var bestMove: Move? = null
@@ -125,9 +122,8 @@ open class ChessEngine {
                 alpha = score
                 bestMove = moves[i]
             }
-            if (System.nanoTime() - searchStart > timeLeft) {
-                searchTimeFinished = true
-                break
+            if (System.nanoTime() - startTime > (COMPUTER_MAX_SEARCH_TIME * 1000000000)) {
+                return null
             }
         }
 
