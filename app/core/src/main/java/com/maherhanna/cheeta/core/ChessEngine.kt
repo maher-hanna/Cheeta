@@ -134,47 +134,6 @@ open class ChessEngine {
         return bestMove
     }
 
-    private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {
-        var quiescenceAlpha = alphaArg
-        val toPlayColor = chessBoard.toPlayColor
-        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
-            chessBoard,
-            toPlayColor
-        )
-        val gameStatus = checkStatus(chessBoard)
-        val eval = evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
-        if (eval >= betaArg) {
-            return betaArg
-        }
-        if (quiescenceAlpha < eval) {
-            quiescenceAlpha = eval
-        }
-
-        if (isGameFinished(gameStatus)) {
-            return evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
-        } else {
-            toPlayLegalMoves.removeNonTake()
-        }
-        if (toPlayLegalMoves.size() == 0) {
-            return evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
-        }
-        toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
-        for (i in 0 until toPlayLegalMoves.size()) {
-            chessBoard.makeMove(toPlayLegalMoves[i])
-            val score = -quiescence(
-                chessBoard, -betaArg, -quiescenceAlpha,
-                ply + 1
-            )
-            chessBoard.unMakeMove()
-            if (score >= betaArg) {
-                return betaArg
-            }
-            if (score > quiescenceAlpha) {
-                quiescenceAlpha = score
-            }
-        }
-        return quiescenceAlpha
-    }
 
     private fun negaMax(
         chessBoard: ChessBoard,
@@ -225,6 +184,47 @@ open class ChessEngine {
         }
         return alpha
     }
+
+    private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {
+        var quiescenceAlpha = alphaArg
+        val toPlayColor = chessBoard.toPlayColor
+        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
+            chessBoard,
+            toPlayColor
+        )
+        val gameStatus = checkStatus(chessBoard)
+        val eval = evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
+        if (eval >= betaArg) {
+            return betaArg
+        }
+        if (quiescenceAlpha < eval) {
+            quiescenceAlpha = eval
+        }
+
+        if (isGameFinished(gameStatus) || toPlayLegalMoves.size() == 0) {
+            return eval
+        } else {
+            toPlayLegalMoves.removeNonTake()
+        }
+
+        toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
+        for (i in 0 until toPlayLegalMoves.size()) {
+            chessBoard.makeMove(toPlayLegalMoves[i])
+            val score = -quiescence(
+                chessBoard, -betaArg, -quiescenceAlpha,
+                ply + 1
+            )
+            chessBoard.unMakeMove()
+            if (score >= betaArg) {
+                return betaArg
+            }
+            if (score > quiescenceAlpha) {
+                quiescenceAlpha = score
+            }
+        }
+        return quiescenceAlpha
+    }
+
 
     private fun scoreMoves(moves: PlayerLegalMoves, ply: Int): ArrayList<MoveScore> {
         val scores = ArrayList<MoveScore>()
