@@ -163,7 +163,7 @@ fun GameScreen(playerColor: Int) {
                         )
 
                         if (fromSquare != ChessBoard.NO_SQUARE) {
-                            if (tappedSquare != fromSquare) {
+                            if (tappedSquare != fromSquare && playerTurn) {
                                 val playerMove = playerLegalMoves
                                     .searchMove(fromSquare, tappedSquare)
                                 if (playerMove != null) {
