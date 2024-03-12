@@ -12,9 +12,10 @@ open class ChessEngine {
     private var evaluations: Long = 0
     private var betaCutOffs: Long = 0
     private var maxingPlayer = 0
-    private var searchTimeFinished = false
+    var searchTimeFinished = false
     var moveGenerator = MoveGenerator()
     var isUciMode = false
+    var bestMove: Move? = null
 
     //killerMove[id][ply]
     private var killerMove = Array(2) { arrayOfNulls<Move>(124) }
@@ -27,12 +28,12 @@ open class ChessEngine {
         searchTimeFinished = false
         moveGenerator = MoveGenerator()
         isUciMode = false
-
+        bestMove = null
         killerMove = Array(2) { arrayOfNulls<Move>(124) }
         moveGenerator.reset()
     }
 
-    fun getMove(chessBoard: ChessBoard): Move? {
+    fun getMove(chessBoard: ChessBoard, maxSearchTimeMilliSeconds: Long): Move? {
         val startTime = System.nanoTime()
         var elapsedTime = 0L
         //convert maximum search time from seconds to nano seconds
@@ -44,7 +45,7 @@ open class ChessEngine {
 
         timer(period = 100L){
             elapsedTime += 100
-            if(elapsedTime > MAX_SEARCH_TIME_MILLISECONDS){
+            if(elapsedTime > maxSearchTimeMilliSeconds){
                 searchTimeFinished = true
                 cancel()
             }
@@ -57,15 +58,15 @@ open class ChessEngine {
         )
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var maxDepth = 0
-        var move: Move? = toPlayLegalMoves[0]
+        bestMove = toPlayLegalMoves[0]
         do {
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
             val currentSearchMove =
-                search(chessBoard, toPlayLegalMoves, startTime, maxDepth)
+                search(chessBoard, toPlayLegalMoves,  maxDepth)
 
             if (currentSearchMove != null) {
-                move = currentSearchMove
+                bestMove = currentSearchMove
             }else{
                 maxDepth--
                 break
@@ -76,7 +77,7 @@ open class ChessEngine {
         Logger.getLogger(DEBUG_TAG).log(
             Level.INFO, "evaluations " + evaluations +
                     " depth " + maxDepth +
-                    "\nmove " + move?.pieceName.toString() + " " + move?.fromNotation.toString() + " to " + move?.toNotation.toString()
+                    "\nmove " + bestMove?.pieceName.toString() + " " + bestMove?.fromNotation.toString() + " to " + bestMove?.toNotation.toString()
                     + "\ntime " + duration.toFloat() / 1000000
         )
 
@@ -89,7 +90,7 @@ open class ChessEngine {
 //            DEBUG_TAG,
 //            "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
 //        )
-        return move
+        return bestMove
 
     }
 
@@ -109,7 +110,6 @@ open class ChessEngine {
     private fun search(
         chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
-        startTime: Long,
         maxDepth: Int,
     ): Move? {
         var alpha = LOSE_SCORE

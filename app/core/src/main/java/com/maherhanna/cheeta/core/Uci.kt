@@ -47,13 +47,30 @@ class Uci {
             }
 
             "go" -> {
-                val move = engine.getMove(chessBoard)
-                response = "bestmove ${move?.notation}\n"
+                if(splitWords.size >= 2){
+                    if(splitWords[1] == "infinite"){
+                        val move = engine.getMove(chessBoard, Long.MAX_VALUE)
+                        response = "bestmove ${move?.notation}\n"
+                    }
+                    if(splitWords[1] == "movetime" && splitWords.size == 3){
+                        val moveTime = splitWords[2].toLongOrNull()
+                        if(moveTime != null){
+                            val move = engine.getMove(chessBoard, moveTime)
+                            response = "bestmove ${move?.notation}\n"
+                        }
+                    }
+
+                }
             }
 
             "check_status" -> {
                 val status = engine.checkStatus(chessBoard)
                 response = status.ordinal.toString()
+            }
+            "stop" ->{
+                engine.searchTimeFinished = true
+                response = "bestmove ${engine.bestMove?.notation}\n"
+
             }
 
             else -> {
