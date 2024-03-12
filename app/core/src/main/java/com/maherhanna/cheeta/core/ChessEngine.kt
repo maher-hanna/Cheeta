@@ -55,7 +55,7 @@ open class ChessEngine {
 
             if (currentSearchMove != null) {
                 move = currentSearchMove
-            }else{
+            } else {
                 maxDepth--
                 break
             }
@@ -145,17 +145,11 @@ open class ChessEngine {
             toPlayColor
         )
         val gameStatus = checkStatus(chessBoard)
-        evaluations++
-        if (depth == 0f) {
-            return if (isGameFinished(gameStatus)) {
-                getGameFinishedScoreFor(gameStatus, toPlayColor)
-            } else {
-                quiescence(chessBoard, alpha, beta, ply)
-            }
+        if (depth == 0f || isGameFinished(gameStatus)) {
+            evaluations++
+            return quiescence(chessBoard, alpha, beta, ply)
         }
-        if (isGameFinished(gameStatus)) {
-            return getGameFinishedScoreFor(gameStatus, toPlayColor)
-        }
+
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
         var maxScore = LOSE_SCORE
         for (i in 0 until toPlayLegalMoves.size()) {
@@ -190,19 +184,19 @@ open class ChessEngine {
         )
         val gameStatus = checkStatus(chessBoard)
         val eval = evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
-        if (eval >= betaArg) {
-            return betaArg
-        }
-        if (quiescenceAlpha < eval) {
-            quiescenceAlpha = eval
-        }
+
 
         if (isGameFinished(gameStatus) || toPlayLegalMoves.size() == 0) {
             return eval
         } else {
             toPlayLegalMoves.removeNonTake()
         }
-
+        if (eval >= betaArg) {
+            return betaArg
+        }
+        if (quiescenceAlpha < eval) {
+            quiescenceAlpha = eval
+        }
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
         for (i in 0 until toPlayLegalMoves.size()) {
             chessBoard.makeMove(toPlayLegalMoves[i])
