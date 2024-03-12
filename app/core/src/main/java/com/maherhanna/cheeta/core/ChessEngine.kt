@@ -5,7 +5,6 @@ import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
 import java.util.logging.Level
 import java.util.logging.Logger
-import kotlin.concurrent.timer
 
 open class ChessEngine {
     private var foundCheckMate = false
@@ -34,23 +33,13 @@ open class ChessEngine {
 
     fun getMove(chessBoard: ChessBoard): Move? {
         val startTime = System.nanoTime()
-        var elapsedTime = 0L
         //convert maximum search time from seconds to nano seconds
+        val maxSearchTime = COMPUTER_MAX_SEARCH_TIME * 1000000000
         foundCheckMate = false
         evaluations = 0
         betaCutOffs = 0
         searchTimeFinished = false
         maxingPlayer = chessBoard.toPlayColor
-
-        timer(period = 100L){
-            elapsedTime += 100
-            if(elapsedTime > MAX_SEARCH_TIME_MILLISECONDS){
-                searchTimeFinished = true
-                cancel()
-            }
-
-        }
-
         var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             maxingPlayer
@@ -132,7 +121,8 @@ open class ChessEngine {
                 alpha = score
                 bestMove = moves[i]
             }
-            if (searchTimeFinished) {
+            if (System.nanoTime() - startTime > (COMPUTER_MAX_SEARCH_TIME * 1000000000)) {
+                searchTimeFinished = true
                 break
             }
         }
@@ -148,9 +138,6 @@ open class ChessEngine {
         depth: Float,
         ply: Int
     ): Int {
-        if(searchTimeFinished){
-            return 0
-        }
         var alpha = alphaArg
         val toPlayColor = chessBoard.toPlayColor
         var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
@@ -432,7 +419,7 @@ open class ChessEngine {
 
     companion object {
         const val DEBUG_TAG = "Cheeta_Debug"
-        const val MAX_SEARCH_TIME_MILLISECONDS: Long = 4000
+        const val COMPUTER_MAX_SEARCH_TIME: Long = 4
 
 
         private const val LOSE_SCORE = -1000000
