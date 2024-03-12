@@ -103,6 +103,7 @@ open class ChessEngine {
     ): Move? {
         var alpha = LOSE_SCORE
         val beta = WIN_SCORE
+        val searchStart = System.nanoTime()
         var score: Int
         var bestMove: Move? = null
         for (i in 0 until moves.size()) {
@@ -122,8 +123,7 @@ open class ChessEngine {
                 bestMove = moves[i]
             }
             if (System.nanoTime() - startTime > (COMPUTER_MAX_SEARCH_TIME * 1000000000)) {
-                searchTimeFinished = true
-                break
+                return null
             }
         }
 
