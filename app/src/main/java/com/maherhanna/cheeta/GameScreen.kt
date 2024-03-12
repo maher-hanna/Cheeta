@@ -46,7 +46,6 @@ import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.PlayerLegalMoves
 import com.maherhanna.cheeta.core.Uci
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.floor
@@ -600,10 +599,7 @@ suspend fun playComputer(
             uci.parseInput("position startpos moves " + chessBoard.moves.notation)
         }
         var computerMoveNotation =
-            uci.parseInput("go movetime 4000")
-//        uci.parseInput("go infinite")
-//        delay(4000)
-//        var computerMoveNotation = uci.parseInput("stop")
+            uci.parseInput("go infinite")
         computerMoveNotation = computerMoveNotation
             .removePrefix("bestmove")
             .trim()
