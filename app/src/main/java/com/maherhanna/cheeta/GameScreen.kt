@@ -60,7 +60,7 @@ fun GameScreen(playerColor: Int) {
     val moveGenerator = MoveGenerator()
     var playerTurn by remember { mutableStateOf(playerColor == Piece.WHITE) }
     var showCancelGameDialog by remember { mutableStateOf(false) }
-    var showGameFinishedDialog by remember { mutableStateOf(false) }
+    var gameFinished by remember { mutableStateOf(false) }
 
     var playerLegalMoves by remember {
         mutableStateOf(PlayerLegalMoves())
@@ -106,6 +106,7 @@ fun GameScreen(playerColor: Int) {
             scope.launch {
                 playComputer(
                     uci = uci, chessBoard = chessBoard,
+                    moveGenerator = moveGenerator,
                     computerLegalMoves = computerLegalMoves
                 ) { newChessBoard ->
                     chessBoard = ChessBoard(newChessBoard)
@@ -117,9 +118,7 @@ fun GameScreen(playerColor: Int) {
                         )
                     computerLegalMoves =
                         moveGenerator.generateLegalMovesFor(chessBoard, computerColor)
-
                 }
-
             }
         }
     }
@@ -127,7 +126,7 @@ fun GameScreen(playerColor: Int) {
     LaunchedEffect(chessBoard) {
         gameStatus = moveGenerator.checkStatus(chessBoard)
         if (gameStatus != GameStatus.NOT_FINISHED) {
-            showGameFinishedDialog = true
+            gameFinished = true
         }
     }
 
@@ -186,6 +185,7 @@ fun GameScreen(playerColor: Int) {
                                     scope.launch() {
                                         playComputer(
                                             uci = uci, chessBoard = chessBoard,
+                                            moveGenerator = moveGenerator,
                                             computerLegalMoves = computerLegalMoves
                                         ) { newChessBoard ->
                                             chessBoard = ChessBoard(newChessBoard)
@@ -307,7 +307,7 @@ fun GameScreen(playerColor: Int) {
                                 },
                                     onDragEnd = {
                                         isDragging = false
-                                        summedDrag = Offset(0f,0f)
+                                        summedDrag = Offset(0f, 0f)
                                         val toSquare = getTouchSquare(
                                             isChessBoardFlipped = isChessBoardFlipped,
                                             chessBoardHeight = chessBoardImageSize.height,
@@ -341,6 +341,7 @@ fun GameScreen(playerColor: Int) {
                                                 scope.launch() {
                                                     playComputer(
                                                         uci = uci, chessBoard = chessBoard,
+                                                        moveGenerator = moveGenerator,
                                                         computerLegalMoves = computerLegalMoves
                                                     ) { newChessBoard ->
                                                         chessBoard = ChessBoard(newChessBoard)
@@ -550,10 +551,10 @@ fun GameScreen(playerColor: Int) {
             },
         )
     }
-    if (showGameFinishedDialog) {
+    if (gameFinished) {
         AlertDialog(
             onDismissRequest = {
-                showGameFinishedDialog = false
+                gameFinished = false
                 (context as Activity).finish()
             },
             title = {
@@ -569,14 +570,14 @@ fun GameScreen(playerColor: Int) {
             text = { Text(stringResource(id = R.string.game_finished_message)) },
             confirmButton = {
                 TextButton(onClick = {
-                    showGameFinishedDialog = false
+                    gameFinished = false
                     (context as Activity).recreate()
                 }) {
                     Text(stringResource(id = R.string.finish_game_yes))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showGameFinishedDialog = false }) {
+                TextButton(onClick = { gameFinished = false }) {
                     Text(stringResource(id = R.string.finish_game_no))
                 }
             },
@@ -588,10 +589,15 @@ fun GameScreen(playerColor: Int) {
 suspend fun playComputer(
     uci: Uci,
     chessBoard: ChessBoard,
+    moveGenerator: MoveGenerator,
     computerLegalMoves: PlayerLegalMoves,
     finished: (newChessBoard: ChessBoard) -> Unit
 ) {
     withContext(Dispatchers.IO) {
+        val gameStatus = moveGenerator.checkStatus(chessBoard)
+        if (gameStatus != GameStatus.NOT_FINISHED) {
+            return@withContext
+        }
         if (chessBoard.moves.isEmpty()) {
             uci.parseInput("position startpos")
 
