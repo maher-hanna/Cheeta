@@ -60,6 +60,13 @@ class Uci {
                                 response = "bestmove ${move?.notation}\n"
                             }
                         }
+                        "depth" -> {
+                            if(splitWords.size >= 3){
+                                val maxDepth = splitWords[2].toLong()
+                                val move = engine.getMove(chessBoard,Long.MAX_VALUE,maxDepth)
+                                response = "bestmove ${move?.notation}\n"
+                            }
+                        }
                     }
                 }
 
