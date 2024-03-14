@@ -12,7 +12,7 @@ open class ChessEngine {
     private var betaCutOffs: Long = 0
     private var maxingPlayer = 0
     private var searchTimeFinished = false
-    var moveGenerator = MoveGenerator()
+    private var moveGenerator = MoveGenerator()
     var isUciMode = false
 
     //killerMove[id][ply]
@@ -27,14 +27,13 @@ open class ChessEngine {
         moveGenerator = MoveGenerator()
         isUciMode = false
 
-        killerMove = Array(2) { arrayOfNulls<Move>(124) }
+        killerMove = Array(2) { arrayOfNulls(124) }
         moveGenerator.reset()
     }
 
-    fun getMove(chessBoard: ChessBoard): Move? {
+    fun getMove(chessBoard: ChessBoard, maxSearchTime:Long): Move? {
         val startTime = System.nanoTime()
         //convert maximum search time from seconds to nano seconds
-        val maxSearchTime = COMPUTER_MAX_SEARCH_TIME * 1000000000
         foundCheckMate = false
         evaluations = 0
         betaCutOffs = 0
@@ -51,7 +50,7 @@ open class ChessEngine {
             maxDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
             val currentSearchMove =
-                search(chessBoard, toPlayLegalMoves, startTime, maxDepth)
+                search(chessBoard, toPlayLegalMoves, startTime,maxSearchTime, maxDepth)
 
             if (currentSearchMove != null) {
                 move = currentSearchMove
@@ -99,11 +98,11 @@ open class ChessEngine {
         chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
         startTime: Long,
+        maxSearchTime: Long,
         maxDepth: Int,
     ): Move? {
         var alpha = LOSE_SCORE
         val beta = WIN_SCORE
-        val searchStart = System.nanoTime()
         var score: Int
         var bestMove: Move? = null
         for (i in 0 until moves.size()) {
@@ -122,7 +121,7 @@ open class ChessEngine {
                 alpha = score
                 bestMove = moves[i]
             }
-            if (System.nanoTime() - startTime > (COMPUTER_MAX_SEARCH_TIME * 1000000000)) {
+            if (System.nanoTime() - startTime > (maxSearchTime * 1000000)) {
                 return null
             }
         }
@@ -413,7 +412,6 @@ open class ChessEngine {
 
     companion object {
         const val DEBUG_TAG = "Cheeta_Debug"
-        const val COMPUTER_MAX_SEARCH_TIME: Long = 4
 
 
         private const val LOSE_SCORE = -1000000

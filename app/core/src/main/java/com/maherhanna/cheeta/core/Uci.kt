@@ -47,8 +47,22 @@ class Uci {
             }
 
             "go" -> {
-                val move = engine.getMove(chessBoard)
-                response = "bestmove ${move?.notation}\n"
+                if(splitWords.size >= 2){
+                    when(splitWords[1]){
+                        "infinite" -> {
+                            val move = engine.getMove(chessBoard,Long.MAX_VALUE)
+                            response = "bestmove ${move?.notation}\n"
+                        }
+                        "movetime" -> {
+                            if(splitWords.size >= 3){
+                                val timeMilliSeconds = splitWords[2].toLong()
+                                val move = engine.getMove(chessBoard,timeMilliSeconds)
+                                response = "bestmove ${move?.notation}\n"
+                            }
+                        }
+                    }
+                }
+
             }
 
             "check_status" -> {
