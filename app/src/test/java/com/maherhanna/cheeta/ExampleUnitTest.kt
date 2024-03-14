@@ -33,6 +33,13 @@ class ExampleUnitTest {
     }
 
     @Test(expected = Test.None::class)
+    fun getMove() {
+        val uci = Uci()
+        uci.parseInput("position fen  ${ChessBoard.trickyPosition}")
+        val move = uci.parseInput("go depth 4")
+
+    }
+    @Test(expected = Test.None::class)
     fun testUciProtocol() {
         val numberOfGames = 30
         var currentGameNumber = 1
