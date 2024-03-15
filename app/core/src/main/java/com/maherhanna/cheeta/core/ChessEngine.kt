@@ -16,8 +16,8 @@ open class ChessEngine {
     var isUciMode = false
 
     //killerMove[id][ply]
-    private var killerMove = Array(2) { arrayOfNulls<Move>(124) }
-    private var history = Array(64) { LongArray(64) }
+    private var killerMove = Array(2) { arrayOfNulls<Move>(MAX_KILLER_MOVE_PLY) }
+    private var history = Array(2) { Array(64){LongArray(64)} }
 
     fun reset() {
         foundCheckMate = false
@@ -29,7 +29,7 @@ open class ChessEngine {
         isUciMode = false
 
         killerMove = Array(2) { arrayOfNulls(124) }
-        history = Array(64) { LongArray(64) }
+        history = Array(2) { Array(64){LongArray(64)} }
         moveGenerator.reset()
     }
 
@@ -151,14 +151,18 @@ open class ChessEngine {
             alpha = alpha.coerceAtLeast(score)
             if (score >= beta) {
                 if(!toPlayLegalMoves[i].isCapture){
-                    //killer moves
-                    killerMove[1][ply] = killerMove[0][ply]
-                    killerMove[0][ply] = Move(toPlayLegalMoves[i])
+                    if(ply < MAX_KILLER_MOVE_PLY){
+                        //killer moves
+                        killerMove[1][ply] = killerMove[0][ply]
+                        killerMove[0][ply] = Move(toPlayLegalMoves[i])
+
+                    }
+
+                    // history moves
+                    history[chessBoard.toPlayColor][toPlayLegalMoves[i].from][toPlayLegalMoves[i].to] += depth * depth
                 }
                 betaCutOffs++
 
-                // history moves
-                history[toPlayLegalMoves[i].from][toPlayLegalMoves[i].to] = depth * depth
 
                 return beta
             }
@@ -233,7 +237,7 @@ open class ChessEngine {
                 }
 
                 //history score
-                //history[currentMove.from][currentMove.to]
+                currentScore += history[currentMove.color][currentMove.from][currentMove.to].toInt()
             }
 
             // promotion score
@@ -426,6 +430,8 @@ open class ChessEngine {
 
         private const val LOSE_SCORE = -1000000
         private const val WIN_SCORE = 1000000
+
+        private const val MAX_KILLER_MOVE_PLY = 64
 
         private const val MOBILITY_SCORE = 10
 
