@@ -9,7 +9,6 @@ import com.maherhanna.cheeta.core.util.Log
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import java.io.File
 import java.util.Random
 import kotlin.system.exitProcess
 
@@ -21,7 +20,7 @@ import kotlin.system.exitProcess
  */
 class ExampleUnitTest {
     val chessBoard = ChessBoard(ChessBoard.positionInUse)
-    val chessBoard2 = ChessBoard(ChessBoard.KiwipetePosition)
+    val chessBoard2 = ChessBoard(ChessBoard.trickyPosition)
     val chessBoard3 = ChessBoard("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -")
     val moveGenerator = MoveGenerator()
 
@@ -35,8 +34,8 @@ class ExampleUnitTest {
     @Test(expected = Test.None::class)
     fun getMove() {
         val uci = Uci()
-        uci.parseInput("position fen  ${ChessBoard.trickyPosition}")
-        val move = uci.parseInput("go depth 4")
+        uci.parseInput("position fen  ${ChessBoard.killerPosition}")
+        val move = uci.parseInput("go depth 5")
 
     }
     @Test(expected = Test.None::class)
@@ -333,7 +332,7 @@ class ExampleUnitTest {
         val n_moves = move_list.size()
         for (i in 0 until n_moves) {
             chessBoard.makeMove(move_list[i]);
-            nodes += PerftCaptures(depth - 1, chessBoard, moveGenerator, move_list[i].isTake);
+            nodes += PerftCaptures(depth - 1, chessBoard, moveGenerator, move_list[i].isCapture);
             chessBoard.unMakeMove();
         }
         return nodes;

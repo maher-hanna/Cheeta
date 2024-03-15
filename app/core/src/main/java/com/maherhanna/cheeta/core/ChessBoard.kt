@@ -438,7 +438,7 @@ class ChessBoard {
         move.previousFiftyMoves = fiftyMovesDrawCount
         //increase fifty moves if no capture or pawn push
         fiftyMovesDrawCount++
-        if (move.isTake || movedPieceType == Piece.PAWN) {
+        if (move.isCapture || movedPieceType == Piece.PAWN) {
             fiftyMovesDrawCount = 0
         }
         val state = State(allPieces, enPassantTargetAfterMove, blackCastlingRightsAfterMove, whiteCastlingRightsAfterMove)
@@ -455,7 +455,7 @@ class ChessBoard {
         val movedPieceType = lastMove.pieceType
         setPieceAt(fromSquare, movedPieceType, moveColor)
         removePiece(toSquare)
-        if (lastMove.isTake && !lastMove.isEnPasant) {
+        if (lastMove.isCapture && !lastMove.isEnPasant) {
             setPieceAt(toSquare, lastMove.takenPieceType, GetOppositeColor(moveColor))
         }
         if (lastMove.isPromote) {
@@ -658,8 +658,6 @@ class ChessBoard {
             "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
         const val cmkPosition =
             "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "
-        const val KiwipetePosition =
-            "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
         const val positionInUse = startPosition
 
         //-------------------------------------------------------------------------------

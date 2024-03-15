@@ -17,6 +17,7 @@ open class ChessEngine {
 
     //killerMove[id][ply]
     private var killerMove = Array(2) { arrayOfNulls<Move>(124) }
+    private var history = Array(64) { LongArray(64) }
 
     fun reset() {
         foundCheckMate = false
@@ -28,6 +29,7 @@ open class ChessEngine {
         isUciMode = false
 
         killerMove = Array(2) { arrayOfNulls(124) }
+        history = Array(64) { LongArray(64) }
         moveGenerator.reset()
     }
 
@@ -148,13 +150,20 @@ open class ChessEngine {
             maxScore = maxScore.coerceAtLeast(score)
             alpha = alpha.coerceAtLeast(score)
             if (score >= beta) {
-                //killer moves
-                killerMove[1][ply] = killerMove[0][ply]
-                killerMove[0][ply] = Move(toPlayLegalMoves[i])
+                if(!toPlayLegalMoves[i].isCapture){
+                    //killer moves
+                    killerMove[1][ply] = killerMove[0][ply]
+                    killerMove[0][ply] = Move(toPlayLegalMoves[i])
+                }
                 betaCutOffs++
+
+                // history moves
+                history[toPlayLegalMoves[i].from][toPlayLegalMoves[i].to] = depth * depth
+
                 return beta
             }
             if (score > alpha) {
+
                 alpha = score
             }
         }
@@ -211,22 +220,25 @@ open class ChessEngine {
             currentScore = 0
 
             // capture score
-            if (currentMove.isTake) {
+            if (currentMove.isCapture) {
                 val victim = currentMove.takenPieceType
                 val attacker = currentMove.pieceType
                 currentScore += mvv_lva[(attacker - 1) * 6 + (victim - 1)] + 10000
+            }else{
+                // killer move score
+                if (killerMove[0][ply] != null && killerMove[0][ply] == moves[i]) {
+                    currentScore += 9000
+                } else if (killerMove[1][ply] != null && killerMove[1][ply] == moves[i]) {
+                    currentScore += 8000
+                }
+
+                //history score
+                //history[currentMove.from][currentMove.to]
             }
 
             // promotion score
             if (currentMove.isPromote) {
                 currentScore += 10000
-            }
-
-            // killer move score
-            if (killerMove[0][ply] != null && killerMove[0][ply] == moves[i]) {
-                currentScore += 9000
-            } else if (killerMove[1][ply] != null && killerMove[1][ply] == moves[i]) {
-                currentScore += 8000
             }
 
             scores.add(MoveScore(currentScore, i))

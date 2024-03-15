@@ -95,7 +95,7 @@ class Move {
             bitValue =
                 BitMath.setBitsValue(bitValue, CASTLING_TYPE_START, CASTLING_TYPE_MASK, value)
         }
-    val isTake: Boolean
+    val isCapture: Boolean
         get() = BitMath.getBitsValue(
             bitValue, TAKE_START, TAKE_MASK
         ) == 1L

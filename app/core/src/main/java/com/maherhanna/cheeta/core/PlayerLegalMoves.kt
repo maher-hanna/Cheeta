@@ -64,7 +64,7 @@ class PlayerLegalMoves {
         val itr = legalMoves.iterator()
         while (itr.hasNext()) {
             val move = itr.next()
-            if (!move.isTake) {
+            if (!move.isCapture) {
                 itr.remove()
             }
         }
