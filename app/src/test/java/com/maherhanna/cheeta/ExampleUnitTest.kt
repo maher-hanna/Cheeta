@@ -4,6 +4,7 @@ import com.maherhanna.cheeta.core.ChessBoard
 import com.maherhanna.cheeta.core.ChessEngine
 import com.maherhanna.cheeta.core.MoveGenerator
 import com.maherhanna.cheeta.core.Piece
+import com.maherhanna.cheeta.core.TranspositionTableFlag
 import com.maherhanna.cheeta.core.Uci
 import com.maherhanna.cheeta.core.util.Log
 import org.junit.Assert.*
@@ -38,10 +39,32 @@ class ExampleUnitTest {
         val move = uci.parseInput("go depth 5")
     }
 
+    @Test
+    fun probeTranspositonTable() {
+        val chessBoard = ChessBoard(ChessBoard.startPosition)
+        val chessEngine = ChessEngine()
+        chessEngine.writeTableEntry(
+            score = 25,
+            hashFlag = TranspositionTableFlag.EXACT,
+            depth = 1,
+            hashKey = chessEngine.getZobristHash(chessBoard)
+        )
+
+        val score = chessEngine.probeTableEntry(
+            depth = 1,
+            alpha = 19,
+            beta = 30,
+            hashKey = chessEngine.getZobristHash(chessBoard)
+        )
+        assertEquals(25, score)
+
+    }
+
     @Test(expected = Test.None::class)
-    fun getZobristKy() {
+    fun getZobristKey() {
         val chessBoard = ChessBoard(ChessBoard.trickyPosition)
-        val chessBoardSlightlyModified = ChessBoard("r3k2r/p1p1qpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
+        val chessBoardSlightlyModified = ChessBoard(
+            "r3k2r/p1p1qpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
         )
         val chessEngine = ChessEngine()
         println(chessEngine.getZobristHash(chessBoard = chessBoard))
@@ -92,9 +115,10 @@ class ExampleUnitTest {
                 val randomPlayerIndex = random.nextInt(2)
                 var currentPlayerIndex = randomPlayerIndex
                 val randomPosition =
-                    positions[random.nextInt(positions.size)] ?: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
-                if(currentPlayerIndex == 0){
-                        uci.parseInput("position fen  $randomPosition")
+                    positions[random.nextInt(positions.size)]
+                        ?: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
+                if (currentPlayerIndex == 0) {
+                    uci.parseInput("position fen  $randomPosition")
                     val gameStatusResponse = uci.parseInput("check_status")
                     // game status : 0 not finished, 1 draw, 2 white winds, 3 black wins
                     val statusCode = gameStatusResponse.toInt()
@@ -103,7 +127,7 @@ class ExampleUnitTest {
                     }
                     val move = uci.parseInput("go infinite")
                     val splits = move.trim().split("\\s+".toRegex())
-                    if(splits.size > 1){
+                    if (splits.size > 1) {
                         movesList += splits[1] + " "
                     }
                 } else {
@@ -117,36 +141,37 @@ class ExampleUnitTest {
                     val move = uci.parseInput("go infinite")
 
                     val splits = move.trim().split("\\s+".toRegex())
-                    if(splits.size > 1){
+                    if (splits.size > 1) {
                         movesList += splits[1] + " "
                     }
                 }
-                while (!isCurrentGameFinished){
+                while (!isCurrentGameFinished) {
                     // flip current player index from 0 to 1 and vice versa
                     currentPlayerIndex = currentPlayerIndex xor 1
-                    if(randomPosition.contains("moves")){
+                    if (randomPosition.contains("moves")) {
                         uci.parseInput("position fen $randomPosition $movesList")
-                    }else {
+                    } else {
                         uci.parseInput("position fen $randomPosition moves $movesList")
                     }
                     val gameStatusResponse = uci.parseInput("check_status")
                     // game status : 0 not finished, 1 draw, 2 white winds, 3 black wins
                     val statusCode = gameStatusResponse.toInt()
                     isCurrentGameFinished = statusCode != 0
-                    if(isCurrentGameFinished){
-                        when(statusCode){
+                    if (isCurrentGameFinished) {
+                        when (statusCode) {
                             1 -> firstEngineDraws += 1
                             2 -> {
-                                if(randomPlayerIndex == 0){
+                                if (randomPlayerIndex == 0) {
                                     firstEngineWins += 1
-                                }else {
+                                } else {
                                     firstEngineLoses += 1
                                 }
                             }
+
                             3 -> {
-                                if(randomPlayerIndex == 0){
+                                if (randomPlayerIndex == 0) {
                                     firstEngineLoses += 1
-                                }else {
+                                } else {
                                     firstEngineWins += 1
                                 }
                             }
@@ -154,18 +179,18 @@ class ExampleUnitTest {
                         break
                     }
 
-                    if(currentPlayerIndex == 0){
+                    if (currentPlayerIndex == 0) {
 
                         val move = uci.parseInput("go infinite")
                         val splits = move.trim().split("\\s+".toRegex())
-                        if(splits.size > 1){
+                        if (splits.size > 1) {
                             movesList += splits[1] + " "
                         }
-                    } else{
+                    } else {
 
                         val move = uci.parseInput("go infinite")
                         val splits = move.trim().split("\\s+".toRegex())
-                        if(splits.size > 1){
+                        if (splits.size > 1) {
                             movesList += splits[1] + " "
                         }
                     }
@@ -202,8 +227,8 @@ class ExampleUnitTest {
 
         for (i in 1 until 7) {
             val perftResult = Perft(i, chessBoard, moveGenerator)
-            if(perftResults[i] != perftResult){
-                Log.d(ChessEngine.DEBUG_TAG,"depth: ${i}")
+            if (perftResults[i] != perftResult) {
+                Log.d(ChessEngine.DEBUG_TAG, "depth: ${i}")
             }
             assertEquals(perftResults[i], perftResult)
 
@@ -224,8 +249,8 @@ class ExampleUnitTest {
 
         for (i in 1 until 7) {
             val perftResult = Perft(i, chessBoard2, moveGenerator)
-            if(perftResults[i - 1] != perftResult){
-                Log.d(ChessEngine.DEBUG_TAG,"depth: ${i}")
+            if (perftResults[i - 1] != perftResult) {
+                Log.d(ChessEngine.DEBUG_TAG, "depth: ${i}")
             }
             assertEquals(perftResults[i - 1], perftResult)
 
@@ -245,13 +270,14 @@ class ExampleUnitTest {
 
         for (i in 1 until 7) {
             val perftResult = Perft(i, chessBoard3, moveGenerator)
-            if(perftResults[i - 1] != perftResult){
-                Log.d(ChessEngine.DEBUG_TAG,"depth: ${i}")
+            if (perftResults[i - 1] != perftResult) {
+                Log.d(ChessEngine.DEBUG_TAG, "depth: ${i}")
             }
             assertEquals(perftResults[i - 1], perftResult)
 
         }
     }
+
     @Test
     fun moveGeneratorCaptures() {
         val perftCaptureResults = listOf<ULong>(
@@ -282,7 +308,7 @@ class ExampleUnitTest {
             35043416UL,
             1558445089UL,
 
-        )
+            )
         for (i in 1 until 7) {
             val perftResult = PerftCaptures(i, chessBoard2, moveGenerator, false)
             assertEquals(perftCaptureResults[i - 1], perftResult)
@@ -369,7 +395,7 @@ class ExampleUnitTest {
                 depth - 1,
                 chessBoard,
                 moveGenerator,
-                moveGenerator.isKingAttacked(chessBoard,chessBoard.toPlayColor)
+                moveGenerator.isKingAttacked(chessBoard, chessBoard.toPlayColor)
             )
             chessBoard.unMakeMove()
         }

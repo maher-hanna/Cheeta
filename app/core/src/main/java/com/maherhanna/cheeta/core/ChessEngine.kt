@@ -22,10 +22,15 @@ open class ChessEngine {
     private var killerMove = Array(2) { arrayOfNulls<Move>(MAX_KILLER_MOVE_PLY) }
     private var history = Array(2) { Array(64) { LongArray(64) } }
 
-    var zobristPiecesArray = Array(2) { Array(6) { LongArray(64) } }
-    var zobristEnPassantArray = LongArray(8)
-    var zobristCastlingRightsArray = LongArray(4)
-    var zobristBlackToMove = 0L
+    private var transpositionTable = Array(TRANSPOSITION_TABLE_SIZE.toInt()){TranspositionTableEntry()}
+
+    @OptIn(ExperimentalUnsignedTypes::class)
+    var zobristPiecesArray = Array(2) { Array(6) { ULongArray(64) } }
+    @OptIn(ExperimentalUnsignedTypes::class)
+    var zobristEnPassantArray = ULongArray(8)
+    @OptIn(ExperimentalUnsignedTypes::class)
+    var zobristCastlingRightsArray = ULongArray(4)
+    var zobristBlackToMove = 0UL
 
     init {
         fillZobristArrays()
@@ -43,32 +48,35 @@ open class ChessEngine {
 
         killerMove = Array(2) { arrayOfNulls(124) }
         history = Array(2) { Array(64) { LongArray(64) } }
+        transpositionTable.fill(TranspositionTableEntry())
         moveGenerator.reset()
     }
 
+    @OptIn(ExperimentalUnsignedTypes::class)
     fun fillZobristArrays() {
         val randomGenerator = SecureRandom()
         for (color in 0..1) {
             for (pieceType in 0..5) {
                 for (boardPosition in 0..63) {
-                    zobristPiecesArray[color][pieceType][boardPosition] = randomGenerator.nextLong()
+                    zobristPiecesArray[color][pieceType][boardPosition] = randomGenerator.nextLong(Long.MAX_VALUE).toULong()
                 }
             }
         }
 
         for (column in 0..7) {
-            zobristEnPassantArray[column] = randomGenerator.nextLong()
+            zobristEnPassantArray[column] = randomGenerator.nextLong(Long.MAX_VALUE).toULong()
         }
 
         for (right in 0..3) {
-            zobristCastlingRightsArray[right] = randomGenerator.nextLong()
+            zobristCastlingRightsArray[right] = randomGenerator.nextLong(Long.MAX_VALUE).toULong()
         }
 
-        zobristBlackToMove = randomGenerator.nextLong()
+        zobristBlackToMove = randomGenerator.nextLong(Long.MAX_VALUE).toULong()
     }
 
-    fun getZobristHash(chessBoard: ChessBoard):Long {
-        var zobristKey = 0L
+    @OptIn(ExperimentalUnsignedTypes::class)
+    fun getZobristHash(chessBoard: ChessBoard):ULong {
+        var zobristKey = 0UL
         for (square in 0..63) {
             val pieceType = chessBoard.pieceType(square)
             val pieceColor = chessBoard.pieceColor(square)
@@ -121,6 +129,36 @@ open class ChessEngine {
             zobristKey = zobristKey xor zobristBlackToMove
         }
         return zobristKey
+
+    }
+
+    fun probeTableEntry(hashKey:ULong, alpha:Int, beta:Int, depth: Int):Int{
+        val entry = transpositionTable[(hashKey % TRANSPOSITION_TABLE_SIZE).toInt()]
+        if(entry.hashKey == hashKey){
+            if(entry.depth >= depth){
+                if(entry.flag == TranspositionTableFlag.EXACT){
+                    return entry.score
+                }
+                if (entry.flag == TranspositionTableFlag.ALPHA && entry.score <= alpha) {
+                    return alpha
+                }
+                if (entry.flag == TranspositionTableFlag.BETA && entry.score >= beta) {
+                    return beta
+                }
+            }
+        }
+        return NO_ENTRY
+    }
+
+    fun writeTableEntry(hashKey:ULong,score:Int, depth: Int, hashFlag:TranspositionTableFlag){
+
+        val entry = TranspositionTableEntry(
+            hashKey= hashKey,
+            score = score,
+            flag = hashFlag,
+            depth = depth
+        )
+        transpositionTable[(hashKey % TRANSPOSITION_TABLE_SIZE).toInt()] = entry
 
     }
 
@@ -523,10 +561,10 @@ open class ChessEngine {
 
     companion object {
         const val DEBUG_TAG = "Cheeta_Debug"
-
-
+        const val TRANSPOSITION_TABLE_SIZE = 1000UL
         private const val LOSE_SCORE = -1000000
         private const val WIN_SCORE = 1000000
+        const val NO_ENTRY = LOSE_SCORE - 1
 
         private const val MAX_KILLER_MOVE_PLY = 64
 
