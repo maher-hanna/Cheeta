@@ -20,14 +20,17 @@ open class ChessEngine {
 
     //killerMove[id][ply]
     private var killerMove = Array(2) { arrayOfNulls<Move>(MAX_KILLER_MOVE_PLY) }
-    private var history = Array(2) { Array(64) { LongArray(64) } }
+    private var history = Array(2) { Array(64) { IntArray(64) } }
 
-    private var transpositionTable = Array(TRANSPOSITION_TABLE_SIZE.toInt()){TranspositionTableEntry()}
+    private var transpositionTable =
+        Array(TRANSPOSITION_TABLE_SIZE.toInt()) { TranspositionTableEntry() }
 
     @OptIn(ExperimentalUnsignedTypes::class)
     var zobristPiecesArray = Array(2) { Array(6) { ULongArray(64) } }
+
     @OptIn(ExperimentalUnsignedTypes::class)
     var zobristEnPassantArray = ULongArray(8)
+
     @OptIn(ExperimentalUnsignedTypes::class)
     var zobristCastlingRightsArray = ULongArray(4)
     var zobristBlackToMove = 0UL
@@ -47,7 +50,7 @@ open class ChessEngine {
         isUciMode = false
 
         killerMove = Array(2) { arrayOfNulls(124) }
-        history = Array(2) { Array(64) { LongArray(64) } }
+        history = Array(2) { Array(64) { IntArray(64) } }
         transpositionTable.fill(TranspositionTableEntry())
         moveGenerator.reset()
     }
@@ -58,24 +61,25 @@ open class ChessEngine {
         for (color in 0..1) {
             for (pieceType in 0..5) {
                 for (boardPosition in 0..63) {
-                    zobristPiecesArray[color][pieceType][boardPosition] = randomGenerator.nextLong(Long.MAX_VALUE).toULong()
+                    zobristPiecesArray[color][pieceType][boardPosition] =
+                        randomGenerator.nextLong().toULong()
                 }
             }
         }
 
         for (column in 0..7) {
-            zobristEnPassantArray[column] = randomGenerator.nextLong(Long.MAX_VALUE).toULong()
+            zobristEnPassantArray[column] = randomGenerator.nextLong().toULong()
         }
 
         for (right in 0..3) {
-            zobristCastlingRightsArray[right] = randomGenerator.nextLong(Long.MAX_VALUE).toULong()
+            zobristCastlingRightsArray[right] = randomGenerator.nextLong().toULong()
         }
 
-        zobristBlackToMove = randomGenerator.nextLong(Long.MAX_VALUE).toULong()
+        zobristBlackToMove = randomGenerator.nextLong().toULong()
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    fun getZobristHash(chessBoard: ChessBoard):ULong {
+    fun getZobristHash(chessBoard: ChessBoard): ULong {
         var zobristKey = 0UL
         for (square in 0..63) {
             val pieceType = chessBoard.pieceType(square)
@@ -85,13 +89,17 @@ open class ChessEngine {
             } else if (pieceType == Piece.PAWN && pieceColor == Piece.BLACK) {
                 zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.PAWN - 1][square]
             } else if (pieceType == Piece.KNIGHT && pieceColor == Piece.WHITE) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.KNIGHT - 1][square]
+                zobristKey =
+                    zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.KNIGHT - 1][square]
             } else if (pieceType == Piece.KNIGHT && pieceColor == Piece.BLACK) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.KNIGHT - 1][square]
+                zobristKey =
+                    zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.KNIGHT - 1][square]
             } else if (pieceType == Piece.BISHOP && pieceColor == Piece.WHITE) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.BISHOP - 1][square]
+                zobristKey =
+                    zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.BISHOP - 1][square]
             } else if (pieceType == Piece.BISHOP && pieceColor == Piece.BLACK) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.BISHOP - 1][square]
+                zobristKey =
+                    zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.BISHOP - 1][square]
             } else if (pieceType == Piece.ROOK && pieceColor == Piece.WHITE) {
                 zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.ROOK - 1][square]
             } else if (pieceType == Piece.ROOK && pieceColor == Piece.BLACK) {
@@ -125,18 +133,18 @@ open class ChessEngine {
         if (chessBoard.blackCastlingRights and CASTLING_QUEEN_SIDE != 0) {
             zobristKey = zobristKey xor zobristCastlingRightsArray[3]
         }
-        if(chessBoard.toPlayColor == Piece.BLACK){
+        if (chessBoard.toPlayColor == Piece.BLACK) {
             zobristKey = zobristKey xor zobristBlackToMove
         }
         return zobristKey
 
     }
 
-    fun probeTableEntry(hashKey:ULong, alpha:Int, beta:Int, depth: Int):Int{
+    fun probeTableEntry(hashKey: ULong, alpha: Int, beta: Int, depth: Int): Int {
         val entry = transpositionTable[(hashKey % TRANSPOSITION_TABLE_SIZE).toInt()]
-        if(entry.hashKey == hashKey){
-            if(entry.depth >= depth){
-                if(entry.flag == TranspositionTableFlag.EXACT){
+        if (entry.hashKey == hashKey) {
+            if (entry.depth >= depth) {
+                if (entry.flag == TranspositionTableFlag.EXACT) {
                     return entry.score
                 }
                 if (entry.flag == TranspositionTableFlag.ALPHA && entry.score <= alpha) {
@@ -150,10 +158,10 @@ open class ChessEngine {
         return NO_ENTRY
     }
 
-    fun writeTableEntry(hashKey:ULong,score:Int, depth: Int, hashFlag:TranspositionTableFlag){
+    fun writeTableEntry(hashKey: ULong, score: Int, depth: Int, hashFlag: TranspositionTableFlag) {
 
         val entry = TranspositionTableEntry(
-            hashKey= hashKey,
+            hashKey = hashKey,
             score = score,
             flag = hashFlag,
             depth = depth
@@ -179,7 +187,7 @@ open class ChessEngine {
             maxingPlayer
         )
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
-        var currentDepth = 0L
+        var currentDepth = 0
         var move: Move? = toPlayLegalMoves[0]
         do {
             currentDepth++
@@ -221,7 +229,7 @@ open class ChessEngine {
         moves: PlayerLegalMoves,
         startTime: Long,
         maxSearchTime: Long,
-        maxDepth: Long,
+        maxDepth: Int,
     ): Move? {
         var alpha = LOSE_SCORE
         val beta = WIN_SCORE
@@ -256,17 +264,24 @@ open class ChessEngine {
         chessBoard: ChessBoard,
         alphaArg: Int,
         beta: Int,
-        depth: Long,
+        depth: Int,
         ply: Int
     ): Int {
         var alpha = alphaArg
+        var hashFlag = TranspositionTableFlag.ALPHA
+        val chessBoardHash = getZobristHash(chessBoard)
+        val tableScore =
+            probeTableEntry(hashKey = chessBoardHash, alpha = alpha, beta = beta, depth = depth)
+        if (tableScore != NO_ENTRY) {
+            return tableScore
+        }
         val toPlayColor = chessBoard.toPlayColor
         var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             toPlayColor
         )
         val gameStatus = checkStatus(chessBoard)
-        if (depth == 0L || isGameFinished(gameStatus)) {
+        if (depth == 0 || isGameFinished(gameStatus)) {
             evaluations++
             return quiescence(chessBoard, alpha, beta, ply)
         }
@@ -283,6 +298,12 @@ open class ChessEngine {
             maxScore = maxScore.coerceAtLeast(score)
             alpha = alpha.coerceAtLeast(score)
             if (score >= beta) {
+                writeTableEntry(
+                    hashKey = chessBoardHash,
+                    depth = depth,
+                    hashFlag = TranspositionTableFlag.BETA,
+                    score = beta
+                )
                 if (!toPlayLegalMoves[i].isCapture) {
                     if (ply < MAX_KILLER_MOVE_PLY) {
                         //killer moves
@@ -295,15 +316,15 @@ open class ChessEngine {
                     history[chessBoard.toPlayColor][toPlayLegalMoves[i].from][toPlayLegalMoves[i].to] += depth * depth
                 }
                 betaCutOffs++
-
-
                 return beta
             }
             if (score > alpha) {
-
+                hashFlag = TranspositionTableFlag.EXACT
                 alpha = score
             }
         }
+        writeTableEntry(hashKey = chessBoardHash,depth = depth, hashFlag = hashFlag, score = alpha)
+
         return alpha
     }
 
