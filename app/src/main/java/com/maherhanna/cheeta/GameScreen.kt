@@ -605,7 +605,7 @@ suspend fun playComputer(
             uci.parseInput("position startpos moves " + chessBoard.moves.notation)
         }
         var computerMoveNotation =
-            uci.parseInput("go depth 4")
+            uci.parseInput("go movetime 4000")
         computerMoveNotation = computerMoveNotation
             .removePrefix("bestmove")
             .trim()
