@@ -1,8 +1,11 @@
 package com.maherhanna.cheeta.core
 
+import com.maherhanna.cheeta.core.ChessBoard.Companion.CASTLING_KING_SIDE
+import com.maherhanna.cheeta.core.ChessBoard.Companion.CASTLING_QUEEN_SIDE
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetFile
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
+import java.security.SecureRandom
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -17,7 +20,17 @@ open class ChessEngine {
 
     //killerMove[id][ply]
     private var killerMove = Array(2) { arrayOfNulls<Move>(MAX_KILLER_MOVE_PLY) }
-    private var history = Array(2) { Array(64){LongArray(64)} }
+    private var history = Array(2) { Array(64) { LongArray(64) } }
+
+    var zobristPiecesArray = Array(2) { Array(6) { LongArray(64) } }
+    var zobristEnPassantArray = LongArray(8)
+    var zobristCastlingRightsArray = LongArray(4)
+    var zobristBlackToMove = 0L
+
+    init {
+        fillZobristArrays()
+
+    }
 
     fun reset() {
         foundCheckMate = false
@@ -29,11 +42,93 @@ open class ChessEngine {
         isUciMode = false
 
         killerMove = Array(2) { arrayOfNulls(124) }
-        history = Array(2) { Array(64){LongArray(64)} }
+        history = Array(2) { Array(64) { LongArray(64) } }
         moveGenerator.reset()
     }
 
-    fun getMove(chessBoard: ChessBoard, maxSearchTime:Long,maxDepth:Long = Long.MAX_VALUE): Move? {
+    fun fillZobristArrays() {
+        val randomGenerator = SecureRandom()
+        for (color in 0..1) {
+            for (pieceType in 0..5) {
+                for (boardPosition in 0..63) {
+                    zobristPiecesArray[color][pieceType][boardPosition] = randomGenerator.nextLong()
+                }
+            }
+        }
+
+        for (column in 0..7) {
+            zobristEnPassantArray[column] = randomGenerator.nextLong()
+        }
+
+        for (right in 0..3) {
+            zobristCastlingRightsArray[right] = randomGenerator.nextLong()
+        }
+
+        zobristBlackToMove = randomGenerator.nextLong()
+    }
+
+    fun getZobristHash(chessBoard: ChessBoard):Long {
+        var zobristKey = 0L
+        for (square in 0..63) {
+            val pieceType = chessBoard.pieceType(square)
+            val pieceColor = chessBoard.pieceColor(square)
+            if (pieceType == Piece.PAWN && pieceColor == Piece.WHITE) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.PAWN - 1][square]
+            } else if (pieceType == Piece.PAWN && pieceColor == Piece.BLACK) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.PAWN - 1][square]
+            } else if (pieceType == Piece.KNIGHT && pieceColor == Piece.WHITE) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.KNIGHT - 1][square]
+            } else if (pieceType == Piece.KNIGHT && pieceColor == Piece.BLACK) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.KNIGHT - 1][square]
+            } else if (pieceType == Piece.BISHOP && pieceColor == Piece.WHITE) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.BISHOP - 1][square]
+            } else if (pieceType == Piece.BISHOP && pieceColor == Piece.BLACK) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.BISHOP - 1][square]
+            } else if (pieceType == Piece.ROOK && pieceColor == Piece.WHITE) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.ROOK - 1][square]
+            } else if (pieceType == Piece.ROOK && pieceColor == Piece.BLACK) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.ROOK - 1][square]
+            } else if (pieceType == Piece.QUEEN && pieceColor == Piece.WHITE) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.QUEEN - 1][square]
+            } else if (pieceType == Piece.QUEEN && pieceColor == Piece.BLACK) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.QUEEN - 1][square]
+            } else if (pieceType == Piece.KING && pieceColor == Piece.WHITE) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.KING - 1][square]
+            } else if (pieceType == Piece.KING && pieceColor == Piece.BLACK) {
+                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.KING - 1][square]
+            }
+        }
+
+        for (column in 0..7) {
+            if (ChessBoard.GetFile(chessBoard.enPassantTarget) == column) {
+                zobristKey = zobristKey xor zobristEnPassantArray[column]
+            }
+        }
+
+        if (chessBoard.whiteCastlingRights and CASTLING_KING_SIDE != 0) {
+            zobristKey = zobristKey xor zobristCastlingRightsArray[0]
+        }
+        if (chessBoard.whiteCastlingRights and CASTLING_QUEEN_SIDE != 0) {
+            zobristKey = zobristKey xor zobristCastlingRightsArray[1]
+        }
+        if (chessBoard.blackCastlingRights and CASTLING_KING_SIDE != 0) {
+            zobristKey = zobristKey xor zobristCastlingRightsArray[2]
+        }
+        if (chessBoard.blackCastlingRights and CASTLING_QUEEN_SIDE != 0) {
+            zobristKey = zobristKey xor zobristCastlingRightsArray[3]
+        }
+        if(chessBoard.toPlayColor == Piece.BLACK){
+            zobristKey = zobristKey xor zobristBlackToMove
+        }
+        return zobristKey
+
+    }
+
+    fun getMove(
+        chessBoard: ChessBoard,
+        maxSearchTime: Long,
+        maxDepth: Long = Long.MAX_VALUE
+    ): Move? {
         val startTime = System.currentTimeMillis()
         //convert maximum search time from seconds to nano seconds
         foundCheckMate = false
@@ -52,7 +147,7 @@ open class ChessEngine {
             currentDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
             val currentSearchMove =
-                search(chessBoard, toPlayLegalMoves, startTime,maxSearchTime, currentDepth)
+                search(chessBoard, toPlayLegalMoves, startTime, maxSearchTime, currentDepth)
 
             if (currentSearchMove != null) {
                 move = currentSearchMove
@@ -110,7 +205,7 @@ open class ChessEngine {
                 alpha = score
                 bestMove = moves[i]
             }
-            if (System.currentTimeMillis() - startTime > maxSearchTime ) {
+            if (System.currentTimeMillis() - startTime > maxSearchTime) {
                 return null
             }
         }
@@ -150,8 +245,8 @@ open class ChessEngine {
             maxScore = maxScore.coerceAtLeast(score)
             alpha = alpha.coerceAtLeast(score)
             if (score >= beta) {
-                if(!toPlayLegalMoves[i].isCapture){
-                    if(ply < MAX_KILLER_MOVE_PLY){
+                if (!toPlayLegalMoves[i].isCapture) {
+                    if (ply < MAX_KILLER_MOVE_PLY) {
                         //killer moves
                         killerMove[1][ply] = killerMove[0][ply]
                         killerMove[0][ply] = Move(toPlayLegalMoves[i])
@@ -228,7 +323,7 @@ open class ChessEngine {
                 val victim = currentMove.takenPieceType
                 val attacker = currentMove.pieceType
                 currentScore += mvv_lva[(attacker - 1) * 6 + (victim - 1)] + 10000
-            }else{
+            } else {
                 // killer move score
                 if (killerMove[0][ply] != null && killerMove[0][ply] == moves[i]) {
                     currentScore += 9000
@@ -263,6 +358,7 @@ open class ChessEngine {
     private fun isGameFinished(gameStatus: GameStatus): Boolean {
         return gameStatus !== GameStatus.NOT_FINISHED
     }
+
     fun makeMove(chessBoard: ChessBoard, moveNotation: String): Move? {
         val playerColor = chessBoard.toPlayColor
         val toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
@@ -275,6 +371,7 @@ open class ChessEngine {
         }
         return move
     }
+
     private fun getGameFinishedWhiteScore(gameStatus: GameStatus): Int {
         return when (gameStatus) {
             GameStatus.FINISHED_WIN_WHITE -> WIN_SCORE

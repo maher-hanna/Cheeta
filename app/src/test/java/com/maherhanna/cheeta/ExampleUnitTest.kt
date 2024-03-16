@@ -36,8 +36,19 @@ class ExampleUnitTest {
         val uci = Uci()
         uci.parseInput("position fen  ${ChessBoard.killerPosition}")
         val move = uci.parseInput("go depth 5")
+    }
+
+    @Test(expected = Test.None::class)
+    fun getZobristKy() {
+        val chessBoard = ChessBoard(ChessBoard.trickyPosition)
+        val chessBoardSlightlyModified = ChessBoard("r3k2r/p1p1qpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
+        )
+        val chessEngine = ChessEngine()
+        println(chessEngine.getZobristHash(chessBoard = chessBoard))
+        println(chessEngine.getZobristHash(chessBoard = chessBoardSlightlyModified))
 
     }
+
     @Test(expected = Test.None::class)
     fun testUciProtocol() {
         val numberOfGames = 30
