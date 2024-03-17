@@ -583,7 +583,7 @@ open class ChessEngine {
 
     companion object {
         const val DEBUG_TAG = "Cheeta_Debug"
-        const val TRANSPOSITION_TABLE_SIZE = 1000UL
+        const val TRANSPOSITION_TABLE_SIZE = 2000UL
         private const val LOSE_SCORE = -1000000
         private const val WIN_SCORE = 1000000
         const val NO_ENTRY = LOSE_SCORE - 1

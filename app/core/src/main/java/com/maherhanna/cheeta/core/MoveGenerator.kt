@@ -1190,7 +1190,7 @@ class MoveGenerator(
         return attackedSquares
     }
 
-    fun getWhitePseudoLegalMoves(chessBoard: ChessBoard): ArrayList<Move> {
+    fun getWhiteLegalMoves(chessBoard: ChessBoard): ArrayList<Move> {
         val moves = ArrayList<Move>()
 
         //add pawns moves
@@ -1240,7 +1240,7 @@ class MoveGenerator(
         return moves
     }
 
-    fun getBlackPseudoLegalMoves(chessBoard: ChessBoard): ArrayList<Move> {
+    fun getBlackLegalMoves(chessBoard: ChessBoard): ArrayList<Move> {
         val moves = ArrayList<Move>()
 
         //add pawns moves
@@ -1397,7 +1397,7 @@ class MoveGenerator(
 
     fun generateWhiteLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
         updateKingPinnedPieces(chessBoard, Piece.WHITE)
-        val moves = getWhitePseudoLegalMoves(chessBoard)
+        val moves = getWhiteLegalMoves(chessBoard)
         //removeMovesThatExposeKing(chessBoard, moves, Piece.WHITE)
         val playerLegalMoves = PlayerLegalMoves()
         playerLegalMoves.addAll(moves)
@@ -1407,7 +1407,7 @@ class MoveGenerator(
 
     fun generateBlackLegalMoves(chessBoard: ChessBoard): PlayerLegalMoves {
         updateKingPinnedPieces(chessBoard, Piece.BLACK)
-        val moves = getBlackPseudoLegalMoves(chessBoard)
+        val moves = getBlackLegalMoves(chessBoard)
         //removeMovesThatExposeKing(chessBoard, moves, Piece.BLACK)
         val playerLegalMoves = PlayerLegalMoves()
         playerLegalMoves.addAll(moves)
