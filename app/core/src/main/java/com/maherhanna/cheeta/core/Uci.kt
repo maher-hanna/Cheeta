@@ -73,7 +73,7 @@ class Uci {
             }
 
             "check_status" -> {
-                val status = engine.checkStatus(chessBoard)
+                val status = engine.checkStatus(chessBoard,null)
                 response = status.ordinal.toString()
             }
 

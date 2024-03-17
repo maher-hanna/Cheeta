@@ -1424,11 +1424,10 @@ class MoveGenerator(
         }
     }
 
-    fun checkStatus(chessBoard: ChessBoard): GameStatus {
+    fun checkStatus(chessBoard: ChessBoard,legalMoves: PlayerLegalMoves? = null): GameStatus {
         val lastPlayed = chessBoard.moves.lastPlayed
         var gameStatus = GameStatus.NOT_FINISHED
-        val toPlayPlayerLegalMoves =
-            generateLegalMovesFor(chessBoard, chessBoard.toPlayColor)
+        val toPlayPlayerLegalMoves = legalMoves ?: generateLegalMovesFor(chessBoard, chessBoard.toPlayColor)
         if (toPlayPlayerLegalMoves.size() == 0) {
             return if (isKingChecked(chessBoard.toPlayColor)) {
                 //win

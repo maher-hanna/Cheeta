@@ -281,7 +281,7 @@ open class ChessEngine {
             chessBoard,
             toPlayColor
         )
-        val gameStatus = checkStatus(chessBoard)
+        val gameStatus = checkStatus(chessBoard,toPlayLegalMoves)
         if (depth == 0 || isGameFinished(gameStatus)) {
             evaluations++
             return quiescence(chessBoard, alpha, beta, ply)
@@ -336,7 +336,7 @@ open class ChessEngine {
             chessBoard,
             toPlayColor
         )
-        val gameStatus = checkStatus(chessBoard)
+        val gameStatus = checkStatus(chessBoard,toPlayLegalMoves)
         val eval = evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
 
 
@@ -576,8 +576,8 @@ open class ChessEngine {
         return (whitePiecesCount + blackPiecesCount) <= 7
     }
 
-    fun checkStatus(chessBoard: ChessBoard): GameStatus {
-        return moveGenerator.checkStatus(chessBoard)
+    fun checkStatus(chessBoard: ChessBoard,legalMoves: PlayerLegalMoves?): GameStatus {
+        return moveGenerator.checkStatus(chessBoard,legalMoves)
     }
 
 
