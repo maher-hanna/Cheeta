@@ -178,6 +178,7 @@ open class ChessEngine {
         val startTime = System.currentTimeMillis()
         //convert maximum search time from seconds to nano seconds
         foundCheckMate = false
+        transpositionTable.fill(TranspositionTableEntry())
         evaluations = 0
         betaCutOffs = 0
         searchTimeFinished = false

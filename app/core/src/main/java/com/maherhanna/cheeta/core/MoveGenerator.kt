@@ -1494,19 +1494,15 @@ class MoveGenerator(
             return false
         }
         if (color == Piece.WHITE) {
-            if (chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING) {
+            if (chessBoard.whiteCastlingRights and ChessBoard.CASTLING_KING_SIDE == 0) {
                 return false
             }
-            if (chessBoard.whiteCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE) {
-                return false
-            }
+
         } else {
-            if (chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING) {
+            if (chessBoard.blackCastlingRights and ChessBoard.CASTLING_KING_SIDE == 0) {
                 return false
             }
-            if (chessBoard.blackCastlingRights == ChessBoard.CASTLING_QUEEN_SIDE) {
-                return false
-            }
+
         }
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
         val initialRookPosition = getInitialRookKingSide(color)
@@ -1542,19 +1538,15 @@ class MoveGenerator(
             return false
         }
         if (color == Piece.WHITE) {
-            if (chessBoard.whiteCastlingRights == ChessBoard.NO_CASTLING) {
+            if (chessBoard.whiteCastlingRights and ChessBoard.CASTLING_QUEEN_SIDE == 0) {
                 return false
             }
-            if (chessBoard.whiteCastlingRights == ChessBoard.CASTLING_KING_SIDE) {
-                return false
-            }
+
         } else {
-            if (chessBoard.blackCastlingRights == ChessBoard.NO_CASTLING) {
+            if (chessBoard.blackCastlingRights and ChessBoard.CASTLING_QUEEN_SIDE == 0) {
                 return false
             }
-            if (chessBoard.blackCastlingRights == ChessBoard.CASTLING_KING_SIDE) {
-                return false
-            }
+
         }
         val initialKingPosition = getInitialKingPosition(chessBoard, color)
         val initialRookPosition = getInitialRookQueenSide(color)
@@ -1569,6 +1561,8 @@ class MoveGenerator(
 
             ) &&
                 !isPieceAttacked(color, initialKingPosition - 2)
+                &&
+                !isPieceAttacked(color, initialKingPosition - 3)
                 && !isPieceAttacked(color, initialRookPosition)
     }
 
