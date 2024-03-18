@@ -539,31 +539,22 @@ class ChessBoard {
     val blackBishopsCount: Int
         get() = BitMath.countSetBits(blackBishops)
 
+    val whiteKnightsCount: Int
+        get() = BitMath.countSetBits(whiteKnights)
+    val blackKnightsCount: Int
+        get() = BitMath.countSetBits(blackKnights)
     fun insufficientMaterial(): Boolean {
-        val allPiecesCount = allPiecesCount
+        val whiteKingCondition = whiteKing == allWhitePieces
+        val whiteKingAndBishopCondition = (whiteKing or whiteBishops == allWhitePieces) && whiteBishopsCount == 1
+        val whiteKingAndKnightCondition = (whiteKing or whiteKnights == allWhitePieces) && whiteKnightsCount == 1
+        val whiteInsufficientMaterialCondition = whiteKingCondition || whiteKingAndBishopCondition || whiteKingAndKnightCondition
 
+        val blackKingCondition = blackKing == allBlackPieces
+        val blackKingAndBishopCondition = (blackKing or blackBishops == allBlackPieces) && blackBishopsCount == 1
+        val blackKingAndKnightCondition = (blackKing or blackKnights == allBlackPieces) && blackKnightsCount == 1
+        val blackInsufficientMaterialCondition = blackKingCondition || blackKingAndBishopCondition || blackKingAndKnightCondition
+        return whiteInsufficientMaterialCondition && blackInsufficientMaterialCondition
 
-        // tow kings remaining
-        if (allPiecesCount == 2) {
-            return true
-        }
-        if (allPiecesCount == 3) {
-
-            // tow kings and a bishop or knight
-            if (whiteBishops or blackBishops or whiteKnights or blackKnights != 0L) {
-                return true
-            }
-        }
-        if (allPiecesCount == 4) {
-            if (whiteBishopsCount == 1 && blackBishopsCount == 1) {
-                val whiteBishopPosition = BitMath.getPositionsOf(whiteBishops)[0]
-                val blackBishopPosition = BitMath.getPositionsOf(blackBishops)[0]
-                // tow king and tow bishops of the same square color
-                return GetSquareColor(whiteBishopPosition) ==
-                        GetSquareColor(blackBishopPosition)
-            }
-        }
-        return false
     }
 
     fun removeKing(kingToRemoveColor: Int) {
