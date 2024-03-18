@@ -4,6 +4,6 @@ data class TranspositionTableEntry(
     var hashKey: ULong = 0UL,
     var depth: Int = 0,
     var flag: TranspositionTableFlag = TranspositionTableFlag.EXACT,
-    var score: Int = 0
+    var value: Int = 0
 ) {
 }

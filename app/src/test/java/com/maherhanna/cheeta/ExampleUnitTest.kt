@@ -44,7 +44,7 @@ class ExampleUnitTest {
         val chessBoard = ChessBoard(ChessBoard.startPosition)
         val chessEngine = ChessEngine()
         chessEngine.writeTableEntry(
-            score = 25,
+            value = 25,
             hashFlag = TranspositionTableFlag.EXACT,
             depth = 1,
             hashKey = chessEngine.getZobristHash(chessBoard)

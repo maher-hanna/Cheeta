@@ -140,29 +140,25 @@ open class ChessEngine {
 
     }
 
-    fun probeTableEntry(hashKey: ULong, alpha: Int, beta: Int, depth: Int): Int {
+    fun probeTableEntry(
+        hashKey: ULong,
+        alpha: Int,
+        beta: Int,
+        depth: Int
+    ): TranspositionTableEntry? {
         val entry = transpositionTable[(hashKey % TRANSPOSITION_TABLE_SIZE).toInt()]
-        if (entry.hashKey == hashKey) {
-            if (entry.depth >= depth) {
-                if (entry.flag == TranspositionTableFlag.EXACT) {
-                    return entry.score
-                }
-                if (entry.flag == TranspositionTableFlag.ALPHA && entry.score <= alpha) {
-                    return alpha
-                }
-                if (entry.flag == TranspositionTableFlag.BETA && entry.score >= beta) {
-                    return beta
-                }
-            }
+        return if (entry.hashKey == hashKey) {
+            entry
+        } else {
+            return null
         }
-        return NO_ENTRY
     }
 
-    fun writeTableEntry(hashKey: ULong, score: Int, depth: Int, hashFlag: TranspositionTableFlag) {
+    fun writeTableEntry(hashKey: ULong, value: Int, depth: Int, hashFlag: TranspositionTableFlag) {
 
         val entry = TranspositionTableEntry(
             hashKey = hashKey,
-            score = score,
+            value = value,
             flag = hashFlag,
             depth = depth
         )
@@ -263,25 +259,37 @@ open class ChessEngine {
 
     private fun negaMax(
         chessBoard: ChessBoard,
-        alphaArg: Int,
-        beta: Int,
+        alphaOriginal: Int,
+        betaOriginal: Int,
         depth: Int,
         ply: Int
     ): Int {
-        var alpha = alphaArg
-        var hashFlag = TranspositionTableFlag.ALPHA
+        var alpha = alphaOriginal
+        var beta = betaOriginal
         val chessBoardHash = getZobristHash(chessBoard)
-        val tableScore =
+        val tableEntry =
             probeTableEntry(hashKey = chessBoardHash, alpha = alpha, beta = beta, depth = depth)
-        if (tableScore != NO_ENTRY) {
-            return tableScore
+        if (tableEntry != null && tableEntry.depth >= depth) {
+            if (tableEntry.flag == TranspositionTableFlag.EXACT) {
+                return tableEntry.value
+            }
+            if (tableEntry.flag == TranspositionTableFlag.LOWER_BOUND) {
+                alpha = alpha.coerceAtLeast(tableEntry.value)
+            }
+            if (tableEntry.flag == TranspositionTableFlag.UPPER_BOUND) {
+                beta = beta.coerceAtMost(tableEntry.value)
+            }
+            if (alpha >= beta){
+                return tableEntry.value
+            }
+
         }
         val toPlayColor = chessBoard.toPlayColor
         var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             toPlayColor
         )
-        val gameStatus = checkStatus(chessBoard,toPlayLegalMoves)
+        val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
         if (depth == 0 || isGameFinished(gameStatus)) {
             evaluations++
             return quiescence(chessBoard, alpha, beta, ply)
@@ -299,12 +307,7 @@ open class ChessEngine {
             maxScore = maxScore.coerceAtLeast(score)
             alpha = alpha.coerceAtLeast(score)
             if (score >= beta) {
-                writeTableEntry(
-                    hashKey = chessBoardHash,
-                    depth = depth,
-                    hashFlag = TranspositionTableFlag.BETA,
-                    score = beta
-                )
+
                 if (!toPlayLegalMoves[i].isCapture) {
                     if (ply < MAX_KILLER_MOVE_PLY) {
                         //killer moves
@@ -320,11 +323,18 @@ open class ChessEngine {
                 return beta
             }
             if (score > alpha) {
-                hashFlag = TranspositionTableFlag.EXACT
                 alpha = score
             }
         }
-        writeTableEntry(hashKey = chessBoardHash,depth = depth, hashFlag = hashFlag, score = alpha)
+        val hashFlag = if(maxScore <= alphaOriginal){
+            TranspositionTableFlag.UPPER_BOUND
+        } else if(maxScore  >= beta){
+            TranspositionTableFlag.LOWER_BOUND
+        }else{
+            TranspositionTableFlag.EXACT
+        }
+
+        writeTableEntry(hashKey = chessBoardHash, depth = depth, hashFlag = hashFlag, value = alpha)
 
         return alpha
     }
@@ -336,7 +346,7 @@ open class ChessEngine {
             chessBoard,
             toPlayColor
         )
-        val gameStatus = checkStatus(chessBoard,toPlayLegalMoves)
+        val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
         val eval = evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
 
 
@@ -576,8 +586,8 @@ open class ChessEngine {
         return (whitePiecesCount + blackPiecesCount) <= 7
     }
 
-    fun checkStatus(chessBoard: ChessBoard,legalMoves: PlayerLegalMoves?): GameStatus {
-        return moveGenerator.checkStatus(chessBoard,legalMoves)
+    fun checkStatus(chessBoard: ChessBoard, legalMoves: PlayerLegalMoves?): GameStatus {
+        return moveGenerator.checkStatus(chessBoard, legalMoves)
     }
 
 
