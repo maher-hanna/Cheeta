@@ -320,7 +320,7 @@ open class ChessEngine {
                     history[chessBoard.toPlayColor][toPlayLegalMoves[i].from][toPlayLegalMoves[i].to] += depth * depth
                 }
                 betaCutOffs++
-                break
+                return beta
             }
 
         }
