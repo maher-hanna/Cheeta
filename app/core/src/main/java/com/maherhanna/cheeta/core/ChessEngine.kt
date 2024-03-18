@@ -320,11 +320,9 @@ open class ChessEngine {
                     history[chessBoard.toPlayColor][toPlayLegalMoves[i].from][toPlayLegalMoves[i].to] += depth * depth
                 }
                 betaCutOffs++
-                return beta
+                break
             }
-            if (score > alpha) {
-                alpha = score
-            }
+
         }
         val hashFlag = if(maxScore <= alphaOriginal){
             TranspositionTableFlag.UPPER_BOUND
@@ -336,7 +334,7 @@ open class ChessEngine {
 
         writeTableEntry(hashKey = chessBoardHash, depth = depth, hashFlag = hashFlag, value = alpha)
 
-        return alpha
+        return maxScore
     }
 
     private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {

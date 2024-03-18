@@ -125,7 +125,7 @@ class ExampleUnitTest {
                     if (statusCode != 0) {
                         break
                     }
-                    val move = uci.parseInput("go infinite")
+                    val move = uci.parseInput("go movetime 4000")
                     val splits = move.trim().split("\\s+".toRegex())
                     if (splits.size > 1) {
                         movesList += splits[1] + " "
