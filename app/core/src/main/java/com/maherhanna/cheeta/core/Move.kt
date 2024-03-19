@@ -3,7 +3,7 @@ package com.maherhanna.cheeta.core
 import java.util.Objects
 
 class Move {
-    private var bitValue: Long = 0
+    var bitValue: Long = 0
     var from: Int
         get() = BitMath.getBitsValue(bitValue, FROM_START, FROM_MASK).toInt()
         set(position) {

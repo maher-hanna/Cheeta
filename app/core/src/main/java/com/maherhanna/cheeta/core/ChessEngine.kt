@@ -17,6 +17,9 @@ open class ChessEngine {
     private var searchTimeFinished = false
     private var moveGenerator = MoveGenerator()
     var isUciMode = false
+    var pvTable: Array<Array<Move?>> =
+        Array(MAX_PV_TABLE_DEPTH) { Array(MAX_PV_TABLE_DEPTH) { null } }
+
 
     //killerMove[id][ply]
     private var killerMove = Array(2) { arrayOfNulls<Move>(MAX_KILLER_MOVE_PLY) }
@@ -52,6 +55,7 @@ open class ChessEngine {
         killerMove = Array(2) { arrayOfNulls(124) }
         history = Array(2) { Array(64) { IntArray(64) } }
         transpositionTable.fill(TranspositionTableEntry())
+        pvTable = Array(MAX_PV_TABLE_DEPTH) { Array(MAX_PV_TABLE_DEPTH) { null } }
         moveGenerator.reset()
     }
 
@@ -175,6 +179,7 @@ open class ChessEngine {
         //convert maximum search time from seconds to nano seconds
         foundCheckMate = false
         transpositionTable.fill(TranspositionTableEntry())
+        pvTable = Array(MAX_PV_TABLE_DEPTH) { Array(MAX_PV_TABLE_DEPTH) { null } }
         evaluations = 0
         betaCutOffs = 0
         searchTimeFinished = false
@@ -186,6 +191,7 @@ open class ChessEngine {
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var currentDepth = 0
         var move: Move? = toPlayLegalMoves[0]
+
         do {
             currentDepth++
             //Log.d(Game.DEBUG, "depth: ${maxDepth}")
@@ -279,12 +285,14 @@ open class ChessEngine {
             if (tableEntry.flag == TranspositionTableFlag.UPPER_BOUND) {
                 beta = beta.coerceAtMost(tableEntry.value)
             }
-            if (alpha >= beta){
+            if (alpha >= beta) {
                 return tableEntry.value
             }
 
         }
         val toPlayColor = chessBoard.toPlayColor
+        // Check PV-Table for Principal Variation
+
         var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             toPlayColor
@@ -294,8 +302,9 @@ open class ChessEngine {
             evaluations++
             return quiescence(chessBoard, alpha, beta, ply)
         }
+        val pvMove = pvTable[depth][depth]
 
-        toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
+        toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply,pvMove)
         var maxScore = LOSE_SCORE
         for (i in 0 until toPlayLegalMoves.size()) {
             chessBoard.makeMove(toPlayLegalMoves[i])
@@ -304,8 +313,15 @@ open class ChessEngine {
                 depth - 1, ply + 1
             )
             chessBoard.unMakeMove()
+            if (score > alpha) {
+                alpha = score
+                // Update Principal Variation in PV-Table
+                pvTable[depth][depth] = toPlayLegalMoves[i]
+                for (i in depth + 1 until MAX_PV_TABLE_DEPTH) {
+                    pvTable[depth][i] = pvTable[depth + 1][i]
+                }
+            }
             maxScore = maxScore.coerceAtLeast(score)
-            alpha = alpha.coerceAtLeast(score)
             if (score >= beta) {
 
                 if (!toPlayLegalMoves[i].isCapture) {
@@ -324,11 +340,11 @@ open class ChessEngine {
             }
 
         }
-        val hashFlag = if(maxScore <= alphaOriginal){
+        val hashFlag = if (maxScore <= alphaOriginal) {
             TranspositionTableFlag.UPPER_BOUND
-        } else if(maxScore  >= beta){
+        } else if (maxScore >= beta) {
             TranspositionTableFlag.LOWER_BOUND
-        }else{
+        } else {
             TranspositionTableFlag.EXACT
         }
 
@@ -378,7 +394,7 @@ open class ChessEngine {
     }
 
 
-    private fun scoreMoves(moves: PlayerLegalMoves, ply: Int): ArrayList<MoveScore> {
+    private fun scoreMoves(moves: PlayerLegalMoves, ply: Int,pvNode: Move?): ArrayList<MoveScore> {
         val scores = ArrayList<MoveScore>()
         var currentScore: Int
         var currentMove: Move
@@ -407,14 +423,18 @@ open class ChessEngine {
             if (currentMove.isPromote) {
                 currentScore += 10000
             }
+            //pv move
+            if(currentMove.bitValue == pvNode?.bitValue){
+                currentScore += 500000
+            }
 
             scores.add(MoveScore(currentScore, i))
         }
         return scores
     }
 
-    private fun sortMoves(moves: PlayerLegalMoves, ply: Int): PlayerLegalMoves {
-        val scores = scoreMoves(moves, ply)
+    private fun sortMoves(moves: PlayerLegalMoves, ply: Int,pvNode:Move? = null): PlayerLegalMoves {
+        val scores = scoreMoves(moves, ply,pvNode)
         scores.sort()
         val sortedMoves = PlayerLegalMoves()
         for (i in 0 until moves.size()) {
@@ -595,6 +615,7 @@ open class ChessEngine {
         private const val LOSE_SCORE = -1000000
         private const val WIN_SCORE = 1000000
         const val NO_ENTRY = LOSE_SCORE - 1
+        const val MAX_PV_TABLE_DEPTH = 6
 
         private const val MAX_KILLER_MOVE_PLY = 64
 
