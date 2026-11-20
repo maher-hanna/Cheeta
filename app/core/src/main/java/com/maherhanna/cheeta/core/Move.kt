@@ -16,8 +16,9 @@ class Move {
     val toNotation: String
         get() = ChessBoard.GetFileNotation(to) + ChessBoard.GetRankNotation(to)
 
+    // UCI long algebraic notation, e.g. "e2e4" or "e7e8q" for promotions
     val notation: String
-        get() = fromNotation + toNotation
+        get() = fromNotation + toNotation + if (isPromote) promotionChar(promotionPieceType) else ""
 
 
     var to: Int
@@ -78,6 +79,10 @@ class Move {
     constructor(notation: String) {
         from = ChessBoard.GetPositionFromNotation(notation.substring(0,2))
         to = ChessBoard.GetPositionFromNotation(notation.substring(2,4))
+        if (notation.length >= 5) {
+            val promotionType = promotionPieceType(notation[4])
+            if (promotionType != 0) setPromotes(promotionType)
+        }
     }
 
     val isCastling: Boolean
@@ -124,20 +129,6 @@ class Move {
         ) == 1L
     val isPawnDoubleMove: Boolean
         get() = BitMath.getBitsValue(bitValue, PAWN_DOUBLE_PUSH_START, PAWN_DOUBLE_PUSH_MASK) == 1L
-    var previousFiftyMoves: Int
-        get() = BitMath.getBitsValue(
-            bitValue, PREVIOUS_FIFTY_MOVES_START,
-            PREVIOUS_FIFTY_MOVES_MASK
-        ).toInt()
-        set(fiftyMoves) {
-            bitValue = BitMath.setBitsValue(
-                bitValue,
-                PREVIOUS_FIFTY_MOVES_START,
-                PREVIOUS_FIFTY_MOVES_MASK,
-                fiftyMoves
-            )
-        }
-
 
     fun setPieceColor(color: Int) {
         bitValue = BitMath.setBitsValue(bitValue, COLOR_START, COLOR_MASK, color)
@@ -209,7 +200,21 @@ class Move {
         private const val ENPASSANT_START: Long = 26
         private const val PAWN_DOUBLE_PUSH_MASK: Long = 134217728
         private const val PAWN_DOUBLE_PUSH_START: Long = 27
-        private const val PREVIOUS_FIFTY_MOVES_MASK = 16911433728L
-        private const val PREVIOUS_FIFTY_MOVES_START: Long = 28
+
+        fun promotionChar(pieceType: Int): String = when (pieceType) {
+            Piece.QUEEN -> "q"
+            Piece.ROOK -> "r"
+            Piece.BISHOP -> "b"
+            Piece.KNIGHT -> "n"
+            else -> ""
+        }
+
+        fun promotionPieceType(char: Char): Int = when (char.lowercaseChar()) {
+            'q' -> Piece.QUEEN
+            'r' -> Piece.ROOK
+            'b' -> Piece.BISHOP
+            'n' -> Piece.KNIGHT
+            else -> 0
+        }
     }
 }

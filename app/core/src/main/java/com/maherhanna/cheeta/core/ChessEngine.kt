@@ -15,18 +15,36 @@ open class ChessEngine {
     private var betaCutOffs: Long = 0
     private var maxingPlayer = 0
     private var searchTimeFinished = false
+    private var startTime = 0L
+    private var maxSearchTime = Long.MAX_VALUE
+    private var nodes = 0L
     private var moveGenerator = MoveGenerator()
     var isUciMode = false
-    var pvTable: Array<Array<Move?>> =
-        Array(MAX_PV_TABLE_DEPTH) { Array(MAX_PV_TABLE_DEPTH) { null } }
+
+    // triangular principal variation table indexed by ply
+    var pvTable: Array<Array<Move?>> = Array(MAX_PLY) { arrayOfNulls(MAX_PLY) }
+    private var pvLength = IntArray(MAX_PLY)
+    // principal variation of the last completed iteration, used for move ordering
+    private var previousPv: Array<Move?> = arrayOfNulls(0)
 
 
     //killerMove[id][ply]
-    private var killerMove = Array(2) { arrayOfNulls<Move>(MAX_KILLER_MOVE_PLY) }
+    private var killerMove = Array(2) { arrayOfNulls<Move>(MAX_PLY) }
     private var history = Array(2) { Array(64) { IntArray(64) } }
 
-    private var transpositionTable =
-        Array(TRANSPOSITION_TABLE_SIZE.toInt()) { TranspositionTableEntry() }
+    // transposition table stored in primitive arrays (no object allocated per write)
+    private val tableKeys = LongArray(TRANSPOSITION_TABLE_SIZE.toInt())
+    private val tableValues = IntArray(TRANSPOSITION_TABLE_SIZE.toInt())
+    private val tableDepths = IntArray(TRANSPOSITION_TABLE_SIZE.toInt())
+    private val tableFlags = ByteArray(TRANSPOSITION_TABLE_SIZE.toInt())
+
+    private fun clearTranspositionTable() {
+        tableKeys.fill(0L)
+        tableDepths.fill(-1)
+    }
+
+    private fun tableIndex(hashKey: ULong): Int =
+        (hashKey.toLong() and (TRANSPOSITION_TABLE_SIZE.toLong() - 1)).toInt()
 
     @OptIn(ExperimentalUnsignedTypes::class)
     var zobristPiecesArray = Array(2) { Array(6) { ULongArray(64) } }
@@ -40,6 +58,7 @@ open class ChessEngine {
 
     init {
         fillZobristArrays()
+        clearTranspositionTable()
 
     }
 
@@ -52,10 +71,12 @@ open class ChessEngine {
         moveGenerator = MoveGenerator()
         isUciMode = false
 
-        killerMove = Array(2) { arrayOfNulls(124) }
+        killerMove = Array(2) { arrayOfNulls(MAX_PLY) }
         history = Array(2) { Array(64) { IntArray(64) } }
-        transpositionTable.fill(TranspositionTableEntry())
-        pvTable = Array(MAX_PV_TABLE_DEPTH) { Array(MAX_PV_TABLE_DEPTH) { null } }
+        clearTranspositionTable()
+        pvTable = Array(MAX_PLY) { arrayOfNulls(MAX_PLY) }
+        pvLength = IntArray(MAX_PLY)
+        previousPv = arrayOfNulls(0)
         moveGenerator.reset()
     }
 
@@ -150,24 +171,60 @@ open class ChessEngine {
         beta: Int,
         depth: Int
     ): TranspositionTableEntry? {
-        val entry = transpositionTable[(hashKey % TRANSPOSITION_TABLE_SIZE).toInt()]
-        return if (entry.hashKey == hashKey) {
-            entry
+        val index = tableIndex(hashKey)
+        return if (tableDepths[index] >= 0 && tableKeys[index] == hashKey.toLong()) {
+            TranspositionTableEntry(
+                hashKey = hashKey,
+                depth = tableDepths[index],
+                flag = TABLE_FLAGS[tableFlags[index].toInt()],
+                value = tableValues[index]
+            )
         } else {
-            return null
+            null
         }
     }
 
     fun writeTableEntry(hashKey: ULong, value: Int, depth: Int, hashFlag: TranspositionTableFlag) {
+        val index = tableIndex(hashKey)
+        tableKeys[index] = hashKey.toLong()
+        tableValues[index] = value
+        tableDepths[index] = depth
+        tableFlags[index] = hashFlag.ordinal.toByte()
 
-        val entry = TranspositionTableEntry(
-            hashKey = hashKey,
-            value = value,
-            flag = hashFlag,
-            depth = depth
-        )
-        transpositionTable[(hashKey % TRANSPOSITION_TABLE_SIZE).toInt()] = entry
+    }
 
+    // mate scores are stored relative to the node (not the root) so they stay correct
+    // when the same position is reached at a different ply
+    private fun scoreToTable(score: Int, ply: Int): Int = when {
+        score > MATE_BOUND -> score + ply
+        score < -MATE_BOUND -> score - ply
+        else -> score
+    }
+
+    private fun scoreFromTable(score: Int, ply: Int): Int = when {
+        score > MATE_BOUND -> score - ply
+        score < -MATE_BOUND -> score + ply
+        else -> score
+    }
+
+    // score of a finished game from the point of view of the side to move
+    private fun terminalScore(gameStatus: GameStatus, ply: Int): Int {
+        return if (gameStatus == GameStatus.FINISHED_DRAW) {
+            0
+        } else {
+            // the side to move has been checkmated; prefer the longest defence / shortest mate
+            LOSE_SCORE + ply
+        }
+    }
+
+    private fun isTimeUp(): Boolean {
+        nodes++
+        if (!searchTimeFinished && (nodes and 1023L) == 0L &&
+            System.currentTimeMillis() - startTime > maxSearchTime
+        ) {
+            searchTimeFinished = true
+        }
+        return searchTimeFinished
     }
 
     fun getMove(
@@ -175,36 +232,44 @@ open class ChessEngine {
         maxSearchTime: Long,
         maxDepth: Long = Long.MAX_VALUE
     ): Move? {
-        val startTime = System.currentTimeMillis()
-        //convert maximum search time from seconds to nano seconds
+        startTime = System.currentTimeMillis()
+        this.maxSearchTime = maxSearchTime
         foundCheckMate = false
-        transpositionTable.fill(TranspositionTableEntry())
-        pvTable = Array(MAX_PV_TABLE_DEPTH) { Array(MAX_PV_TABLE_DEPTH) { null } }
+        clearTranspositionTable()
+        pvTable = Array(MAX_PLY) { arrayOfNulls(MAX_PLY) }
+        pvLength = IntArray(MAX_PLY)
+        previousPv = arrayOfNulls(0)
+        killerMove = Array(2) { arrayOfNulls(MAX_PLY) }
+        history = Array(2) { Array(64) { IntArray(64) } }
         evaluations = 0
         betaCutOffs = 0
+        nodes = 0
         searchTimeFinished = false
         maxingPlayer = chessBoard.toPlayColor
         var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             maxingPlayer
         )
+        // no legal moves: the game is already over
+        if (toPlayLegalMoves.size() == 0) return null
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
         var currentDepth = 0
         var move: Move? = toPlayLegalMoves[0]
 
-        do {
+        while (!foundCheckMate && currentDepth < maxDepth && currentDepth < MAX_PLY - 1) {
             currentDepth++
-            //Log.d(Game.DEBUG, "depth: ${maxDepth}")
-            val currentSearchMove =
-                search(chessBoard, toPlayLegalMoves, startTime, maxSearchTime, currentDepth)
-
-            if (currentSearchMove != null) {
-                move = currentSearchMove
-            } else {
+            val currentSearchMove = search(chessBoard, toPlayLegalMoves, currentDepth)
+            if (currentSearchMove == null) {
+                // search was interrupted; keep the result of the last completed depth
                 currentDepth--
                 break
             }
-        } while (!foundCheckMate && !searchTimeFinished && currentDepth < maxDepth)
+            move = currentSearchMove
+            previousPv = pvTable[0].copyOf(pvLength[0])
+            // search the best move of this iteration first in the next one
+            toPlayLegalMoves = moveToFront(toPlayLegalMoves, currentSearchMove)
+            if (System.currentTimeMillis() - startTime > maxSearchTime) break
+        }
         val duration = System.currentTimeMillis() - startTime
         Logger.getLogger(DEBUG_TAG).log(
             Level.INFO, "evaluations " + evaluations +
@@ -212,53 +277,57 @@ open class ChessEngine {
                     "\nmove " + move?.pieceName.toString() + " " + move?.fromNotation.toString() + " to " + move?.toNotation.toString()
                     + "\ntime " + duration.toFloat() + " milliseconds"
         )
-
-//        Log.d(
-//            DEBUG_TAG, "evaluations: " + evaluations +
-//                    "\n beta cutoffs: " + betaCutOffs +
-//                    "\n move " + move.pieceName + " from: " + move.from + " move to " + move.to
-//        )
-//        Log.d(
-//            DEBUG_TAG,
-//            "Duration: " + duration.toFloat() / 1000000 + " depth " + maxDepth
-//        )
         return move
-
     }
 
+    private fun moveToFront(moves: PlayerLegalMoves, first: Move): PlayerLegalMoves {
+        val reordered = PlayerLegalMoves()
+        reordered.add(first)
+        for (i in 0 until moves.size()) {
+            if (moves[i] != first) reordered.add(moves[i])
+        }
+        return reordered
+    }
 
+    private fun updatePv(ply: Int, move: Move) {
+        pvTable[ply][ply] = move
+        val childLength = pvLength[ply + 1]
+        for (j in ply + 1 until childLength) {
+            pvTable[ply][j] = pvTable[ply + 1][j]
+        }
+        pvLength[ply] = maxOf(childLength, ply + 1)
+    }
+
+    // returns null if the search was interrupted by the time limit
     private fun search(
         chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
-        startTime: Long,
-        maxSearchTime: Long,
         maxDepth: Int,
     ): Move? {
-        var alpha = LOSE_SCORE
-        val beta = WIN_SCORE
-        var score: Int
+        var alpha = -INFINITY
+        val beta = INFINITY
         var bestMove: Move? = null
+        pvLength[0] = 0
         for (i in 0 until moves.size()) {
             chessBoard.makeMove(moves[i])
-            score = -negaMax(
+            val score = -negaMax(
                 chessBoard, -beta,
                 -alpha, maxDepth - 1, 1
             )
             chessBoard.unMakeMove()
-            if (score >= beta) {
-                bestMove = moves[i]
-                foundCheckMate = true
-                break
+            if (searchTimeFinished) {
+                return null
             }
             if (score > alpha) {
                 alpha = score
                 bestMove = moves[i]
-            }
-            if (System.currentTimeMillis() - startTime > maxSearchTime) {
-                return null
+                updatePv(0, moves[i])
             }
         }
-
+        // a forced mate was found, deeper searches cannot improve on it
+        if (alpha > MATE_BOUND) {
+            foundCheckMate = true
+        }
         return bestMove
     }
 
@@ -266,115 +335,112 @@ open class ChessEngine {
     private fun negaMax(
         chessBoard: ChessBoard,
         alphaOriginal: Int,
-        betaOriginal: Int,
+        beta: Int,
         depth: Int,
         ply: Int
     ): Int {
+        pvLength[ply] = ply
+        if (isTimeUp()) return 0
         var alpha = alphaOriginal
-        var beta = betaOriginal
+        val toPlayColor = chessBoard.toPlayColor
+        val toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
+            chessBoard,
+            toPlayColor
+        )
+        // game status first so repetition / fifty move draws are not hidden by the table
+        val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
+        if (isGameFinished(gameStatus)) {
+            return terminalScore(gameStatus, ply)
+        }
+        if (depth <= 0 || ply >= MAX_PLY - 1) {
+            return quiescence(chessBoard, alpha, beta, ply)
+        }
+
         val chessBoardHash = getZobristHash(chessBoard)
         val tableEntry =
             probeTableEntry(hashKey = chessBoardHash, alpha = alpha, beta = beta, depth = depth)
         if (tableEntry != null && tableEntry.depth >= depth) {
-            if (tableEntry.flag == TranspositionTableFlag.EXACT) {
-                return tableEntry.value
+            val tableScore = scoreFromTable(tableEntry.value, ply)
+            when (tableEntry.flag) {
+                TranspositionTableFlag.EXACT -> return tableScore
+                TranspositionTableFlag.LOWER_BOUND -> if (tableScore >= beta) return beta
+                TranspositionTableFlag.UPPER_BOUND -> if (tableScore <= alpha) return alpha
             }
-            if (tableEntry.flag == TranspositionTableFlag.LOWER_BOUND) {
-                alpha = alpha.coerceAtLeast(tableEntry.value)
-            }
-            if (tableEntry.flag == TranspositionTableFlag.UPPER_BOUND) {
-                beta = beta.coerceAtMost(tableEntry.value)
-            }
-            if (alpha >= beta) {
-                return tableEntry.value
-            }
-
         }
-        val toPlayColor = chessBoard.toPlayColor
-        // Check PV-Table for Principal Variation
 
-        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
-            chessBoard,
-            toPlayColor
-        )
-        val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
-        if (depth == 0 || isGameFinished(gameStatus)) {
-            evaluations++
-            return quiescence(chessBoard, alpha, beta, ply)
-        }
-        val pvMove = pvTable[depth][depth]
-
-        toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply,pvMove)
-        var maxScore = LOSE_SCORE
-        for (i in 0 until toPlayLegalMoves.size()) {
-            chessBoard.makeMove(toPlayLegalMoves[i])
+        val sortedMoves = sortMoves(toPlayLegalMoves, ply, previousPv.getOrNull(ply))
+        var hashFlag = TranspositionTableFlag.UPPER_BOUND
+        for (i in 0 until sortedMoves.size()) {
+            val move = sortedMoves[i]
+            chessBoard.makeMove(move)
             val score = -negaMax(
                 chessBoard, -beta, -alpha,
                 depth - 1, ply + 1
             )
             chessBoard.unMakeMove()
-            if (score > alpha) {
-                alpha = score
-                // Update Principal Variation in PV-Table
-                pvTable[depth][depth] = toPlayLegalMoves[i]
-                for (i in depth + 1 until MAX_PV_TABLE_DEPTH) {
-                    pvTable[depth][i] = pvTable[depth + 1][i]
-                }
-            }
-            maxScore = maxScore.coerceAtLeast(score)
+            if (searchTimeFinished) return 0
             if (score >= beta) {
-
-                if (!toPlayLegalMoves[i].isCapture) {
-                    if (ply < MAX_KILLER_MOVE_PLY) {
-                        //killer moves
-                        killerMove[1][ply] = killerMove[0][ply]
-                        killerMove[0][ply] = Move(toPlayLegalMoves[i])
-
-                    }
-
+                if (!move.isCapture) {
+                    //killer moves
+                    killerMove[1][ply] = killerMove[0][ply]
+                    killerMove[0][ply] = Move(move)
                     // history moves
-                    history[chessBoard.toPlayColor][toPlayLegalMoves[i].from][toPlayLegalMoves[i].to] += depth * depth
+                    history[move.color][move.from][move.to] += depth * depth
                 }
                 betaCutOffs++
+                writeTableEntry(
+                    hashKey = chessBoardHash,
+                    value = scoreToTable(beta, ply),
+                    depth = depth,
+                    hashFlag = TranspositionTableFlag.LOWER_BOUND
+                )
                 return beta
             }
-
+            if (score > alpha) {
+                alpha = score
+                hashFlag = TranspositionTableFlag.EXACT
+                updatePv(ply, move)
+            }
         }
-        val hashFlag = if (maxScore <= alphaOriginal) {
-            TranspositionTableFlag.UPPER_BOUND
-        } else if (maxScore >= beta) {
-            TranspositionTableFlag.LOWER_BOUND
-        } else {
-            TranspositionTableFlag.EXACT
-        }
-
-        writeTableEntry(hashKey = chessBoardHash, depth = depth, hashFlag = hashFlag, value = alpha)
-
-        return maxScore
+        writeTableEntry(
+            hashKey = chessBoardHash,
+            value = scoreToTable(alpha, ply),
+            depth = depth,
+            hashFlag = hashFlag
+        )
+        return alpha
     }
 
     private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {
+        if (isTimeUp()) return 0
+        evaluations++
         var quiescenceAlpha = alphaArg
         val toPlayColor = chessBoard.toPlayColor
         var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
             chessBoard,
             toPlayColor
         )
+        // read before evaluate(), which regenerates moves for the other side
+        val inCheck = moveGenerator.isKingChecked(toPlayColor)
         val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
-        val eval = evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
-
-
-        if (isGameFinished(gameStatus) || toPlayLegalMoves.size() == 0) {
-            return eval
-        } else {
+        if (isGameFinished(gameStatus)) {
+            return terminalScore(gameStatus, ply)
+        }
+        if (ply >= MAX_PLY - 1) {
+            return evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
+        }
+        if (!inCheck) {
+            // stand pat is only allowed when not in check
+            val eval = evaluate(chessBoard, toPlayColor, gameStatus, toPlayLegalMoves)
+            if (eval >= betaArg) {
+                return betaArg
+            }
+            if (quiescenceAlpha < eval) {
+                quiescenceAlpha = eval
+            }
             toPlayLegalMoves.removeNonTake()
         }
-        if (eval >= betaArg) {
-            return betaArg
-        }
-        if (quiescenceAlpha < eval) {
-            quiescenceAlpha = eval
-        }
+        // when in check all evasions are searched
         toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
         for (i in 0 until toPlayLegalMoves.size()) {
             chessBoard.makeMove(toPlayLegalMoves[i])
@@ -383,6 +449,7 @@ open class ChessEngine {
                 ply + 1
             )
             chessBoard.unMakeMove()
+            if (searchTimeFinished) return 0
             if (score >= betaArg) {
                 return betaArg
             }
@@ -409,19 +476,22 @@ open class ChessEngine {
                 currentScore += mvv_lva[(attacker - 1) * 6 + (victim - 1)] + 10000
             } else {
                 // killer move score
-                if (killerMove[0][ply] != null && killerMove[0][ply] == moves[i]) {
+                if (ply < MAX_PLY && killerMove[0][ply] != null && killerMove[0][ply] == moves[i]) {
                     currentScore += 9000
-                } else if (killerMove[1][ply] != null && killerMove[1][ply] == moves[i]) {
+                } else if (ply < MAX_PLY && killerMove[1][ply] != null && killerMove[1][ply] == moves[i]) {
                     currentScore += 8000
                 }
 
-                //history score
-                currentScore += history[currentMove.color][currentMove.from][currentMove.to].toInt()
+                // history score, capped so it never outranks killers or captures
+                currentScore += minOf(
+                    history[currentMove.color][currentMove.from][currentMove.to],
+                    MAX_HISTORY_SCORE
+                )
             }
 
             // promotion score
             if (currentMove.isPromote) {
-                currentScore += 10000
+                currentScore += if (currentMove.promotionPieceType == Piece.QUEEN) 10000 else 0
             }
             //pv move
             if(currentMove.bitValue == pvNode?.bitValue){
@@ -493,9 +563,7 @@ open class ChessEngine {
 
     private fun evaluate(
         chessBoard: ChessBoard,
-        color: Int,
-        whiteLegalMoves: PlayerLegalMoves,
-        blackLegalMoves: PlayerLegalMoves
+        color: Int
     ): Int {
         val numWhiteKings = BitMath.countSetBits(chessBoard.whiteKing)
         val numBlackKings = BitMath.countSetBits(chessBoard.blackKing)
@@ -522,7 +590,15 @@ open class ChessEngine {
 
         val piecesPositionalValue = whitePiecePositionValue - blackPiecePositionValue
 
-        val mobilityScore = MOBILITY_SCORE * (whiteLegalMoves.size() - blackLegalMoves.size())
+        // mobility = number of squares each side attacks (empty or holding an enemy piece);
+        // much cheaper than generating the full legal move lists of both sides
+        val whiteMobility = BitMath.countSetBits(
+            moveGenerator.getAttacksWithCaptures(chessBoard, Piece.WHITE, chessBoard.allBlackPieces)
+        )
+        val blackMobility = BitMath.countSetBits(
+            moveGenerator.getAttacksWithCaptures(chessBoard, Piece.BLACK, chessBoard.allWhitePieces)
+        )
+        val mobilityScore = MOBILITY_SCORE * (whiteMobility - blackMobility)
         val score = numPiecesScore + piecesPositionalValue + mobilityScore
 
         return if (color == Piece.WHITE) {
@@ -541,14 +617,7 @@ open class ChessEngine {
         return if (isGameFinished(gameStatus)) {
             getGameFinishedScoreFor(gameStatus, color)
         } else {
-            if (color == Piece.WHITE) {
-                val blackLegalMoves = moveGenerator.generateBlackLegalMoves(chessBoard)
-                evaluate(chessBoard, color, toPlayLegalMoves, blackLegalMoves)
-            } else {
-                val whiteLegalMoves = moveGenerator.generateWhiteLegalMoves(chessBoard)
-                evaluate(chessBoard, color, whiteLegalMoves, toPlayLegalMoves)
-
-            }
+            evaluate(chessBoard, color)
         }
     }
 
@@ -578,15 +647,44 @@ open class ChessEngine {
         return value
     }
 
+    // same result as summing getPositionalValue over the pieces, but walks the piece
+    // bitboards directly instead of building a list of squares and looking up each piece
     private fun getPiecesPositionalValueFor(chessboard: ChessBoard, color: Int): Int {
-        var value = 0
-        val squares = if (color == Piece.WHITE) {
-            moveGenerator.getWhitePositions(chessboard)
+        val kingTable = if (isEndGame(chessboard)) {
+            KING_END_GAME_SQUARES_TABLE
         } else {
-            moveGenerator.getBlackPositions(chessboard)
+            KING_MIDDLE_GAME_SQUARES_TABLE
         }
-        for (square in squares) {
-            value += getPositionalValue(chessboard, square)
+        return if (color == Piece.WHITE) {
+            tableValue(chessboard.whitePawns, PAWN_SQUARES_TABLE, color) +
+                    tableValue(chessboard.whiteKnights, KNIGHT_SQUARES_TABLE, color) +
+                    tableValue(chessboard.whiteBishops, BISHOP_SQUARES_TABLE, color) +
+                    tableValue(chessboard.whiteRooks, ROOK_SQUARES_TABLE, color) +
+                    tableValue(chessboard.whiteQueens, QUEEN_SQUARES_TABLE, color) +
+                    tableValue(chessboard.whiteKing, kingTable, color)
+        } else {
+            tableValue(chessboard.blackPawns, PAWN_SQUARES_TABLE, color) +
+                    tableValue(chessboard.blackKnights, KNIGHT_SQUARES_TABLE, color) +
+                    tableValue(chessboard.blackBishops, BISHOP_SQUARES_TABLE, color) +
+                    tableValue(chessboard.blackRooks, ROOK_SQUARES_TABLE, color) +
+                    tableValue(chessboard.blackQueens, QUEEN_SQUARES_TABLE, color) +
+                    tableValue(chessboard.blackKing, kingTable, color)
+        }
+    }
+
+    private fun tableValue(pieces: Long, table: IntArray, color: Int): Int {
+        var remaining = pieces
+        var value = 0
+        while (remaining != 0L) {
+            val square = java.lang.Long.numberOfTrailingZeros(remaining)
+            remaining = remaining and (remaining - 1)
+            // same table orientation as getPositionalValue
+            val tableSquare = if (color == Piece.WHITE) {
+                (7 - GetRank(square)) * 8 + GetFile(square)
+            } else {
+                GetRank(square) * 8 + (7 - GetFile(square))
+            }
+            value += table[tableSquare]
         }
         return value
     }
@@ -611,13 +709,20 @@ open class ChessEngine {
 
     companion object {
         const val DEBUG_TAG = "Cheeta_Debug"
-        const val TRANSPOSITION_TABLE_SIZE = 2000UL
+        // number of table entries; must be a power of two (about 9 MB)
+        const val TRANSPOSITION_TABLE_SIZE = 524288UL
+        private val TABLE_FLAGS = TranspositionTableFlag.entries.toTypedArray()
         private const val LOSE_SCORE = -1000000
         private const val WIN_SCORE = 1000000
         const val NO_ENTRY = LOSE_SCORE - 1
-        const val MAX_PV_TABLE_DEPTH = 6
+        private const val INFINITY = 2000000
+        // scores beyond this bound mean a forced mate
+        private const val MATE_BOUND = WIN_SCORE - 1000
 
-        private const val MAX_KILLER_MOVE_PLY = 64
+        // maximum search ply (main search + quiescence)
+        const val MAX_PLY = 128
+
+        private const val MAX_HISTORY_SCORE = 7000
 
         private const val MOBILITY_SCORE = 10
 

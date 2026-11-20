@@ -59,20 +59,15 @@ object BitMath {
         return (1L shl index).inv() and bitboard
     }
 
+    // the java.lang.Long bit functions are compiler intrinsics (single CPU instructions)
     fun countSetBits(bitboard: Long): Int {
-        var bitboard = bitboard
-        var count = 0
-        while (bitboard != 0L) {
-            bitboard = bitboard and bitboard - 1
-            count++
-        }
-        return count
+        return java.lang.Long.bitCount(bitboard)
     }
 
     //get least significant bit index
     fun getLSBitIndex(bitboard: Long): Int {
         return if (bitboard != 0L) {
-            MagicTable[((bitboard and -bitboard) * Magic ushr 58).toInt()]
+            java.lang.Long.numberOfTrailingZeros(bitboard)
         } else {
             //ChessBoard.OUT
             -1
@@ -94,16 +89,8 @@ object BitMath {
 
     //get most significant bit index
     fun getMSBitIndex(bitboard: Long): Int {
-        var bitboard = bitboard
         return if (bitboard != 0L) {
-            bitboard = bitboard or (bitboard ushr 1)
-            bitboard = bitboard or (bitboard ushr 2)
-            bitboard = bitboard or (bitboard ushr 4)
-            bitboard = bitboard or (bitboard ushr 8)
-            bitboard = bitboard or (bitboard ushr 16)
-            bitboard = bitboard or (bitboard ushr 32)
-            bitboard = bitboard and (bitboard ushr 1).inv()
-            MagicTable[(bitboard * Magic ushr 58).toInt()]
+            63 - java.lang.Long.numberOfLeadingZeros(bitboard)
         } else {
             //ChessBoard.OUT
             -1

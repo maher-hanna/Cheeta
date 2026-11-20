@@ -33,6 +33,7 @@ class ChessBoard {
     @JvmField
     var toPlayColor = Piece.WHITE
     var fiftyMovesDrawCount = 0
+    private var fiftyMovesHistory: ArrayList<Int> = ArrayList()
     var fullMovesCount = 1
 
     //---------------------------------------------------------------------------------
@@ -58,6 +59,7 @@ class ChessBoard {
             allPieces = copy.allPieces
             toPlayColor = copy.toPlayColor
             fiftyMovesDrawCount = copy.fiftyMovesDrawCount
+            fiftyMovesHistory = ArrayList(copy.fiftyMovesHistory)
             fullMovesCount = copy.fullMovesCount
         }
 
@@ -65,6 +67,29 @@ class ChessBoard {
     constructor(fenString: String){
         setupFromFen(fenString)
 
+    }
+
+    /** Copies only the piece bitboards (no history), for cheap attack calculations. */
+    fun copyPieces(): ChessBoard {
+        val copy = ChessBoard(null as ChessBoard?)
+        copy.whitePawns = whitePawns
+        copy.whiteRooks = whiteRooks
+        copy.whiteBishops = whiteBishops
+        copy.whiteKnights = whiteKnights
+        copy.whiteQueens = whiteQueens
+        copy.whiteKing = whiteKing
+        copy.blackPawns = blackPawns
+        copy.blackRooks = blackRooks
+        copy.blackBishops = blackBishops
+        copy.blackKnights = blackKnights
+        copy.blackQueens = blackQueens
+        copy.blackKing = blackKing
+        copy.allWhitePieces = allWhitePieces
+        copy.allBlackPieces = allBlackPieces
+        copy.emptySquares = emptySquares
+        copy.allPieces = allPieces
+        copy.toPlayColor = toPlayColor
+        return copy
     }
 
 
@@ -227,8 +252,7 @@ class ChessBoard {
             fiftyMovesDrawCount = 0
             fullMovesCount = 0
         }
-        val startState = State(allPieces, enPassantTarget, blackCastlingRights, whiteCastlingRights)
-        states.add(startState)
+        states.add(createState(enPassantTarget, blackCastlingRights, whiteCastlingRights))
 
     }
 
@@ -363,7 +387,8 @@ class ChessBoard {
         val movedPieceType = move.pieceType
         setPieceAt(toSquare, move.pieceType, moveColor)
         removePiece(fromSquare)
-        if (moveColor == Piece.WHITE) fullMovesCount++
+        // the full move number increases after black's move
+        if (moveColor == Piece.BLACK) fullMovesCount++
 
         //set enPassant target
         var enPassantTargetAfterMove = NO_SQUARE
@@ -398,23 +423,17 @@ class ChessBoard {
             setPieceAt(rookCastlingTarget, Piece.ROOK, moveColor)
             removePiece(rookPosition)
         } else {
+            // a rook leaving its initial square loses only that side's castling right
             if (movedPieceType == Piece.ROOK) {
+                val lostRight = when (fromSquare) {
+                    getInitialRookKingSide(moveColor) -> CASTLING_KING_SIDE
+                    getInitialRookQueenSide(moveColor) -> CASTLING_QUEEN_SIDE
+                    else -> NO_CASTLING
+                }
                 if (moveColor == Piece.WHITE) {
-                    whiteCastlingRightsAfterMove = if (fromSquare == getInitialRookKingSide(Piece.WHITE)) {
-                        //king side
-                        BitMath.unSetBit(whiteCastlingRightsAfterMove, 0)
-                    } else {
-                        //queen side
-                        BitMath.unSetBit(whiteCastlingRightsAfterMove, 1)
-                    }
+                    whiteCastlingRightsAfterMove = whiteCastlingRightsAfterMove and lostRight.inv()
                 } else {
-                    blackCastlingRightsAfterMove = if (fromSquare == getInitialRookKingSide(Piece.BLACK)) {
-                        //king side
-                        BitMath.unSetBit(blackCastlingRightsAfterMove, 0)
-                    } else {
-                        //queen side
-                        BitMath.unSetBit(blackCastlingRightsAfterMove, 1)
-                    }
+                    blackCastlingRightsAfterMove = blackCastlingRightsAfterMove and lostRight.inv()
                 }
             }
             if (movedPieceType == Piece.KING) {
@@ -423,6 +442,20 @@ class ChessBoard {
                 } else {
                     blackCastlingRightsAfterMove = NO_CASTLING
                 }
+            }
+        }
+        // capturing a rook on its initial square removes the opponent's right on that side
+        if (move.isCapture && !move.isEnPasant) {
+            val opponentColor = GetOppositeColor(moveColor)
+            val lostRight = when (toSquare) {
+                getInitialRookKingSide(opponentColor) -> CASTLING_KING_SIDE
+                getInitialRookQueenSide(opponentColor) -> CASTLING_QUEEN_SIDE
+                else -> NO_CASTLING
+            }
+            if (opponentColor == Piece.WHITE) {
+                whiteCastlingRightsAfterMove = whiteCastlingRightsAfterMove and lostRight.inv()
+            } else {
+                blackCastlingRightsAfterMove = blackCastlingRightsAfterMove and lostRight.inv()
             }
         }
         if (move.isPromote) {
@@ -435,16 +468,24 @@ class ChessBoard {
                 removePiece(toSquare + 8)
             }
         }
-        move.previousFiftyMoves = fiftyMovesDrawCount
+        // remember the counter on the board instead of writing it into the (shared) move object
+        fiftyMovesHistory.add(fiftyMovesDrawCount)
         //increase fifty moves if no capture or pawn push
         fiftyMovesDrawCount++
         if (move.isCapture || movedPieceType == Piece.PAWN) {
             fiftyMovesDrawCount = 0
         }
-        val state = State(allPieces, enPassantTargetAfterMove, blackCastlingRightsAfterMove, whiteCastlingRightsAfterMove)
-        states.add(state)
-        moves.add(move)
         toPlayColor = if (toPlayColor == Piece.WHITE) Piece.BLACK else Piece.WHITE
+        states.add(createState(enPassantTargetAfterMove, blackCastlingRightsAfterMove, whiteCastlingRightsAfterMove))
+        moves.add(move)
+    }
+
+    private fun createState(enPassantTarget: Int, blackCastlingRights: Int, whiteCastlingRights: Int): State {
+        val pieces = longArrayOf(
+            whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing,
+            blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing
+        )
+        return State(pieces, toPlayColor, enPassantTarget, blackCastlingRights, whiteCastlingRights)
     }
 
     fun unMakeMove() {
@@ -461,7 +502,7 @@ class ChessBoard {
         if (lastMove.isPromote) {
             setPieceAt(fromSquare, Piece.PAWN, moveColor)
         }
-        if (moveColor == Piece.WHITE) {
+        if (moveColor == Piece.BLACK) {
             fullMovesCount--
         }
         if (lastMove.isCastling) {
@@ -492,7 +533,7 @@ class ChessBoard {
 
 
         //restore previous fifty moves count
-        fiftyMovesDrawCount = lastMove.previousFiftyMoves
+        fiftyMovesDrawCount = fiftyMovesHistory.removeAt(fiftyMovesHistory.size - 1)
         states.removeAt(states.size - 1)
         moves.removeLastMove()
     }

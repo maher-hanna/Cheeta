@@ -51,20 +51,20 @@ class Uci {
                     when(splitWords[1]){
                         "infinite" -> {
                             val move = engine.getMove(chessBoard,Long.MAX_VALUE)
-                            response = "bestmove ${move?.notation}\n"
+                            response = "bestmove ${move?.notation ?: "0000"}\n"
                         }
                         "movetime" -> {
                             if(splitWords.size >= 3){
                                 val timeMilliSeconds = splitWords[2].toLong()
                                 val move = engine.getMove(chessBoard,timeMilliSeconds)
-                                response = "bestmove ${move?.notation}\n"
+                                response = "bestmove ${move?.notation ?: "0000"}\n"
                             }
                         }
                         "depth" -> {
                             if(splitWords.size >= 3){
                                 val maxDepth = splitWords[2].toLong()
                                 val move = engine.getMove(chessBoard,Long.MAX_VALUE,maxDepth)
-                                response = "bestmove ${move?.notation}\n"
+                                response = "bestmove ${move?.notation ?: "0000"}\n"
                             }
                         }
                     }

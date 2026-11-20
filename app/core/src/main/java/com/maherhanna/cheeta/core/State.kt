@@ -1,19 +1,34 @@
 package com.maherhanna.cheeta.core
 
-import java.util.Objects
-
+/**
+ * Snapshot of a position used for castling/en passant bookkeeping and repetition detection.
+ * Two states are equal only if every piece bitboard, the side to move, the en passant
+ * target and the castling rights are equal.
+ */
 class State(
-    var allPieces: Long, @JvmField var enPassantTarget: Int, @JvmField var blackCastlingRights: Int,
+    private val pieces: LongArray,
+    @JvmField val toPlayColor: Int,
+    @JvmField var enPassantTarget: Int,
+    @JvmField var blackCastlingRights: Int,
     @JvmField var whiteCastlingRights: Int
 ) {
-    override fun equals(o: Any?): Boolean {
-        if (this === o) return true
-        if (o == null || javaClass != o.javaClass) return false
-        val state = o as State
-        return allPieces == state.allPieces && enPassantTarget == state.enPassantTarget && blackCastlingRights == state.blackCastlingRights && whiteCastlingRights == state.whiteCastlingRights
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val state = other as State
+        return toPlayColor == state.toPlayColor &&
+                enPassantTarget == state.enPassantTarget &&
+                blackCastlingRights == state.blackCastlingRights &&
+                whiteCastlingRights == state.whiteCastlingRights &&
+                pieces.contentEquals(state.pieces)
     }
 
     override fun hashCode(): Int {
-        return Objects.hash(allPieces, enPassantTarget, blackCastlingRights, whiteCastlingRights)
+        var result = pieces.contentHashCode()
+        result = 31 * result + toPlayColor
+        result = 31 * result + enPassantTarget
+        result = 31 * result + blackCastlingRights
+        result = 31 * result + whiteCastlingRights
+        return result
     }
 }

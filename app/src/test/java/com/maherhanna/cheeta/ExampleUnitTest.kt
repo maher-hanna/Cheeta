@@ -56,7 +56,7 @@ class ExampleUnitTest {
             beta = 30,
             hashKey = chessEngine.getZobristHash(chessBoard)
         )
-        assertEquals(25, score)
+        assertEquals(25, score?.value)
 
     }
 

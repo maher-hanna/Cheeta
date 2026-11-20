@@ -1,7 +1,8 @@
 package com.maherhanna.cheeta.core
 
 class PlayerLegalMoves {
-    private val legalMoves: ArrayList<Move> = ArrayList()
+    // presized: a position rarely has more than 64 legal moves, so the list seldom grows
+    private val legalMoves: ArrayList<Move> = ArrayList(64)
 
     fun getLegalTargetsFor(position: Int): ArrayList<Int> {
         val targetSquares = ArrayList<Int>()
@@ -35,39 +36,31 @@ class PlayerLegalMoves {
         legalMoves.addAll(moves!!)
     }
 
-    fun getMove(basicMove: Move): Move? {
-        for (move in legalMoves) {
-            if (move.from == basicMove.from && move.to == basicMove.to) {
-                return move
-            }
-        }
-        return null
-    }
+    fun getMove(basicMove: Move): Move? = searchMove(basicMove)
 
-    fun searchMove(from: Int , to: Int): Move? {
+    /** Finds the legal move from/to the given squares; a promotion defaults to a queen. */
+    fun searchMove(from: Int, to: Int): Move? = searchMove(from, to, Piece.QUEEN)
+
+    /** Finds the legal move matching from/to and, for promotions, the requested piece (queen if none). */
+    fun searchMove(pseudoMove: Move): Move? = searchMove(
+        pseudoMove.from,
+        pseudoMove.to,
+        if (pseudoMove.isPromote) pseudoMove.promotionPieceType else Piece.QUEEN
+    )
+
+    private fun searchMove(from: Int, to: Int, promotionPieceType: Int): Move? {
         for (move in legalMoves) {
-            if (move.from == from && move.to == to) {
-                return move
-            }
-        }
-        return null
-    }
-    fun searchMove(pseudoMove:Move): Move? {
-        for (move in legalMoves) {
-            if (move.from == pseudoMove.from && move.to == pseudoMove.to) {
+            if (move.from == from && move.to == to &&
+                (!move.isPromote || move.promotionPieceType == promotionPieceType)
+            ) {
                 return move
             }
         }
         return null
     }
     fun removeNonTake() {
-        val itr = legalMoves.iterator()
-        while (itr.hasNext()) {
-            val move = itr.next()
-            if (!move.isCapture) {
-                itr.remove()
-            }
-        }
+        // single pass; removing through an iterator shifted the array on every removal
+        legalMoves.removeAll { !it.isCapture }
     }
 
     fun isOpponentKingInCheck(opponentKingPosition: Int): Boolean {
