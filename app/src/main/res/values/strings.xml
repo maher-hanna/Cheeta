@@ -20,5 +20,7 @@
     <string name="from_square">From Square</string>
     <string name="last_move">Last Move</string>
     <string name="king_checked">King Checked</string>
+    <string name="last_captured">Last captured</string>
+    <string name="new_game">New game</string>
 
 </resources>

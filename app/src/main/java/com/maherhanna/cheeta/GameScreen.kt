@@ -9,11 +9,18 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -39,6 +47,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.maherhanna.cheeta.core.ChessBoard
@@ -63,7 +72,6 @@ fun GameScreen(playerColor: Int) {
     val moveGenerator = MoveGenerator()
     var playerTurn by remember { mutableStateOf(playerColor == Piece.WHITE) }
     var showCancelGameDialog by remember { mutableStateOf(false) }
-    var gameFinished by remember { mutableStateOf(false) }
 
     var playerLegalMoves by remember {
         mutableStateOf(PlayerLegalMoves())
@@ -128,9 +136,6 @@ fun GameScreen(playerColor: Int) {
 
     LaunchedEffect(chessBoard) {
         gameStatus = moveGenerator.checkStatus(chessBoard)
-        if (gameStatus != GameStatus.NOT_FINISHED) {
-            gameFinished = true
-        }
     }
 
     BackHandler {
@@ -146,6 +151,8 @@ fun GameScreen(playerColor: Int) {
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center
     ) {
+        LastCapturedPiece(lastCapture = chessBoard.moves.lastCapture)
+
         // the board must never be mirrored: in right-to-left languages (e.g. Arabic)
         // offsets and alignment would be mirrored while touch positions are not
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
@@ -539,6 +546,12 @@ fun GameScreen(playerColor: Int) {
             }
         }
 
+        // game result shown under the board instead of a dialog
+        GameResult(
+            gameStatus = gameStatus,
+            playerColor = playerColor,
+            onNewGame = { (context as Activity).recreate() }
+        )
     }
 
     if (showCancelGameDialog) {
@@ -558,37 +571,65 @@ fun GameScreen(playerColor: Int) {
             },
         )
     }
-    if (gameFinished) {
-        AlertDialog(
-            onDismissRequest = {
-                gameFinished = false
-                (context as Activity).finish()
-            },
-            title = {
-                Text(
-                    stringResource(
-                        id = getGameStatusStringResourceId(
-                            playerColor = playerColor,
-                            gameStatus = gameStatus
-                        )
+}
+
+// fixed height so the board does not move when the first capture appears
+private val INFO_ROW_HEIGHT = 56.dp
+
+@Composable
+private fun LastCapturedPiece(lastCapture: Move?) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(INFO_ROW_HEIGHT)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (lastCapture != null) {
+            Text(
+                text = stringResource(id = R.string.last_captured),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Image(
+                modifier = Modifier.size(40.dp),
+                painter = painterResource(
+                    id = getPieceDrawableId(
+                        lastCapture.takenPieceType,
+                        // the captured piece belongs to the side that did not move
+                        Piece.GetOppositeColor(lastCapture.color)
                     )
-                )
-            },
-            text = { Text(stringResource(id = R.string.game_finished_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    gameFinished = false
-                    (context as Activity).recreate()
-                }) {
-                    Text(stringResource(id = R.string.finish_game_yes))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { gameFinished = false }) {
-                    Text(stringResource(id = R.string.finish_game_no))
-                }
-            },
-        )
+                ),
+                contentDescription = stringResource(id = R.string.last_captured)
+            )
+        }
+    }
+}
+
+@Composable
+private fun GameResult(gameStatus: GameStatus, playerColor: Int, onNewGame: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(INFO_ROW_HEIGHT)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        if (gameStatus != GameStatus.NOT_FINISHED) {
+            Text(
+                text = stringResource(
+                    id = getGameStatusStringResourceId(
+                        playerColor = playerColor,
+                        gameStatus = gameStatus
+                    )
+                ),
+                style = MaterialTheme.typography.titleLarge
+            )
+            Button(onClick = onNewGame) {
+                Text(stringResource(id = R.string.new_game))
+            }
+        }
     }
 }
 

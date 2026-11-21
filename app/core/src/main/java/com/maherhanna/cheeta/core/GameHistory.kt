@@ -37,6 +37,10 @@ class GameHistory {
             lastMove!!.color
         }
 
+    /** The most recent capturing move (including en passant), or null if nothing was captured. */
+    val lastCapture: Move?
+        get() = moves.lastOrNull { it.isCapture }
+
     operator fun get(index: Int): Move {
         return moves[index]
     }
