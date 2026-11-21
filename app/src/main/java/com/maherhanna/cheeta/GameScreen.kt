@@ -17,6 +17,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -34,8 +35,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.maherhanna.cheeta.core.ChessBoard
@@ -143,393 +146,397 @@ fun GameScreen(playerColor: Int) {
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pointerInput(Unit) {
-                    detectTapGestures(onPress = { offset ->
-                        touchStartPosition = Offset(
-                            offset.x,
-                            offset.y
-                        )
-
-                        val tappedSquare = getTouchSquare(
-                            isChessBoardFlipped = isChessBoardFlipped,
-                            chessBoardHeight = chessBoardImageSize.height,
-                            x = offset.x,
-                            y = offset.y,
-                            squareSize = squareSize,
-                        )
-
-                        if (fromSquare != ChessBoard.NO_SQUARE) {
-                            if (tappedSquare != fromSquare && playerTurn) {
-                                val playerMove = playerLegalMoves
-                                    .searchMove(fromSquare, tappedSquare)
-                                if (playerMove != null) {
-                                    chessBoard.makeMove(playerMove)
-                                    // force jetpack compose to recompose by coping chessboard
-                                    chessBoard = ChessBoard(chessBoard)
-                                    playerTurn = !playerTurn
-                                    computerLegalMoves =
-                                        moveGenerator.generateLegalMovesFor(
-                                            chessBoard,
-                                            computerColor
-                                        )
-                                    playerLegalMoves =
-                                        moveGenerator.generateLegalMovesFor(
-                                            chessBoard,
-                                            playerColor
-                                        )
-                                    touchStartPosition = Offset(0f, 0f)
-                                    fromSquare = ChessBoard.NO_SQUARE
-                                    scope.launch() {
-                                        playComputer(
-                                            uci = uci, chessBoard = chessBoard,
-                                            moveGenerator = moveGenerator,
-                                            computerLegalMoves = computerLegalMoves
-                                        ) { newChessBoard ->
-                                            chessBoard = ChessBoard(newChessBoard)
-                                            playerTurn = !playerTurn
-                                            playerLegalMoves =
-                                                moveGenerator.generateLegalMovesFor(
-                                                    chessBoard,
-                                                    playerColor
-                                                )
-                                            computerLegalMoves =
-                                                moveGenerator.generateLegalMovesFor(
-                                                    chessBoard,
-                                                    computerColor
-                                                )
-
-                                        }
-
-                                    }
-                                } else {
-                                    if (canSelect(
-                                            chessBoard = chessBoard,
-                                            position = tappedSquare,
-                                            playerColor = playerColor
-                                        )
-                                    ) {
-
-                                        fromSquare = tappedSquare
-                                    }
-                                }
-
-                            }
-                        } else {
-                            if (canSelect(
-                                    chessBoard = chessBoard,
-                                    position = tappedSquare,
-                                    playerColor = playerColor
-                                )
-                            ) {
-
-                                fromSquare = tappedSquare
-                            }
-                        }
-
-
-                        playerSelectedPieceLegalTargets =
-                            playerLegalMoves.getLegalTargetsFor(
-                                fromSquare
-                            )
-                    })
-                },
-        ) {
-            Image(
+        // the board must never be mirrored: in right-to-left languages (e.g. Arabic)
+        // offsets and alignment would be mirrored while touch positions are not
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Box(
                 modifier = Modifier
-                    .onGloballyPositioned { coordinates ->
-                        chessBoardImageSize = coordinates.size.toSize()
-                    }
-                    .fillMaxWidth(), painter = painterResource(R.drawable.chessboard),
-                contentDescription = stringResource(R.string.chessboard),
-                contentScale = ContentScale.FillWidth
-            )
-
-            for (i in ChessBoard.MIN_POSITION..ChessBoard.MAX_POSITION) {
-                val index = if (playerColor == Piece.WHITE) {
-                    ChessBoard.MAX_POSITION - i
-                } else {
-                    i
-                }
-                if (!chessBoard.isSquareEmpty(i)) {
-                    val isPieceSelected = i == fromSquare
-                    Image(
-                        modifier = Modifier
-                            .zIndex(zIndex = if (isPieceSelected && isDragging) 2f else 1f)
-                            .size(with(LocalDensity.current) { squareSize.toDp() * pieceScaleDownFactor })
-                            .offset(
-                                x = with(LocalDensity.current) {
-                                    (ChessBoard.GetFile(
-                                        i
-                                    ) * squareSize + ((1 - pieceScaleDownFactor) / 2 * squareSize) + if (isPieceSelected && isDragging) dragOffset.x else 0f).toDp()
-                                },
-                                y = with(LocalDensity.current) {
-                                    (ChessBoard.GetRank(
-                                        index
-                                    ) * squareSize + ((1 - pieceScaleDownFactor) / 2 * squareSize) + if (isPieceSelected && isDragging) (dragOffset.y - squareSize / 2) else 0f).toDp()
-                                }
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectTapGestures(onPress = { offset ->
+                            touchStartPosition = Offset(
+                                offset.x,
+                                offset.y
                             )
-                            .pointerInput(Unit) {
-                                detectDragGestures(onDrag = { change, offset ->
-                                    change.consume()
-                                    if (fromSquare != ChessBoard.NO_SQUARE && isDragging) {
-                                        // limit dragged piece inside chess board borders
-                                        summedDrag += offset
-                                        dragOffset = Offset(
-                                            x = if ((ChessBoard.GetFile(i) * squareSize + summedDrag.x) <= 0f || ((ChessBoard.GetFile(
-                                                    i
-                                                ) + 1) * squareSize + summedDrag.x) >= chessBoardImageSize.width
-                                            ) dragOffset.x else summedDrag.x,
-                                            y = if ((ChessBoard.GetRank(index) * squareSize + summedDrag.y) <= 0f || ((ChessBoard.GetRank(
-                                                    index
-                                                ) + 1) * squareSize + summedDrag.y) >= chessBoardImageSize.height
-                                            ) dragOffset.y else summedDrag.y
-                                        )
-                                        touchSquare = getTouchSquare(
-                                            isChessBoardFlipped = isChessBoardFlipped,
-                                            chessBoardHeight = chessBoardImageSize.height,
-                                            x = touchStartPosition.x + dragOffset.x,
-                                            y = touchStartPosition.y + dragOffset.y,
-                                            squareSize = squareSize,
-                                        )
-                                    }
 
-                                }, onDragStart = {
-                                    if (!playerTurn || fromSquare == ChessBoard.NO_SQUARE) {
-                                        dragOffset = Offset(0f, 0f)
-                                        isDragging = false
-                                    } else {
-                                        isDragging = true
-                                    }
+                            val tappedSquare = getTouchSquare(
+                                isChessBoardFlipped = isChessBoardFlipped,
+                                chessBoardHeight = chessBoardImageSize.height,
+                                x = offset.x,
+                                y = offset.y,
+                                squareSize = squareSize,
+                            )
 
-                                },
-                                    onDragEnd = {
-                                        isDragging = false
-                                        summedDrag = Offset(0f, 0f)
-                                        val toSquare = getTouchSquare(
-                                            isChessBoardFlipped = isChessBoardFlipped,
-                                            chessBoardHeight = chessBoardImageSize.height,
-                                            x = touchStartPosition.x + dragOffset.x,
-                                            y = touchStartPosition.y + dragOffset.y,
-                                            squareSize = squareSize,
-                                        )
-                                        if (playerSelectedPieceLegalTargets.contains(toSquare)) {
-                                            dragOffset = Offset(0f, 0f)
-                                            val playerMove = playerLegalMoves
-                                                .searchMove(fromSquare, toSquare)
-                                            if (playerMove != null) {
-                                                chessBoard.makeMove(playerMove)
-                                                // force jetpack compose to recompose by coping chessboard
-                                                chessBoard = ChessBoard(chessBoard)
+                            if (fromSquare != ChessBoard.NO_SQUARE) {
+                                if (tappedSquare != fromSquare && playerTurn) {
+                                    val playerMove = playerLegalMoves
+                                        .searchMove(fromSquare, tappedSquare)
+                                    if (playerMove != null) {
+                                        chessBoard.makeMove(playerMove)
+                                        // force jetpack compose to recompose by coping chessboard
+                                        chessBoard = ChessBoard(chessBoard)
+                                        playerTurn = !playerTurn
+                                        computerLegalMoves =
+                                            moveGenerator.generateLegalMovesFor(
+                                                chessBoard,
+                                                computerColor
+                                            )
+                                        playerLegalMoves =
+                                            moveGenerator.generateLegalMovesFor(
+                                                chessBoard,
+                                                playerColor
+                                            )
+                                        touchStartPosition = Offset(0f, 0f)
+                                        fromSquare = ChessBoard.NO_SQUARE
+                                        scope.launch() {
+                                            playComputer(
+                                                uci = uci, chessBoard = chessBoard,
+                                                moveGenerator = moveGenerator,
+                                                computerLegalMoves = computerLegalMoves
+                                            ) { newChessBoard ->
+                                                chessBoard = ChessBoard(newChessBoard)
                                                 playerTurn = !playerTurn
-                                                computerLegalMoves =
-                                                    moveGenerator.generateLegalMovesFor(
-                                                        chessBoard,
-                                                        computerColor
-                                                    )
                                                 playerLegalMoves =
                                                     moveGenerator.generateLegalMovesFor(
                                                         chessBoard,
                                                         playerColor
                                                     )
-                                                touchStartPosition = Offset(0f, 0f)
-                                                fromSquare = ChessBoard.NO_SQUARE
-                                                touchSquare = ChessBoard.NO_SQUARE
+                                                computerLegalMoves =
+                                                    moveGenerator.generateLegalMovesFor(
+                                                        chessBoard,
+                                                        computerColor
+                                                    )
 
-                                                scope.launch() {
-                                                    playComputer(
-                                                        uci = uci, chessBoard = chessBoard,
-                                                        moveGenerator = moveGenerator,
-                                                        computerLegalMoves = computerLegalMoves
-                                                    ) { newChessBoard ->
-                                                        chessBoard = ChessBoard(newChessBoard)
-                                                        playerTurn = !playerTurn
-                                                        playerLegalMoves =
-                                                            moveGenerator.generateLegalMovesFor(
-                                                                chessBoard,
-                                                                playerColor
-                                                            )
-                                                        computerLegalMoves =
-                                                            moveGenerator.generateLegalMovesFor(
-                                                                chessBoard,
-                                                                computerColor
-                                                            )
+                                            }
 
+                                        }
+                                    } else {
+                                        if (canSelect(
+                                                chessBoard = chessBoard,
+                                                position = tappedSquare,
+                                                playerColor = playerColor
+                                            )
+                                        ) {
+
+                                            fromSquare = tappedSquare
+                                        }
+                                    }
+
+                                }
+                            } else {
+                                if (canSelect(
+                                        chessBoard = chessBoard,
+                                        position = tappedSquare,
+                                        playerColor = playerColor
+                                    )
+                                ) {
+
+                                    fromSquare = tappedSquare
+                                }
+                            }
+
+
+                            playerSelectedPieceLegalTargets =
+                                playerLegalMoves.getLegalTargetsFor(
+                                    fromSquare
+                                )
+                        })
+                    },
+            ) {
+                Image(
+                    modifier = Modifier
+                        .onGloballyPositioned { coordinates ->
+                            chessBoardImageSize = coordinates.size.toSize()
+                        }
+                        .fillMaxWidth(), painter = painterResource(R.drawable.chessboard),
+                    contentDescription = stringResource(R.string.chessboard),
+                    contentScale = ContentScale.FillWidth
+                )
+
+                for (i in ChessBoard.MIN_POSITION..ChessBoard.MAX_POSITION) {
+                    val index = if (playerColor == Piece.WHITE) {
+                        ChessBoard.MAX_POSITION - i
+                    } else {
+                        i
+                    }
+                    if (!chessBoard.isSquareEmpty(i)) {
+                        val isPieceSelected = i == fromSquare
+                        Image(
+                            modifier = Modifier
+                                .zIndex(zIndex = if (isPieceSelected && isDragging) 2f else 1f)
+                                .size(with(LocalDensity.current) { squareSize.toDp() * pieceScaleDownFactor })
+                                .offset(
+                                    x = with(LocalDensity.current) {
+                                        (ChessBoard.GetFile(
+                                            i
+                                        ) * squareSize + ((1 - pieceScaleDownFactor) / 2 * squareSize) + if (isPieceSelected && isDragging) dragOffset.x else 0f).toDp()
+                                    },
+                                    y = with(LocalDensity.current) {
+                                        (ChessBoard.GetRank(
+                                            index
+                                        ) * squareSize + ((1 - pieceScaleDownFactor) / 2 * squareSize) + if (isPieceSelected && isDragging) (dragOffset.y - squareSize / 2) else 0f).toDp()
+                                    }
+                                )
+                                .pointerInput(Unit) {
+                                    detectDragGestures(onDrag = { change, offset ->
+                                        change.consume()
+                                        if (fromSquare != ChessBoard.NO_SQUARE && isDragging) {
+                                            // limit dragged piece inside chess board borders
+                                            summedDrag += offset
+                                            dragOffset = Offset(
+                                                x = if ((ChessBoard.GetFile(i) * squareSize + summedDrag.x) <= 0f || ((ChessBoard.GetFile(
+                                                        i
+                                                    ) + 1) * squareSize + summedDrag.x) >= chessBoardImageSize.width
+                                                ) dragOffset.x else summedDrag.x,
+                                                y = if ((ChessBoard.GetRank(index) * squareSize + summedDrag.y) <= 0f || ((ChessBoard.GetRank(
+                                                        index
+                                                    ) + 1) * squareSize + summedDrag.y) >= chessBoardImageSize.height
+                                                ) dragOffset.y else summedDrag.y
+                                            )
+                                            touchSquare = getTouchSquare(
+                                                isChessBoardFlipped = isChessBoardFlipped,
+                                                chessBoardHeight = chessBoardImageSize.height,
+                                                x = touchStartPosition.x + dragOffset.x,
+                                                y = touchStartPosition.y + dragOffset.y,
+                                                squareSize = squareSize,
+                                            )
+                                        }
+
+                                    }, onDragStart = {
+                                        if (!playerTurn || fromSquare == ChessBoard.NO_SQUARE) {
+                                            dragOffset = Offset(0f, 0f)
+                                            isDragging = false
+                                        } else {
+                                            isDragging = true
+                                        }
+
+                                    },
+                                        onDragEnd = {
+                                            isDragging = false
+                                            summedDrag = Offset(0f, 0f)
+                                            val toSquare = getTouchSquare(
+                                                isChessBoardFlipped = isChessBoardFlipped,
+                                                chessBoardHeight = chessBoardImageSize.height,
+                                                x = touchStartPosition.x + dragOffset.x,
+                                                y = touchStartPosition.y + dragOffset.y,
+                                                squareSize = squareSize,
+                                            )
+                                            if (playerSelectedPieceLegalTargets.contains(toSquare)) {
+                                                dragOffset = Offset(0f, 0f)
+                                                val playerMove = playerLegalMoves
+                                                    .searchMove(fromSquare, toSquare)
+                                                if (playerMove != null) {
+                                                    chessBoard.makeMove(playerMove)
+                                                    // force jetpack compose to recompose by coping chessboard
+                                                    chessBoard = ChessBoard(chessBoard)
+                                                    playerTurn = !playerTurn
+                                                    computerLegalMoves =
+                                                        moveGenerator.generateLegalMovesFor(
+                                                            chessBoard,
+                                                            computerColor
+                                                        )
+                                                    playerLegalMoves =
+                                                        moveGenerator.generateLegalMovesFor(
+                                                            chessBoard,
+                                                            playerColor
+                                                        )
+                                                    touchStartPosition = Offset(0f, 0f)
+                                                    fromSquare = ChessBoard.NO_SQUARE
+                                                    touchSquare = ChessBoard.NO_SQUARE
+
+                                                    scope.launch() {
+                                                        playComputer(
+                                                            uci = uci, chessBoard = chessBoard,
+                                                            moveGenerator = moveGenerator,
+                                                            computerLegalMoves = computerLegalMoves
+                                                        ) { newChessBoard ->
+                                                            chessBoard = ChessBoard(newChessBoard)
+                                                            playerTurn = !playerTurn
+                                                            playerLegalMoves =
+                                                                moveGenerator.generateLegalMovesFor(
+                                                                    chessBoard,
+                                                                    playerColor
+                                                                )
+                                                            computerLegalMoves =
+                                                                moveGenerator.generateLegalMovesFor(
+                                                                    chessBoard,
+                                                                    computerColor
+                                                                )
+
+
+                                                        }
 
                                                     }
-
                                                 }
+                                            } else {
+                                                dragOffset = Offset(0f, 0f)
+
                                             }
-                                        } else {
-                                            dragOffset = Offset(0f, 0f)
 
                                         }
 
-                                    }
-
+                                    )
+                                }
+                                .scale(if (isPieceSelected && isDragging) 1.5f else 1f),
+                            painter = painterResource(
+                                id = getPieceDrawableId(
+                                    chessBoard.pieceType(i),
+                                    chessBoard.pieceColor(i)
                                 )
-                            }
-                            .scale(if (isPieceSelected && isDragging) 1.5f else 1f),
-                        painter = painterResource(
-                            id = getPieceDrawableId(
-                                chessBoard.pieceType(i),
-                                chessBoard.pieceColor(i)
+                            ),
+                            contentDescription = stringResource(
+                                id = R.string.chess_piece
                             )
-                        ),
-                        contentDescription = stringResource(
-                            id = R.string.chess_piece
                         )
-                    )
-                }
-                var isSquareLegalTarget = false
-                if (fromSquare != ChessBoard.NO_SQUARE) {
-                    isSquareLegalTarget = playerSelectedPieceLegalTargets.contains(i)
-                }
-                val isSquareEmpty = chessBoard.isSquareEmpty(i)
-                // for highlighting legal target squares
-                if (isSquareLegalTarget) {
-                    Image(
-                        modifier = Modifier
-                            .offset(
-                                x = with(LocalDensity.current) {
-                                    (ChessBoard.GetFile(
-                                        i
-                                    ) * squareSize).toDp()
-                                },
-                                y = with(LocalDensity.current) {
-                                    (ChessBoard.GetRank(
-                                        index
-                                    ) * squareSize).toDp()
-                                }
+                    }
+                    var isSquareLegalTarget = false
+                    if (fromSquare != ChessBoard.NO_SQUARE) {
+                        isSquareLegalTarget = playerSelectedPieceLegalTargets.contains(i)
+                    }
+                    val isSquareEmpty = chessBoard.isSquareEmpty(i)
+                    // for highlighting legal target squares
+                    if (isSquareLegalTarget) {
+                        Image(
+                            modifier = Modifier
+                                .offset(
+                                    x = with(LocalDensity.current) {
+                                        (ChessBoard.GetFile(
+                                            i
+                                        ) * squareSize).toDp()
+                                    },
+                                    y = with(LocalDensity.current) {
+                                        (ChessBoard.GetRank(
+                                            index
+                                        ) * squareSize).toDp()
+                                    }
+                                )
+                                .size(with(LocalDensity.current) { squareSize.toDp() }),
+                            painter = painterResource(
+                                if (isSquareEmpty) R.drawable.legal_move_quite else
+                                    R.drawable.legal_move_capture
+                            ),
+                            contentDescription = stringResource(
+                                id = R.string.legal_move
                             )
-                            .size(with(LocalDensity.current) { squareSize.toDp() }),
-                        painter = painterResource(
-                            if (isSquareEmpty) R.drawable.legal_move_quite else
-                                R.drawable.legal_move_capture
-                        ),
-                        contentDescription = stringResource(
-                            id = R.string.legal_move
                         )
-                    )
 
-                }
-                // for highlighting from,touch squares
-                if (i == fromSquare || i == touchSquare) {
-                    Image(
-                        modifier = Modifier
-                            .zIndex(0f)
-                            .offset(
-                                x = with(LocalDensity.current) {
-                                    (ChessBoard.GetFile(
-                                        i
-                                    ) * squareSize).toDp()
-                                },
-                                y = with(LocalDensity.current) {
-                                    (ChessBoard.GetRank(
-                                        index
-                                    ) * squareSize).toDp()
-                                }
+                    }
+                    // for highlighting from,touch squares
+                    if (i == fromSquare || i == touchSquare) {
+                        Image(
+                            modifier = Modifier
+                                .zIndex(0f)
+                                .offset(
+                                    x = with(LocalDensity.current) {
+                                        (ChessBoard.GetFile(
+                                            i
+                                        ) * squareSize).toDp()
+                                    },
+                                    y = with(LocalDensity.current) {
+                                        (ChessBoard.GetRank(
+                                            index
+                                        ) * squareSize).toDp()
+                                    }
+                                )
+                                .size(with(LocalDensity.current) { squareSize.toDp() }),
+                            painter = painterResource(
+                                R.drawable.transparent_yellow_square
+                            ),
+                            contentDescription = stringResource(
+                                id = R.string.from_square
                             )
-                            .size(with(LocalDensity.current) { squareSize.toDp() }),
-                        painter = painterResource(
-                            R.drawable.transparent_yellow_square
-                        ),
-                        contentDescription = stringResource(
-                            id = R.string.from_square
                         )
-                    )
 
-                }
+                    }
 
-                // for highlighting last move squares
-                if (i == chessBoard.moves.lastMove?.from || i == chessBoard.moves.lastMove?.to) {
-                    Image(
-                        modifier = Modifier
-                            .zIndex(0f)
-                            .offset(
-                                x = with(LocalDensity.current) {
-                                    (ChessBoard.GetFile(
-                                        i
-                                    ) * squareSize).toDp()
-                                },
-                                y = with(LocalDensity.current) {
-                                    (ChessBoard.GetRank(
-                                        index
-                                    ) * squareSize).toDp()
-                                }
+                    // for highlighting last move squares
+                    if (i == chessBoard.moves.lastMove?.from || i == chessBoard.moves.lastMove?.to) {
+                        Image(
+                            modifier = Modifier
+                                .zIndex(0f)
+                                .offset(
+                                    x = with(LocalDensity.current) {
+                                        (ChessBoard.GetFile(
+                                            i
+                                        ) * squareSize).toDp()
+                                    },
+                                    y = with(LocalDensity.current) {
+                                        (ChessBoard.GetRank(
+                                            index
+                                        ) * squareSize).toDp()
+                                    }
+                                )
+                                .size(with(LocalDensity.current) { squareSize.toDp() }),
+                            painter = painterResource(
+                                R.drawable.transparent_yellow_square
+                            ),
+                            contentDescription = stringResource(
+                                id = R.string.last_move
                             )
-                            .size(with(LocalDensity.current) { squareSize.toDp() }),
-                        painter = painterResource(
-                            R.drawable.transparent_yellow_square
-                        ),
-                        contentDescription = stringResource(
-                            id = R.string.last_move
                         )
-                    )
 
-                }
-                // for highlighting last move squares
-                val playerKingPosition = moveGenerator.getKingPosition(chessBoard, playerColor)
-                val computerKingPosition = moveGenerator.getKingPosition(chessBoard, computerColor)
-                // for highlighting king check
-                if (computerLegalMoves.isOpponentKingInCheck(playerKingPosition) && i == playerKingPosition
-                ) {
-                    Image(
-                        modifier = Modifier
-                            .zIndex(0f)
-                            .offset(
-                                x = with(LocalDensity.current) {
-                                    (ChessBoard.GetFile(
-                                        i
-                                    ) * squareSize).toDp()
-                                },
-                                y = with(LocalDensity.current) {
-                                    (ChessBoard.GetRank(
-                                        index
-                                    ) * squareSize).toDp()
-                                }
+                    }
+                    // for highlighting last move squares
+                    val playerKingPosition = moveGenerator.getKingPosition(chessBoard, playerColor)
+                    val computerKingPosition = moveGenerator.getKingPosition(chessBoard, computerColor)
+                    // for highlighting king check
+                    if (computerLegalMoves.isOpponentKingInCheck(playerKingPosition) && i == playerKingPosition
+                    ) {
+                        Image(
+                            modifier = Modifier
+                                .zIndex(0f)
+                                .offset(
+                                    x = with(LocalDensity.current) {
+                                        (ChessBoard.GetFile(
+                                            i
+                                        ) * squareSize).toDp()
+                                    },
+                                    y = with(LocalDensity.current) {
+                                        (ChessBoard.GetRank(
+                                            index
+                                        ) * squareSize).toDp()
+                                    }
+                                )
+                                .size(with(LocalDensity.current) { squareSize.toDp() }),
+                            painter = painterResource(
+                                R.drawable.red_gradient
+                            ),
+                            contentDescription = stringResource(
+                                id = R.string.king_checked
                             )
-                            .size(with(LocalDensity.current) { squareSize.toDp() }),
-                        painter = painterResource(
-                            R.drawable.red_gradient
-                        ),
-                        contentDescription = stringResource(
-                            id = R.string.king_checked
                         )
-                    )
 
-                }
-                if (playerLegalMoves.isOpponentKingInCheck(computerKingPosition) && i == computerKingPosition
-                ) {
-                    Image(
-                        modifier = Modifier
-                            .zIndex(0f)
-                            .offset(
-                                x = with(LocalDensity.current) {
-                                    (ChessBoard.GetFile(
-                                        i
-                                    ) * squareSize).toDp()
-                                },
-                                y = with(LocalDensity.current) {
-                                    (ChessBoard.GetRank(
-                                        index
-                                    ) * squareSize).toDp()
-                                }
+                    }
+                    if (playerLegalMoves.isOpponentKingInCheck(computerKingPosition) && i == computerKingPosition
+                    ) {
+                        Image(
+                            modifier = Modifier
+                                .zIndex(0f)
+                                .offset(
+                                    x = with(LocalDensity.current) {
+                                        (ChessBoard.GetFile(
+                                            i
+                                        ) * squareSize).toDp()
+                                    },
+                                    y = with(LocalDensity.current) {
+                                        (ChessBoard.GetRank(
+                                            index
+                                        ) * squareSize).toDp()
+                                    }
+                                )
+                                .size(with(LocalDensity.current) { squareSize.toDp() }),
+                            painter = painterResource(
+                                R.drawable.red_gradient
+                            ),
+                            contentDescription = stringResource(
+                                id = R.string.king_checked
                             )
-                            .size(with(LocalDensity.current) { squareSize.toDp() }),
-                        painter = painterResource(
-                            R.drawable.red_gradient
-                        ),
-                        contentDescription = stringResource(
-                            id = R.string.king_checked
                         )
-                    )
 
+                    }
                 }
+
             }
-
         }
 
     }
