@@ -22,5 +22,7 @@
     <string name="king_checked">King Checked</string>
     <string name="last_captured">Last captured</string>
     <string name="new_game">New game</string>
+    <string name="engine_thinking">Thinking…</string>
+    <string name="search_depth">Search depth</string>
 
 </resources>

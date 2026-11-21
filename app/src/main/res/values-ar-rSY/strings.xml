@@ -9,6 +9,8 @@
     <string name="king_checked">كش ملك</string>
     <string name="last_captured">آخر قطعة مأخوذة</string>
     <string name="new_game">لعبة جديدة</string>
+    <string name="engine_thinking">يفكر…</string>
+    <string name="search_depth">عمق البحث</string>
     <string name="game_finished_message">ابدأ لعبة جديدة</string>
     <string name="cancel_game_title">إنهاء اللعبة</string>
     <string name="cancel_game_message">هل تريد حقا إنهاء هذه اللعبة</string>

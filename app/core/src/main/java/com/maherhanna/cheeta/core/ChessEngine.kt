@@ -21,6 +21,11 @@ open class ChessEngine {
     private var moveGenerator = MoveGenerator()
     var isUciMode = false
 
+    /** Depth fully searched by the last call to getMove (read by the UI after the search). */
+    @Volatile
+    var lastSearchDepth = 0
+        private set
+
     // triangular principal variation table indexed by ply
     var pvTable: Array<Array<Move?>> = Array(MAX_PLY) { arrayOfNulls(MAX_PLY) }
     private var pvLength = IntArray(MAX_PLY)
@@ -270,6 +275,7 @@ open class ChessEngine {
             toPlayLegalMoves = moveToFront(toPlayLegalMoves, currentSearchMove)
             if (System.currentTimeMillis() - startTime > maxSearchTime) break
         }
+        lastSearchDepth = currentDepth
         val duration = System.currentTimeMillis() - startTime
         Logger.getLogger(DEBUG_TAG).log(
             Level.INFO, "evaluations " + evaluations +

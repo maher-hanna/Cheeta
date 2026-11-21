@@ -3,7 +3,21 @@ package com.maherhanna.cheeta
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutBack
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +49,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
@@ -58,9 +78,12 @@ import com.maherhanna.cheeta.core.Piece
 import com.maherhanna.cheeta.core.PlayerLegalMoves
 import com.maherhanna.cheeta.core.Uci
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.PI
 import kotlin.math.floor
+import kotlin.math.sin
 
 @Composable
 fun GameScreen(playerColor: Int) {
@@ -82,6 +105,8 @@ fun GameScreen(playerColor: Int) {
     var playerSelectedPieceLegalTargets by remember {
         mutableStateOf(emptyList<Int>())
     }
+    // depth reached by the computer's last search (read once the search has finished)
+    var searchDepth by remember { mutableIntStateOf(0) }
     val uci by remember {
         mutableStateOf(Uci())
     }
@@ -136,6 +161,8 @@ fun GameScreen(playerColor: Int) {
 
     LaunchedEffect(chessBoard) {
         gameStatus = moveGenerator.checkStatus(chessBoard)
+        // the board changes when the computer has moved; pick up how deep it searched
+        searchDepth = uci.engine.lastSearchDepth
     }
 
     BackHandler {
@@ -552,6 +579,12 @@ fun GameScreen(playerColor: Int) {
             playerColor = playerColor,
             onNewGame = { (context as Activity).recreate() }
         )
+
+        SearchDepthIndicator(
+            depth = searchDepth,
+            isThinking = !playerTurn && gameStatus == GameStatus.NOT_FINISHED,
+            visible = searchDepth > 0
+        )
     }
 
     if (showCancelGameDialog) {
@@ -633,6 +666,126 @@ private fun GameResult(gameStatus: GameStatus, playerColor: Int, onNewGame: () -
     }
 }
 
+private const val DEPTH_BAR_COUNT = 10
+
+/**
+ * Search depth display. While the computer thinks, the bars play a looping wave that is
+ * purely visual (the engine is not asked for progress). Once the move is made, the depth
+ * the engine reached is shown and the bars fill up to it one after another.
+ */
+@Composable
+private fun SearchDepthIndicator(depth: Int, isThinking: Boolean, visible: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (!visible && !isThinking) return@Row
+        Column {
+            Text(
+                text = stringResource(
+                    id = if (isThinking) R.string.engine_thinking else R.string.search_depth
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            AnimatedVisibility(
+                visible = !isThinking,
+                enter = slideInVertically { height -> height } + fadeIn(),
+                exit = fadeOut()
+            ) {
+                Text(
+                    text = depth.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        if (isThinking) ThinkingBars() else DepthBars(depth = depth)
+    }
+}
+
+@Composable
+private fun DepthBar(index: Int, modifier: Modifier, color: Color) {
+    // bars get taller from the first to the last depth
+    val barHeight = 14.dp + 26.dp * (index + 1) / DEPTH_BAR_COUNT
+    Box(
+        modifier = Modifier
+            .width(8.dp)
+            .height(barHeight)
+            .then(modifier)
+            .clip(RoundedCornerShape(4.dp))
+            .background(color)
+    )
+}
+
+@Composable
+private fun ThinkingBars() {
+    // a wave travelling across the bars; read inside graphicsLayer so only the
+    // drawing layer updates each frame, not the composition
+    val phase = rememberInfiniteTransition(label = "thinking").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "wave phase"
+    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        for (index in 0 until DEPTH_BAR_COUNT) {
+            DepthBar(
+                index = index,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.graphicsLayer {
+                    val wave = (sin(2 * PI * (phase.value - index.toFloat() / DEPTH_BAR_COUNT)) + 1) / 2
+                    scaleY = 0.45f + 0.55f * wave.toFloat()
+                    alpha = 0.35f + 0.65f * wave.toFloat()
+                    transformOrigin = TransformOrigin(0.5f, 1f)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DepthBars(depth: Int) {
+    val filledColor = MaterialTheme.colorScheme.primary
+    val emptyColor = MaterialTheme.colorScheme.surfaceVariant
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        for (index in 0 until DEPTH_BAR_COUNT) {
+            val isFilled = index < depth
+            // 0 = empty, 1 = filled; EaseOutBack overshoots slightly for a small bounce
+            val progress = remember { Animatable(0f) }
+            LaunchedEffect(depth) {
+                // fill the bars one after another
+                delay(index * 70L)
+                progress.animateTo(
+                    targetValue = if (isFilled) 1f else 0f,
+                    animationSpec = tween(durationMillis = 350, easing = EaseOutBack)
+                )
+            }
+            DepthBar(
+                index = index,
+                color = lerp(emptyColor, filledColor, progress.value.coerceIn(0f, 1f)),
+                modifier = Modifier.graphicsLayer {
+                    scaleY = 0.55f + 0.45f * progress.value
+                    transformOrigin = TransformOrigin(0.5f, 1f)
+                }
+            )
+        }
+    }
+}
 
 suspend fun playComputer(
     uci: Uci,
