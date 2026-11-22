@@ -110,6 +110,27 @@ class EngineRegressionTest {
         )
     }
 
+    // -------------------------------------------- static exchange evaluation
+
+    private fun see(fen: String, notation: String): Int {
+        val b = board(fen)
+        val moves = MoveGenerator().generateLegalMovesFor(b, b.toPlayColor)
+        val move = (0 until moves.size()).map { moves[it] }.first { it.notation == notation }
+        return com.maherhanna.cheeta.core.ChessEngine().staticExchangeEvaluation(b, move)
+    }
+
+    @Test
+    fun staticExchangeEvaluation() {
+        // undefended pawn: win it
+        assertEquals(100, see("4k3/8/8/3p4/8/8/8/3QK3 w - - 0 1", "d1d5"))
+        // pawn defended by a pawn: queen for pawn
+        assertEquals(-800, see("4k3/8/2p5/3p4/8/8/8/3QK3 w - - 0 1", "d1d5"))
+        // rook takes defended pawn, the rook behind it (x-ray) recaptures: R for 2P
+        assertEquals(-300, see("4k3/8/2p5/3p4/8/8/3R4/3RK3 w - - 0 1", "d2d5"))
+        // pawn takes defended knight: keeps the knight-for-pawn gain
+        assertEquals(220, see("4k3/8/2p5/3n4/4P3/8/8/4K3 w - - 0 1", "e4d5"))
+    }
+
     // ---------------------------------------------------------------- perft
 
     @Test

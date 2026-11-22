@@ -561,6 +561,26 @@ class ChessBoard {
         }
     }
 
+    /**
+     * Passes the turn without moving (used by null-move pruning in the search).
+     * Clears the en passant square and resets the fifty-move counter, which also stops
+     * repetition detection from looking past the null move.
+     */
+    fun makeNullMove() {
+        fiftyMovesHistory.add(fiftyMovesDrawCount)
+        fiftyMovesDrawCount = 0
+        val black = blackCastlingRights
+        val white = whiteCastlingRights
+        toPlayColor = GetOppositeColor(toPlayColor)
+        states.add(createState(NO_SQUARE, black, white))
+    }
+
+    fun unMakeNullMove() {
+        states.removeAt(states.size - 1)
+        toPlayColor = GetOppositeColor(toPlayColor)
+        fiftyMovesDrawCount = fiftyMovesHistory.removeAt(fiftyMovesHistory.size - 1)
+    }
+
     //get and set a square info
     fun setPieceAt(position: Int, pieceType: Int, pieceColor: Int) {
         removePiece(position)

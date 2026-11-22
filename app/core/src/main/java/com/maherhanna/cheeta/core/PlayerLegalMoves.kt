@@ -58,6 +58,11 @@ class PlayerLegalMoves {
         }
         return null
     }
+    /** Removes every move matching [predicate] in a single pass. */
+    fun removeMovesIf(predicate: (Move) -> Boolean) {
+        legalMoves.removeAll(predicate)
+    }
+
     fun removeNonTake() {
         // single pass; removing through an iterator shifted the array on every removal
         legalMoves.removeAll { !it.isCapture }

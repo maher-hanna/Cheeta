@@ -5,6 +5,7 @@ import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.math.abs
 
 open class ChessEngine {
     private var foundCheckMate = false
@@ -17,6 +18,13 @@ open class ChessEngine {
     private var nodes = 0L
     private var moveGenerator = MoveGenerator()
     var isUciMode = false
+
+    // search features, all on by default; they can be switched off to compare versions
+    var useCheckExtension = true
+    var usePvs = true
+    var useLateMoveReductions = true // only applies when usePvs is on
+    var useNullMove = true
+    var useSee = true
 
     /** Depth fully searched by the last call to getMove (read by the UI after the search). */
     @Volatile
@@ -177,7 +185,7 @@ open class ChessEngine {
         )
         // no legal moves: the game is already over
         if (toPlayLegalMoves.size() == 0) return null
-        toPlayLegalMoves = sortMoves(toPlayLegalMoves, 0)
+        toPlayLegalMoves = sortMoves(chessBoard, toPlayLegalMoves, 0)
         var currentDepth = 0
         var move: Move? = toPlayLegalMoves[0]
 
@@ -278,8 +286,9 @@ open class ChessEngine {
         chessBoard: ChessBoard,
         alphaOriginal: Int,
         beta: Int,
-        depth: Int,
-        ply: Int
+        depthArg: Int,
+        ply: Int,
+        allowNullMove: Boolean = true
     ): Int {
         pvLength[ply] = ply
         // only the node reached through the PV move keeps following the PV
@@ -287,6 +296,7 @@ open class ChessEngine {
         followPv = false
         if (isTimeUp()) return 0
         var alpha = alphaOriginal
+        var depth = depthArg
         val toPlayColor = chessBoard.toPlayColor
 
         // cheap draw checks first: repetition and insufficient material never coincide
@@ -320,30 +330,80 @@ open class ChessEngine {
             chessBoard,
             toPlayColor
         )
+        // isKingChecked is valid right after move generation
+        val inCheck = moveGenerator.isKingChecked(toPlayColor)
         if (toPlayLegalMoves.size() == 0) {
-            // checkmate or stalemate (isKingChecked is valid right after move generation)
-            return if (moveGenerator.isKingChecked(toPlayColor)) LOSE_SCORE + ply else 0
+            // checkmate or stalemate
+            return if (inCheck) LOSE_SCORE + ply else 0
         }
         // fifty move rule is checked after mate: a mate on the 100th half move still counts
         if (chessBoard.fiftyMovesDrawCount >= 100) {
             return 0
         }
 
+        // check extension: search one ply deeper when in check, so forcing lines are
+        // not cut off at the horizon
+        if (useCheckExtension && inCheck) {
+            depth++
+        }
+
+        // null-move pruning: if passing the turn still fails high with a reduced search,
+        // a real move will too. Not used in check, on the PV, twice in a row, near mate
+        // scores, or with only pawns left (zugzwang positions break the idea)
+        if (useNullMove && allowNullMove && !inCheck && !isOnPv &&
+            depth >= NULL_MOVE_MIN_DEPTH && abs(beta) < MATE_BOUND &&
+            hasNonPawnMaterial(chessBoard, toPlayColor)
+        ) {
+            chessBoard.makeNullMove()
+            val nullScore = -negaMax(
+                chessBoard, -beta, -beta + 1,
+                depth - 1 - NULL_MOVE_REDUCTION, ply + 1, allowNullMove = false
+            )
+            chessBoard.unMakeNullMove()
+            if (searchTimeFinished) return 0
+            if (nullScore >= beta) {
+                return beta
+            }
+        }
+
         val pvMove = if (isOnPv) previousPv.getOrNull(ply) else null
-        val sortedMoves = sortMoves(toPlayLegalMoves, ply, pvMove, hashMove)
+        val sortedMoves = sortMoves(chessBoard, toPlayLegalMoves, ply, pvMove, hashMove)
         var hashFlag = TranspositionTableFlag.UPPER_BOUND
         // on a fail low no move is known to be best; keep the previously stored one
         var bestMove = hashMove
         for (i in 0 until sortedMoves.size()) {
             val move = sortedMoves[i]
             chessBoard.makeMove(move)
-            // the PV move is sorted first; only its subtree continues along the PV
-            followPv = i == 0 && pvMove != null && move.bitValue == pvMove.bitValue
-            val score = -negaMax(
-                chessBoard, -beta, -alpha,
-                depth - 1, ply + 1
-            )
-            followPv = false
+            var score: Int
+            if (i == 0 || !usePvs) {
+                // the first (expected best) move is searched with the full window;
+                // the PV move is sorted first and only its subtree continues along the PV
+                followPv = i == 0 && pvMove != null && move.bitValue == pvMove.bitValue
+                score = -negaMax(chessBoard, -beta, -alpha, depth - 1, ply + 1)
+                followPv = false
+            } else {
+                // late move reduction: quiet moves sorted late rarely turn out best, so
+                // search them one ply shallower first
+                var reduction = 0
+                if (useLateMoveReductions && i >= LMR_FULL_DEPTH_MOVES &&
+                    depth >= LMR_MIN_DEPTH && !inCheck && !move.isCapture &&
+                    !move.isPromote && !isKillerMove(move, ply) &&
+                    !moveGenerator.isKingAttacked(chessBoard, chessBoard.toPlayColor)
+                ) {
+                    reduction = 1
+                }
+                // principal variation search: prove with a zero-width window that the
+                // move is not better than the best so far
+                score = -negaMax(chessBoard, -alpha - 1, -alpha, depth - 1 - reduction, ply + 1)
+                if (score > alpha && reduction > 0) {
+                    // the reduced search looked good: verify at full depth
+                    score = -negaMax(chessBoard, -alpha - 1, -alpha, depth - 1, ply + 1)
+                }
+                if (score > alpha && score < beta) {
+                    // it is better: search again with the full window for its exact score
+                    score = -negaMax(chessBoard, -beta, -alpha, depth - 1, ply + 1)
+                }
+            }
             chessBoard.unMakeMove()
             if (searchTimeFinished) return 0
             if (score >= beta) {
@@ -383,6 +443,18 @@ open class ChessEngine {
         return alpha
     }
 
+    private fun isKillerMove(move: Move, ply: Int): Boolean =
+        killerMove[0][ply] == move || killerMove[1][ply] == move
+
+    private fun hasNonPawnMaterial(chessBoard: ChessBoard, color: Int): Boolean =
+        if (color == Piece.WHITE) {
+            (chessBoard.whiteKnights or chessBoard.whiteBishops or
+                    chessBoard.whiteRooks or chessBoard.whiteQueens) != 0L
+        } else {
+            (chessBoard.blackKnights or chessBoard.blackBishops or
+                    chessBoard.blackRooks or chessBoard.blackQueens) != 0L
+        }
+
     private fun quiescence(chessBoard: ChessBoard, alphaArg: Int, betaArg: Int, ply: Int): Int {
         if (isTimeUp()) return 0
         evaluations++
@@ -411,9 +483,16 @@ open class ChessEngine {
                 quiescenceAlpha = eval
             }
             toPlayLegalMoves.removeNonTake()
+            if (useSee) {
+                // captures that lose material cannot improve on standing pat
+                toPlayLegalMoves.removeMovesIf { move ->
+                    !move.isPromote && isPossiblyLosingCapture(move) &&
+                            staticExchangeEvaluation(chessBoard, move) < 0
+                }
+            }
         }
         // when in check all evasions are searched
-        toPlayLegalMoves = sortMoves(toPlayLegalMoves, ply)
+        toPlayLegalMoves = sortMoves(chessBoard, toPlayLegalMoves, ply)
         for (i in 0 until toPlayLegalMoves.size()) {
             chessBoard.makeMove(toPlayLegalMoves[i])
             val score = -quiescence(
@@ -432,8 +511,114 @@ open class ChessEngine {
         return quiescenceAlpha
     }
 
+    // ------------------------------------------------------- static exchange evaluation
+
+    // a capture can only lose material if the capturing piece is worth more than the victim
+    private fun isPossiblyLosingCapture(move: Move): Boolean =
+        SEE_VALUES[move.pieceType] > SEE_VALUES[move.takenPieceType]
+
+    /**
+     * Static exchange evaluation: the material balance (from the mover's side) after the
+     * best sequence of captures and recaptures on the target square, where each side
+     * may stop capturing when continuing would lose material.
+     */
+    fun staticExchangeEvaluation(chessBoard: ChessBoard, move: Move): Int {
+        val target = move.to
+        val gain = IntArray(32)
+        var depth = 0
+        gain[0] = SEE_VALUES[move.takenPieceType]
+        var occupied = chessBoard.allPieces and (1L shl move.from).inv()
+        if (move.isEnPasant) {
+            val capturedPawn = if (move.color == Piece.WHITE) target - 8 else target + 8
+            occupied = occupied and (1L shl capturedPawn).inv()
+        }
+        // value of the piece now standing on the target square
+        var pieceOnTarget = SEE_VALUES[move.pieceType]
+        var side = Piece.GetOppositeColor(move.color)
+        while (depth < gain.size - 1) {
+            val attackers = attackersTo(chessBoard, target, occupied) and occupied
+            val attacker = leastValuableAttacker(chessBoard, attackers, side)
+            if (attacker < 0) break
+            depth++
+            gain[depth] = pieceOnTarget - gain[depth - 1]
+            // neither side can gain by continuing
+            if (maxOf(-gain[depth - 1], gain[depth]) < 0) break
+            pieceOnTarget = SEE_VALUES[chessBoard.pieceType(attacker)]
+            // removing the attacker also uncovers sliders behind it (x-rays)
+            occupied = occupied and (1L shl attacker).inv()
+            side = Piece.GetOppositeColor(side)
+        }
+        while (depth > 0) {
+            gain[depth - 1] = -maxOf(-gain[depth - 1], gain[depth])
+            depth--
+        }
+        return gain[0]
+    }
+
+    // all pieces (both colours) attacking [square], with sliders blocked by [occupied]
+    private fun attackersTo(chessBoard: ChessBoard, square: Int, occupied: Long): Long {
+        var attackers = 0L
+        val file = GetFile(square)
+        val rank = GetRank(square)
+        // white pawns attack diagonally upwards, black pawns downwards
+        if (rank > 0) {
+            if (file > 0) attackers = attackers or (chessBoard.whitePawns and (1L shl (square - 9)))
+            if (file < 7) attackers = attackers or (chessBoard.whitePawns and (1L shl (square - 7)))
+        }
+        if (rank < 7) {
+            if (file > 0) attackers = attackers or (chessBoard.blackPawns and (1L shl (square + 7)))
+            if (file < 7) attackers = attackers or (chessBoard.blackPawns and (1L shl (square + 9)))
+        }
+        attackers = attackers or
+                (KNIGHT_ATTACKS[square] and (chessBoard.whiteKnights or chessBoard.blackKnights))
+        attackers = attackers or
+                (KING_ATTACKS[square] and (chessBoard.whiteKing or chessBoard.blackKing))
+        val rooksAndQueens = chessBoard.whiteRooks or chessBoard.blackRooks or
+                chessBoard.whiteQueens or chessBoard.blackQueens
+        val bishopsAndQueens = chessBoard.whiteBishops or chessBoard.blackBishops or
+                chessBoard.whiteQueens or chessBoard.blackQueens
+        for (direction in 0 until 8) {
+            val fileStep = DIRECTION_FILE_STEPS[direction]
+            val rankStep = DIRECTION_RANK_STEPS[direction]
+            val sliders = if (direction < 4) rooksAndQueens else bishopsAndQueens
+            var f = file + fileStep
+            var r = rank + rankStep
+            while (f in 0..7 && r in 0..7) {
+                val bit = 1L shl (r * 8 + f)
+                if (occupied and bit != 0L) {
+                    // the first piece on the ray: an attacker if it slides this way
+                    attackers = attackers or (sliders and bit)
+                    break
+                }
+                f += fileStep
+                r += rankStep
+            }
+        }
+        return attackers
+    }
+
+    // square of the cheapest piece of [color] among [attackers], or -1
+    private fun leastValuableAttacker(chessBoard: ChessBoard, attackers: Long, color: Int): Int {
+        val pieces = if (color == Piece.WHITE) {
+            longArrayOf(
+                chessBoard.whitePawns, chessBoard.whiteKnights, chessBoard.whiteBishops,
+                chessBoard.whiteRooks, chessBoard.whiteQueens, chessBoard.whiteKing
+            )
+        } else {
+            longArrayOf(
+                chessBoard.blackPawns, chessBoard.blackKnights, chessBoard.blackBishops,
+                chessBoard.blackRooks, chessBoard.blackQueens, chessBoard.blackKing
+            )
+        }
+        for (bitboard in pieces) {
+            val candidates = bitboard and attackers
+            if (candidates != 0L) return java.lang.Long.numberOfTrailingZeros(candidates)
+        }
+        return -1
+    }
 
     private fun scoreMoves(
+        chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
         ply: Int,
         pvNode: Move?,
@@ -450,7 +635,15 @@ open class ChessEngine {
             if (currentMove.isCapture) {
                 val victim = currentMove.takenPieceType
                 val attacker = currentMove.pieceType
-                currentScore += mvv_lva[(attacker - 1) * 6 + (victim - 1)] + 10000
+                val mvvLva = mvv_lva[(attacker - 1) * 6 + (victim - 1)]
+                currentScore += if (useSee && isPossiblyLosingCapture(currentMove) &&
+                    staticExchangeEvaluation(chessBoard, currentMove) < 0
+                ) {
+                    // losing captures go after killer moves
+                    mvvLva + LOSING_CAPTURE_SCORE
+                } else {
+                    mvvLva + 10000
+                }
             } else {
                 // killer move score
                 if (ply < MAX_PLY && killerMove[0][ply] != null && killerMove[0][ply] == moves[i]) {
@@ -485,12 +678,13 @@ open class ChessEngine {
     }
 
     private fun sortMoves(
+        chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
         ply: Int,
         pvNode: Move? = null,
         hashMove: Long = 0L
     ): PlayerLegalMoves {
-        val scores = scoreMoves(moves, ply, pvNode, hashMove)
+        val scores = scoreMoves(chessBoard, moves, ply, pvNode, hashMove)
         scores.sort()
         val sortedMoves = PlayerLegalMoves()
         for (i in 0 until moves.size()) {
@@ -709,6 +903,44 @@ open class ChessEngine {
         const val MAX_PLY = 128
 
         private const val MAX_HISTORY_SCORE = 7000
+
+        // null-move pruning: minimum remaining depth and the extra depth reduction
+        private const val NULL_MOVE_MIN_DEPTH = 3
+        private const val NULL_MOVE_REDUCTION = 2
+
+        // late move reductions: moves searched at full depth first, and minimum depth
+        private const val LMR_FULL_DEPTH_MOVES = 4
+        private const val LMR_MIN_DEPTH = 3
+
+        // ordering score of captures that lose material (below killer moves)
+        private const val LOSING_CAPTURE_SCORE = 5000
+
+        // piece values for static exchange evaluation, indexed by piece type
+        private val SEE_VALUES = intArrayOf(0, 100, 320, 330, 500, 900, 20000)
+
+        // ray directions: the first four are straight (rook), the last four diagonal (bishop)
+        private val DIRECTION_FILE_STEPS = intArrayOf(0, 0, 1, -1, 1, 1, -1, -1)
+        private val DIRECTION_RANK_STEPS = intArrayOf(1, -1, 0, 0, 1, -1, 1, -1)
+
+        private fun leaperAttacks(fileSteps: IntArray, rankSteps: IntArray): LongArray =
+            LongArray(64) { square ->
+                var attacks = 0L
+                for (k in fileSteps.indices) {
+                    val f = square % 8 + fileSteps[k]
+                    val r = square / 8 + rankSteps[k]
+                    if (f in 0..7 && r in 0..7) attacks = attacks or (1L shl (r * 8 + f))
+                }
+                attacks
+            }
+
+        private val KNIGHT_ATTACKS = leaperAttacks(
+            intArrayOf(1, 2, 2, 1, -1, -2, -2, -1),
+            intArrayOf(2, 1, -1, -2, -2, -1, 1, 2)
+        )
+        private val KING_ATTACKS = leaperAttacks(
+            intArrayOf(0, 1, 1, 1, 0, -1, -1, -1),
+            intArrayOf(1, 1, 0, -1, -1, -1, 0, 1)
+        )
 
         private const val MOBILITY_SCORE = 10
 
