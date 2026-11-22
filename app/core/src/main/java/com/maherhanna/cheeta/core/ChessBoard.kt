@@ -495,14 +495,10 @@ class ChessBoard {
     }
 
     private fun createState(enPassantTarget: Int, blackCastlingRights: Int, whiteCastlingRights: Int): State {
-        val pieces = longArrayOf(
-            whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing,
-            blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing
-        )
         val hash = piecesHash xor Zobrist.stateHash(
             this, toPlayColor, whiteCastlingRights, blackCastlingRights, enPassantTarget
         )
-        return State(pieces, toPlayColor, enPassantTarget, blackCastlingRights, whiteCastlingRights, hash)
+        return State(toPlayColor, enPassantTarget, blackCastlingRights, whiteCastlingRights, hash)
     }
 
     fun unMakeMove() {

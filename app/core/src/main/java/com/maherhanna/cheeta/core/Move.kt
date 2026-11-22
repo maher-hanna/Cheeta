@@ -90,11 +90,12 @@ class Move {
             bitValue, CASTLING_START, CASTLING_MASK
         ) == 1L
     var castlingType: CastlingType
-        get() = CastlingType.entries[BitMath.getBitsValue(
-            bitValue,
-            CASTLING_TYPE_START,
-            CASTLING_TYPE_MASK
-        ).toInt()]
+        // read the bit directly: indexing CastlingType.entries showed up as a hot spot
+        get() = if (bitValue and CASTLING_TYPE_MASK == 0L) {
+            CastlingType.CASTLING_KING_SIDE
+        } else {
+            CastlingType.CASTLING_QUEEN_SIDE
+        }
         set(castlingType) {
             val value = castlingType.ordinal
             bitValue =

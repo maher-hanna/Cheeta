@@ -110,6 +110,39 @@ class EngineRegressionTest {
         )
     }
 
+    // ------------------------------------------------------ captures only
+
+    @Test
+    fun capturesOnlyGenerationMatchesFilteredFullGeneration() {
+        val random = java.util.Random(777)
+        val starts = listOf(
+            ChessBoard.startPosition,
+            "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+            "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
+            "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
+            "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+        )
+        val generator = MoveGenerator()
+        var positions = 0
+        for (fen in starts) {
+            repeat(20) {
+                val b = board(fen)
+                for (ply in 0 until 60) {
+                    val all = generator.generateLegalMovesFor(b, b.toPlayColor)
+                    val expected = (0 until all.size()).map { all[it] }
+                        .filter { it.isCapture }.map { it.notation }.sorted()
+                    val captures = generator.generateLegalCapturesFor(b, b.toPlayColor)
+                    val actual = (0 until captures.size()).map { captures[it].notation }.sorted()
+                    assertEquals("captures in position after ${b.moves.notation}", expected, actual)
+                    positions++
+                    if (all.size() == 0) break
+                    b.makeMove(all[random.nextInt(all.size())])
+                }
+            }
+        }
+        assertTrue(positions > 1000)
+    }
+
     // -------------------------------------------- static exchange evaluation
 
     private fun see(fen: String, notation: String): Int {

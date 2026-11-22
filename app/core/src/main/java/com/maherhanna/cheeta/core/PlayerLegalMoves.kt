@@ -1,8 +1,8 @@
 package com.maherhanna.cheeta.core
 
-class PlayerLegalMoves {
-    // presized: a position rarely has more than 64 legal moves, so the list seldom grows
-    private val legalMoves: ArrayList<Move> = ArrayList(64)
+// presized: a position rarely has more than 64 legal moves, so the list seldom grows.
+// The list passed in is used directly (not copied).
+class PlayerLegalMoves(private val legalMoves: ArrayList<Move> = ArrayList(64)) {
 
     fun getLegalTargetsFor(position: Int): ArrayList<Int> {
         val targetSquares = ArrayList<Int>()

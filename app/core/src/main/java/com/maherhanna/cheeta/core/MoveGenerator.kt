@@ -19,6 +19,10 @@ class MoveGenerator(
     var isWhiteKingChecked: Boolean = false
     var isBlackKingChecked: Boolean = false
 
+    // ANDed into every quiet-move target set: all ones normally, zero while generating
+    // captures only (see generateLegalCapturesFor)
+    private var quietMask = 0L.inv()
+
     var blackPlayerLegalMoves: PlayerLegalMoves = PlayerLegalMoves()
     var whitePlayerLegalMoves: PlayerLegalMoves = PlayerLegalMoves()
 
@@ -528,27 +532,33 @@ class MoveGenerator(
 
         val moves = ArrayList<Move>()
         if (color == Piece.BLACK) {
-            quietTargets = kingMovesQuite(chessBoard.blackKing, chessBoard.emptySquares)
+            quietTargets = kingMovesQuite(chessBoard.blackKing, chessBoard.emptySquares and quietMask)
             captureTargets = kingMovesCapture(chessBoard.blackKing, chessBoard.allWhitePieces)
             kingPosition = BitMath.getLSBitIndex(chessBoard.blackKing)
         } else {
-            quietTargets = kingMovesQuite(chessBoard.whiteKing, chessBoard.emptySquares)
+            quietTargets = kingMovesQuite(chessBoard.whiteKing, chessBoard.emptySquares and quietMask)
             captureTargets = kingMovesCapture(chessBoard.whiteKing, chessBoard.allBlackPieces)
             kingPosition = BitMath.getLSBitIndex(chessBoard.whiteKing)
         }
 
 
-        val chessBoardWithoutKing = chessBoard.copyPieces()
-        chessBoardWithoutKing.removePiece(kingPosition)
-
         val enemyPieces =
             if (color == Piece.WHITE) chessBoard.allBlackPieces else chessBoard.allWhitePieces
 
+        // squares attacked with the king lifted off the board, so sliders "see through"
+        // it. The attack calculation only reads the attacker's pieces and the occupancy,
+        // so the king is removed from the occupancy in place instead of copying the board
+        val savedAllPieces = chessBoard.allPieces
+        val savedEmptySquares = chessBoard.emptySquares
+        chessBoard.allPieces = savedAllPieces and (1L shl kingPosition).inv()
+        chessBoard.emptySquares = chessBoard.allPieces.inv()
         val opponentAttackedSquaresWithoutKing = getAttacksWithCaptures(
-            chessBoardWithoutKing,
+            chessBoard,
             Piece.GetOppositeColor(color),
             enemyPieces
         )
+        chessBoard.allPieces = savedAllPieces
+        chessBoard.emptySquares = savedEmptySquares
 
         quietTargets = quietTargets and opponentAttackedSquaresWithoutKing.inv()
         captureTargets = captureTargets and opponentAttackedSquaresWithoutKing.inv()
@@ -602,7 +612,7 @@ class MoveGenerator(
             currentKnightPosition = BitMath.getLSBitIndex(knightsCopy)
             knightsCopy = BitMath.popBit(knightsCopy, currentKnightPosition)
             quietTargets =
-                knightMovesQuite(currentKnightPosition, chessBoard.emptySquares) and kingCheckLine
+                knightMovesQuite(currentKnightPosition, chessBoard.emptySquares and quietMask) and kingCheckLine
             captureTargets = if (color == Piece.BLACK) {
                 knightMovesCapture(
                     currentKnightPosition,
@@ -696,7 +706,7 @@ class MoveGenerator(
             } else {
                 northTargets and chessBoard.allBlackPieces
             }
-            quietTargets = northTargets and chessBoard.emptySquares
+            quietTargets = northTargets and chessBoard.emptySquares and quietMask
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
@@ -725,7 +735,7 @@ class MoveGenerator(
             } else {
                 southTargets and chessBoard.allBlackPieces
             }
-            quietTargets = southTargets and chessBoard.emptySquares
+            quietTargets = southTargets and chessBoard.emptySquares and quietMask
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
@@ -753,7 +763,7 @@ class MoveGenerator(
             } else {
                 westTargets and chessBoard.allBlackPieces
             }
-            quietTargets = westTargets and chessBoard.emptySquares
+            quietTargets = westTargets and chessBoard.emptySquares and quietMask
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
@@ -781,7 +791,7 @@ class MoveGenerator(
             } else {
                 eastTargets and chessBoard.allBlackPieces
             }
-            quietTargets = eastTargets and chessBoard.emptySquares
+            quietTargets = eastTargets and chessBoard.emptySquares and quietMask
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[rookPosition] and (1L shl captureTargetIndex)) != 0L) {
@@ -864,7 +874,7 @@ class MoveGenerator(
             } else {
                 northWestTargets and chessBoard.allBlackPieces
             }
-            quietTargets = northWestTargets and chessBoard.emptySquares
+            quietTargets = northWestTargets and chessBoard.emptySquares and quietMask
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[bishopPosition] and (1L shl captureTargetIndex)) != 0L) {
@@ -893,7 +903,7 @@ class MoveGenerator(
             } else {
                 southWestTargets and chessBoard.allBlackPieces
             }
-            quietTargets = southWestTargets and chessBoard.emptySquares
+            quietTargets = southWestTargets and chessBoard.emptySquares and quietMask
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[bishopPosition] and (1L shl captureTargetIndex)) != 0L) {
@@ -921,7 +931,7 @@ class MoveGenerator(
             } else {
                 southEastTargets and chessBoard.allBlackPieces
             }
-            quietTargets = southEastTargets and chessBoard.emptySquares
+            quietTargets = southEastTargets and chessBoard.emptySquares and quietMask
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[bishopPosition] and (1L shl captureTargetIndex)) != 0L) {
@@ -949,7 +959,7 @@ class MoveGenerator(
             } else {
                 northEastTargets and chessBoard.allBlackPieces
             }
-            quietTargets = northEastTargets and chessBoard.emptySquares
+            quietTargets = northEastTargets and chessBoard.emptySquares and quietMask
             if (captureTarget != 0L) {
                 captureTargetIndex = BitMath.getLSBitIndex(captureTarget)
                 if ((kingPinnedPieces[bishopPosition] and (1L shl captureTargetIndex)) != 0L) {
@@ -1215,7 +1225,7 @@ class MoveGenerator(
         moves.addAll(
             getWhitePawnsPushes(
                 chessBoard.whitePawns,
-                chessBoard.emptySquares
+                chessBoard.emptySquares and quietMask
             )
         )
         moves.addAll(getWhitePawnsCaptures(chessBoard))
@@ -1265,7 +1275,7 @@ class MoveGenerator(
         moves.addAll(
             getBlackPawnsPushes(
                 chessBoard.blackPawns,
-                chessBoard.emptySquares
+                chessBoard.emptySquares and quietMask
             )
         )
         moves.addAll(getBlackPawnsCaptures(chessBoard))
@@ -1318,17 +1328,18 @@ class MoveGenerator(
 
 
     fun isKingAttacked(chessBoard: ChessBoard, kingColor: Int): Boolean {
-        //val startTime = System.nanoTime()
-        val chessBoardWithoutKing = chessBoard.copyPieces()
         val kingPosition = getKingPosition(chessBoard, kingColor)
-        chessBoardWithoutKing.removeKing(kingColor)
+        // lift the king off the occupancy in place (getAttacks only reads the attacker's
+        // pieces and the occupancy), instead of copying the board
+        val savedAllPieces = chessBoard.allPieces
+        val savedEmptySquares = chessBoard.emptySquares
+        chessBoard.allPieces = savedAllPieces and (1L shl kingPosition).inv()
+        chessBoard.emptySquares = chessBoard.allPieces.inv()
         val isAttacked =
-            (getAttacks(chessBoardWithoutKing, GetOppositeColor(kingColor))
+            (getAttacks(chessBoard, GetOppositeColor(kingColor))
                     and (1L shl kingPosition)) != 0L
-//        Log.d(
-//            Game.DEBUG,
-//            "isKingAttacked elapsedTme in nano seconds: ${System.nanoTime() - startTime}"
-//        )
+        chessBoard.allPieces = savedAllPieces
+        chessBoard.emptySquares = savedEmptySquares
         return isAttacked
     }
 
@@ -1417,9 +1428,8 @@ class MoveGenerator(
         updateKingPinnedPieces(chessBoard, Piece.WHITE)
         val moves = getWhiteLegalMoves(chessBoard)
         //removeMovesThatExposeKing(chessBoard, moves, Piece.WHITE)
-        val playerLegalMoves = PlayerLegalMoves()
-        playerLegalMoves.addAll(moves)
-        checkCastling(chessBoard, playerLegalMoves, Piece.WHITE)
+        val playerLegalMoves = PlayerLegalMoves(moves)
+        if (quietMask != 0L) checkCastling(chessBoard, playerLegalMoves, Piece.WHITE)
         return playerLegalMoves
     }
 
@@ -1427,9 +1437,8 @@ class MoveGenerator(
         updateKingPinnedPieces(chessBoard, Piece.BLACK)
         val moves = getBlackLegalMoves(chessBoard)
         //removeMovesThatExposeKing(chessBoard, moves, Piece.BLACK)
-        val playerLegalMoves = PlayerLegalMoves()
-        playerLegalMoves.addAll(moves)
-        checkCastling(chessBoard, playerLegalMoves, Piece.BLACK)
+        val playerLegalMoves = PlayerLegalMoves(moves)
+        if (quietMask != 0L) checkCastling(chessBoard, playerLegalMoves, Piece.BLACK)
 
         return playerLegalMoves
     }
@@ -1439,6 +1448,20 @@ class MoveGenerator(
             generateWhiteLegalMoves(chessBoard)
         } else {
             generateBlackLegalMoves(chessBoard)
+        }
+    }
+
+    /**
+     * Legal captures only (including en passant and capturing promotions), much cheaper than
+     * generating every move when only captures are needed (quiescence search). Like
+     * generateLegalMovesFor, it updates isKingChecked for [color].
+     */
+    fun generateLegalCapturesFor(chessBoard: ChessBoard, color: Int): PlayerLegalMoves {
+        quietMask = 0L
+        try {
+            return generateLegalMovesFor(chessBoard, color)
+        } finally {
+            quietMask = 0L.inv()
         }
     }
 
