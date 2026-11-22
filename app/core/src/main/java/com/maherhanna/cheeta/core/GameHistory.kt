@@ -1,47 +1,56 @@
 package com.maherhanna.cheeta.core
 
+/** The moves played so far, stored as encoded Longs (see Move's companion functions). */
 class GameHistory {
-    private val moves: ArrayList<Move>
+    private var moves: LongArray
+    private var count = 0
 
     constructor() {
-        moves = ArrayList()
+        moves = LongArray(64)
     }
 
     constructor(copy: GameHistory) {
-        moves = ArrayList(copy.moves)
+        moves = copy.moves.copyOf()
+        count = copy.count
     }
 
-    fun add(move: Move) {
-        moves.add(move)
+    val size: Int
+        get() = count
+
+    fun add(move: Move) = addBits(move.bitValue)
+
+    fun addBits(bits: Long) {
+        if (count == moves.size) moves = moves.copyOf(maxOf(8, moves.size * 2))
+        moves[count++] = bits
     }
 
     fun removeLastMove() {
-        moves.removeAt(moves.size - 1)
-    }
-    fun isEmpty():Boolean{
-        return moves.isEmpty()
+        count--
     }
 
-    val notation : String
-        get() = moves.joinToString(" ") { it.notation }
+    fun isEmpty(): Boolean = count == 0
+
+    /** The encoded last move; only valid when the history is not empty. */
+    val lastBits: Long
+        get() = moves[count - 1]
+
+    val notation: String
+        get() = (0 until count).joinToString(" ") { Move(moves[it]).notation }
 
     val lastMove: Move?
-        get() = if (moves.size == 0) {
-            null
-        } else moves[moves.size - 1]
+        get() = if (count == 0) null else Move(moves[count - 1])
 
     val lastPlayed: Int
-        get() = if (moves.size == 0) {
-            Piece.BLACK
-        } else {
-            lastMove!!.color
-        }
+        get() = if (count == 0) Piece.BLACK else Move.colorOf(moves[count - 1])
 
     /** The most recent capturing move (including en passant), or null if nothing was captured. */
     val lastCapture: Move?
-        get() = moves.lastOrNull { it.isCapture }
+        get() {
+            for (i in count - 1 downTo 0) {
+                if (Move.isCapture(moves[i])) return Move(moves[i])
+            }
+            return null
+        }
 
-    operator fun get(index: Int): Move {
-        return moves[index]
-    }
+    operator fun get(index: Int): Move = Move(moves[index])
 }

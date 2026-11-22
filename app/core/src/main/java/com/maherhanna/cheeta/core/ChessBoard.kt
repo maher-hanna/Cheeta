@@ -394,28 +394,31 @@ class ChessBoard {
         }
 
 
-    fun makeMove(move: Move) {
-        val fromSquare = move.from
-        val toSquare = move.to
-        val moveColor = move.color
-        val movedPieceType = move.pieceType
-        setPieceAt(toSquare, move.pieceType, moveColor)
+    fun makeMove(move: Move) = makeMove(move.bitValue)
+
+    /** Plays an encoded move (see Move's companion functions). */
+    fun makeMove(move: Long) {
+        val fromSquare = Move.fromOf(move)
+        val toSquare = Move.toOf(move)
+        val moveColor = Move.colorOf(move)
+        val movedPieceType = Move.pieceTypeOf(move)
+        setPieceAt(toSquare, Move.pieceTypeOf(move), moveColor)
         removePiece(fromSquare)
         // the full move number increases after black's move
         if (moveColor == Piece.BLACK) fullMovesCount++
 
         //set enPassant target
         var enPassantTargetAfterMove = NO_SQUARE
-        if (move.isPawnDoubleMove) {
+        if (Move.isPawnDoubleMove(move)) {
             enPassantTargetAfterMove = if (moveColor == Piece.WHITE) {
-                move.to - 8
+                Move.toOf(move) - 8
             } else {
-                move.to + 8
+                Move.toOf(move) + 8
             }
         }
         var blackCastlingRightsAfterMove = blackCastlingRights
         var whiteCastlingRightsAfterMove = whiteCastlingRights
-        if (move.isCastling) {
+        if (Move.isCastling(move)) {
             val rookPosition: Int
             val rookCastlingTarget: Int
             if (moveColor == Piece.WHITE) {
@@ -423,16 +426,16 @@ class ChessBoard {
             } else {
                 blackCastlingRightsAfterMove = NO_CASTLING
             }
-            if (move.castlingType === Move.CastlingType.CASTLING_KING_SIDE) {
+            if (!Move.isQueenSideCastling(move)) {
                 rookPosition = getInitialRookKingSide(
                     moveColor
                 )
-                rookCastlingTarget = move.from + 1
+                rookCastlingTarget = Move.fromOf(move) + 1
             } else {
                 rookPosition = getInitialRookQueenSide(
                     moveColor
                 )
-                rookCastlingTarget = move.from - 1
+                rookCastlingTarget = Move.fromOf(move) - 1
             }
             setPieceAt(rookCastlingTarget, Piece.ROOK, moveColor)
             removePiece(rookPosition)
@@ -459,7 +462,7 @@ class ChessBoard {
             }
         }
         // capturing a rook on its initial square removes the opponent's right on that side
-        if (move.isCapture && !move.isEnPasant) {
+        if (Move.isCapture(move) && !Move.isEnPassant(move)) {
             val opponentColor = GetOppositeColor(moveColor)
             val lostRight = when (toSquare) {
                 getInitialRookKingSide(opponentColor) -> CASTLING_KING_SIDE
@@ -472,10 +475,10 @@ class ChessBoard {
                 blackCastlingRightsAfterMove = blackCastlingRightsAfterMove and lostRight.inv()
             }
         }
-        if (move.isPromote) {
-            setPieceAt(toSquare, move.promotionPieceType, moveColor)
+        if (Move.isPromotion(move)) {
+            setPieceAt(toSquare, Move.promotionPieceTypeOf(move), moveColor)
         }
-        if (move.isEnPasant) {
+        if (Move.isEnPassant(move)) {
             if (moveColor == Piece.WHITE) {
                 removePiece(toSquare - 8)
             } else {
@@ -486,12 +489,12 @@ class ChessBoard {
         fiftyMovesHistory.add(fiftyMovesDrawCount)
         //increase fifty moves if no capture or pawn push
         fiftyMovesDrawCount++
-        if (move.isCapture || movedPieceType == Piece.PAWN) {
+        if (Move.isCapture(move) || movedPieceType == Piece.PAWN) {
             fiftyMovesDrawCount = 0
         }
         toPlayColor = if (toPlayColor == Piece.WHITE) Piece.BLACK else Piece.WHITE
         states.add(createState(enPassantTargetAfterMove, blackCastlingRightsAfterMove, whiteCastlingRightsAfterMove))
-        moves.add(move)
+        moves.addBits(move)
     }
 
     private fun createState(enPassantTarget: Int, blackCastlingRights: Int, whiteCastlingRights: Int): State {
@@ -502,40 +505,41 @@ class ChessBoard {
     }
 
     fun unMakeMove() {
-        val lastMove = moves.lastMove ?: return
-        val fromSquare = lastMove.from
-        val toSquare = lastMove.to
-        val moveColor = lastMove.color
-        val movedPieceType = lastMove.pieceType
+        if (moves.isEmpty()) return
+        val lastMove = moves.lastBits
+        val fromSquare = Move.fromOf(lastMove)
+        val toSquare = Move.toOf(lastMove)
+        val moveColor = Move.colorOf(lastMove)
+        val movedPieceType = Move.pieceTypeOf(lastMove)
         setPieceAt(fromSquare, movedPieceType, moveColor)
         removePiece(toSquare)
-        if (lastMove.isCapture && !lastMove.isEnPasant) {
-            setPieceAt(toSquare, lastMove.takenPieceType, GetOppositeColor(moveColor))
+        if (Move.isCapture(lastMove) && !Move.isEnPassant(lastMove)) {
+            setPieceAt(toSquare, Move.takenPieceTypeOf(lastMove), GetOppositeColor(moveColor))
         }
-        if (lastMove.isPromote) {
+        if (Move.isPromotion(lastMove)) {
             setPieceAt(fromSquare, Piece.PAWN, moveColor)
         }
         if (moveColor == Piece.BLACK) {
             fullMovesCount--
         }
-        if (lastMove.isCastling) {
+        if (Move.isCastling(lastMove)) {
             val rookPosition: Int
             val currentRookPosition: Int
-            if (lastMove.castlingType === Move.CastlingType.CASTLING_KING_SIDE) {
+            if (!Move.isQueenSideCastling(lastMove)) {
                 rookPosition = getInitialRookKingSide(
                     moveColor
                 )
-                currentRookPosition = lastMove.from + 1
+                currentRookPosition = Move.fromOf(lastMove) + 1
             } else {
                 rookPosition = getInitialRookQueenSide(
                     moveColor
                 )
-                currentRookPosition = lastMove.from - 1
+                currentRookPosition = Move.fromOf(lastMove) - 1
             }
             setPieceAt(rookPosition, Piece.ROOK, moveColor)
             removePiece(currentRookPosition)
         }
-        if (lastMove.isEnPasant) {
+        if (Move.isEnPassant(lastMove)) {
             if (moveColor == Piece.WHITE) {
                 setPieceAt(toSquare - 8, Piece.PAWN, Piece.BLACK)
             } else {

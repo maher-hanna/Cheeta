@@ -1,40 +1,60 @@
 package com.maherhanna.cheeta.core
 
-// presized: a position rarely has more than 64 legal moves, so the list seldom grows.
-// The list passed in is used directly (not copied).
-class PlayerLegalMoves(private val legalMoves: ArrayList<Move> = ArrayList(64)) {
+/**
+ * A list of moves stored as encoded Longs (see Move's companion functions) in a growable
+ * array, so generating moves allocates no objects. [get] wraps a move in a Move object
+ * for callers that want one; the search uses [bits] instead. A list can be [clear]ed and
+ * reused.
+ */
+class PlayerLegalMoves(initialCapacity: Int = 64) {
+    private var moves = LongArray(initialCapacity)
+    private var count = 0
+
+    fun size(): Int = count
+
+    fun clear() {
+        count = 0
+    }
+
+    /** The encoded move at [index]. */
+    fun bits(index: Int): Long = moves[index]
+
+    fun setBits(index: Int, bits: Long) {
+        moves[index] = bits
+    }
+
+    /** Keeps only the first [newSize] moves. */
+    fun shrinkTo(newSize: Int) {
+        count = newSize
+    }
+
+    fun swap(first: Int, second: Int) {
+        val temporary = moves[first]
+        moves[first] = moves[second]
+        moves[second] = temporary
+    }
+
+    fun addBits(bits: Long) {
+        if (count == moves.size) moves = moves.copyOf(maxOf(8, moves.size * 2))
+        moves[count++] = bits
+    }
+
+    /** The move at [index] as a (newly allocated) Move object. */
+    operator fun get(index: Int): Move = Move(moves[index])
+
+    fun add(newMove: Move) = addBits(newMove.bitValue)
 
     fun getLegalTargetsFor(position: Int): ArrayList<Int> {
         val targetSquares = ArrayList<Int>()
-        for (move in legalMoves) {
-            if (move.from == position) {
-                targetSquares.add(move.to)
+        for (i in 0 until count) {
+            if (Move.fromOf(moves[i]) == position) {
+                targetSquares.add(Move.toOf(moves[i]))
             }
         }
         return targetSquares
     }
 
-    fun canMove(from: Int, to: Int): Boolean {
-        val targets = getLegalTargetsFor(from)
-        if (targets.isEmpty()) return false
-        return targets.contains(to)
-    }
-
-    fun size(): Int {
-        return legalMoves.size
-    }
-
-    operator fun get(index: Int): Move {
-        return legalMoves[index]
-    }
-
-    fun add(newMove: Move) {
-        legalMoves.add(newMove)
-    }
-
-    fun addAll(moves: ArrayList<Move>?) {
-        legalMoves.addAll(moves!!)
-    }
+    fun canMove(from: Int, to: Int): Boolean = getLegalTargetsFor(from).contains(to)
 
     fun getMove(basicMove: Move): Move? = searchMove(basicMove)
 
@@ -49,26 +69,35 @@ class PlayerLegalMoves(private val legalMoves: ArrayList<Move> = ArrayList(64)) 
     )
 
     private fun searchMove(from: Int, to: Int, promotionPieceType: Int): Move? {
-        for (move in legalMoves) {
-            if (move.from == from && move.to == to &&
-                (!move.isPromote || move.promotionPieceType == promotionPieceType)
+        for (i in 0 until count) {
+            val bits = moves[i]
+            if (Move.fromOf(bits) == from && Move.toOf(bits) == to &&
+                (!Move.isPromotion(bits) || Move.promotionPieceTypeOf(bits) == promotionPieceType)
             ) {
-                return move
+                return Move(bits)
             }
         }
         return null
     }
-    /** Removes every move matching [predicate] in a single pass. */
-    fun removeMovesIf(predicate: (Move) -> Boolean) {
-        legalMoves.removeAll(predicate)
+
+    /** Removes every move whose encoding matches [predicate], keeping the order. */
+    fun removeBitsIf(predicate: (Long) -> Boolean) {
+        var kept = 0
+        for (i in 0 until count) {
+            if (!predicate(moves[i])) moves[kept++] = moves[i]
+        }
+        count = kept
     }
 
-    fun removeNonTake() {
-        // single pass; removing through an iterator shifted the array on every removal
-        legalMoves.removeAll { !it.isCapture }
-    }
+    /** Removes every move matching [predicate] (wraps each move in a Move object). */
+    fun removeMovesIf(predicate: (Move) -> Boolean) = removeBitsIf { predicate(Move(it)) }
+
+    fun removeNonTake() = removeBitsIf { !Move.isCapture(it) }
 
     fun isOpponentKingInCheck(opponentKingPosition: Int): Boolean {
-        return legalMoves.map { it.to }.contains(opponentKingPosition)
+        for (i in 0 until count) {
+            if (Move.toOf(moves[i]) == opponentKingPosition) return true
+        }
+        return false
     }
 }

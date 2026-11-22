@@ -76,6 +76,11 @@ class Move {
     constructor(copy: Move) {
         bitValue = copy.bitValue
     }
+
+    /** Wraps an encoded move (see the companion's encode/decode functions). */
+    constructor(bits: Long) {
+        bitValue = bits
+    }
     constructor(notation: String) {
         from = ChessBoard.GetPositionFromNotation(notation.substring(0,2))
         to = ChessBoard.GetPositionFromNotation(notation.substring(2,4))
@@ -201,6 +206,45 @@ class Move {
         private const val ENPASSANT_START: Long = 26
         private const val PAWN_DOUBLE_PUSH_MASK: Long = 134217728
         private const val PAWN_DOUBLE_PUSH_START: Long = 27
+
+        // ------------------------------------------------------------------------------
+        // Moves as plain Longs. The search works with these directly so that no Move
+        // object is allocated per generated move; the bit layout is the same as bitValue.
+        // ------------------------------------------------------------------------------
+
+        fun encode(pieceType: Int, color: Int, from: Int, to: Int): Long =
+            pieceType.toLong() or (color.toLong() shl 3) or
+                    (from.toLong() shl 4) or (to.toLong() shl 10)
+
+        fun withCapture(bits: Long, takenPieceType: Int): Long =
+            bits or TAKE_MASK or (takenPieceType.toLong() shl TAKE_TYPE_START.toInt())
+
+        fun withPromotion(bits: Long, promotionPieceType: Int): Long =
+            (bits and PROMOTE_TYPE_MASK.inv()) or PROMOTE_MASK or
+                    (promotionPieceType.toLong() shl PROMOTE_TYPE_START.toInt())
+
+        fun withEnPassant(bits: Long): Long = withCapture(bits, Piece.PAWN) or ENPASSANT_MASK
+
+        fun withPawnDoublePush(bits: Long): Long = bits or PAWN_DOUBLE_PUSH_MASK
+
+        fun encodeCastling(color: Int, from: Int, to: Int, queenSide: Boolean): Long =
+            encode(Piece.KING, color, from, to) or CASTLING_MASK or
+                    (if (queenSide) CASTLING_TYPE_MASK else 0L)
+
+        fun pieceTypeOf(bits: Long): Int = (bits and TYPE_MASK).toInt()
+        fun colorOf(bits: Long): Int = ((bits and COLOR_MASK) ushr 3).toInt()
+        fun fromOf(bits: Long): Int = ((bits and FROM_MASK) ushr 4).toInt()
+        fun toOf(bits: Long): Int = ((bits and TO_MASK) ushr 10).toInt()
+        fun isCastling(bits: Long): Boolean = bits and CASTLING_MASK != 0L
+        fun isQueenSideCastling(bits: Long): Boolean = bits and CASTLING_TYPE_MASK != 0L
+        fun isCapture(bits: Long): Boolean = bits and TAKE_MASK != 0L
+        fun takenPieceTypeOf(bits: Long): Int =
+            ((bits and TAKE_TYPE_MASK) ushr TAKE_TYPE_START.toInt()).toInt()
+        fun isPromotion(bits: Long): Boolean = bits and PROMOTE_MASK != 0L
+        fun promotionPieceTypeOf(bits: Long): Int =
+            ((bits and PROMOTE_TYPE_MASK) ushr PROMOTE_TYPE_START.toInt()).toInt()
+        fun isEnPassant(bits: Long): Boolean = bits and ENPASSANT_MASK != 0L
+        fun isPawnDoubleMove(bits: Long): Boolean = bits and PAWN_DOUBLE_PUSH_MASK != 0L
 
         fun promotionChar(pieceType: Int): String = when (pieceType) {
             Piece.QUEEN -> "q"

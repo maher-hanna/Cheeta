@@ -110,6 +110,27 @@ class EngineRegressionTest {
         )
     }
 
+    // ----------------------------------------------------- magic bitboards
+
+    @Test
+    fun magicSliderAttacksMatchRayWalking() {
+        val random = java.util.Random(99)
+        for (square in 0 until 64) {
+            repeat(2000) {
+                // sparse and dense occupancies
+                val occupied = if (it % 2 == 0) random.nextLong() and random.nextLong() else random.nextLong()
+                assertEquals(
+                    com.maherhanna.cheeta.core.SliderAttacks.slowRook(square, occupied),
+                    com.maherhanna.cheeta.core.SliderAttacks.rook(square, occupied)
+                )
+                assertEquals(
+                    com.maherhanna.cheeta.core.SliderAttacks.slowBishop(square, occupied),
+                    com.maherhanna.cheeta.core.SliderAttacks.bishop(square, occupied)
+                )
+            }
+        }
+    }
+
     // ------------------------------------------------------ captures only
 
     @Test

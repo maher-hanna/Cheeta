@@ -31,19 +31,26 @@ open class ChessEngine {
     var lastSearchDepth = 0
         private set
 
-    // triangular principal variation table indexed by ply
-    var pvTable: Array<Array<Move?>> = Array(MAX_PLY) { arrayOfNulls(MAX_PLY) }
+    // triangular principal variation table indexed by ply (encoded moves)
+    private val pvTable = Array(MAX_PLY) { LongArray(MAX_PLY) }
     private var pvLength = IntArray(MAX_PLY)
     // principal variation of the last completed iteration, used for move ordering
-    private var previousPv: Array<Move?> = arrayOfNulls(0)
+    private val previousPv = LongArray(MAX_PLY)
+    private var previousPvLength = 0
     // true only while the search is walking down the previous iteration's PV
     private var followPv = false
     // false when the last root search was cut short by the time limit
     private var lastIterationComplete = false
 
 
-    //killerMove[id][ply]
-    private var killerMove = Array(2) { arrayOfNulls<Move>(MAX_PLY) }
+    //killerMove[id][ply], encoded moves (0 = none)
+    private val killerMove = Array(2) { LongArray(MAX_PLY) }
+
+    // reusable buffers, one move list and score array per ply, so the search allocates
+    // nothing per node (a position has at most 218 legal moves)
+    private val moveBuffers = Array(MAX_PLY + 1) { PlayerLegalMoves(64) }
+    private val scoreBuffers = Array(MAX_PLY + 1) { IntArray(256) }
+    private val seeGain = IntArray(32)
     private var history = Array(2) { Array(64) { IntArray(64) } }
 
     // transposition table stored in primitive arrays (no object allocated per write)
@@ -78,12 +85,12 @@ open class ChessEngine {
         moveGenerator = MoveGenerator()
         isUciMode = false
 
-        killerMove = Array(2) { arrayOfNulls(MAX_PLY) }
+        killerMove[0].fill(0L)
+        killerMove[1].fill(0L)
         history = Array(2) { Array(64) { IntArray(64) } }
         clearTranspositionTable()
-        pvTable = Array(MAX_PLY) { arrayOfNulls(MAX_PLY) }
         pvLength = IntArray(MAX_PLY)
-        previousPv = arrayOfNulls(0)
+        previousPvLength = 0
         moveGenerator.reset()
     }
 
@@ -169,30 +176,30 @@ open class ChessEngine {
         foundCheckMate = false
         // the transposition table is kept between moves (positions from the previous
         // search often come up again); it is cleared by reset() for a new game
-        pvTable = Array(MAX_PLY) { arrayOfNulls(MAX_PLY) }
-        pvLength = IntArray(MAX_PLY)
-        previousPv = arrayOfNulls(0)
-        killerMove = Array(2) { arrayOfNulls(MAX_PLY) }
+        pvLength.fill(0)
+        previousPvLength = 0
+        killerMove[0].fill(0L)
+        killerMove[1].fill(0L)
         history = Array(2) { Array(64) { IntArray(64) } }
         evaluations = 0
         betaCutOffs = 0
         nodes = 0
         searchTimeFinished = false
         maxingPlayer = chessBoard.toPlayColor
-        var toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
-            chessBoard,
-            maxingPlayer
-        )
+        val rootMoves = moveGenerator.generateLegalMovesFor(chessBoard, maxingPlayer)
         // no legal moves: the game is already over
-        if (toPlayLegalMoves.size() == 0) return null
-        toPlayLegalMoves = sortMoves(chessBoard, toPlayLegalMoves, 0)
+        if (rootMoves.size() == 0) return null
+        // order the root moves once; afterwards each iteration's best move is moved first
+        val rootScores = IntArray(rootMoves.size())
+        scoreMoves(chessBoard, rootMoves, rootScores, 0, 0L, 0L)
+        for (i in 0 until rootMoves.size()) pickNextMove(rootMoves, rootScores, i)
         var currentDepth = 0
-        var move: Move? = toPlayLegalMoves[0]
+        var move = rootMoves.bits(0)
 
         while (!foundCheckMate && currentDepth < maxDepth && currentDepth < MAX_PLY - 1) {
             currentDepth++
-            val currentSearchMove = search(chessBoard, toPlayLegalMoves, currentDepth)
-            if (currentSearchMove == null) {
+            val currentSearchMove = search(chessBoard, rootMoves, currentDepth)
+            if (currentSearchMove == 0L) {
                 // interrupted before any root move finished; keep the last completed depth
                 currentDepth--
                 break
@@ -204,34 +211,37 @@ open class ChessEngine {
                 currentDepth--
                 break
             }
-            previousPv = pvTable[0].copyOf(pvLength[0])
+            previousPvLength = pvLength[0]
+            pvTable[0].copyInto(previousPv, 0, 0, previousPvLength)
             // search the best move of this iteration first in the next one
-            toPlayLegalMoves = moveToFront(toPlayLegalMoves, currentSearchMove)
+            moveToFront(rootMoves, currentSearchMove)
             // each depth takes several times longer than the previous one, so a new depth
             // started after half the time is used would almost certainly not finish
             if (System.currentTimeMillis() - startTime > maxSearchTime / 2) break
         }
         lastSearchDepth = currentDepth
+        val bestMove = Move(move)
         val duration = System.currentTimeMillis() - startTime
         Logger.getLogger(DEBUG_TAG).log(
             Level.INFO, "evaluations " + evaluations +
                     " depth " + currentDepth +
-                    "\nmove " + move?.pieceName.toString() + " " + move?.fromNotation.toString() + " to " + move?.toNotation.toString()
+                    "\nmove " + bestMove.pieceName + " " + bestMove.fromNotation + " to " + bestMove.toNotation
                     + "\ntime " + duration.toFloat() + " milliseconds"
         )
-        return move
+        return bestMove
     }
 
-    private fun moveToFront(moves: PlayerLegalMoves, first: Move): PlayerLegalMoves {
-        val reordered = PlayerLegalMoves()
-        reordered.add(first)
-        for (i in 0 until moves.size()) {
-            if (moves[i] != first) reordered.add(moves[i])
+    // moves [first] to the front of [moves], keeping the order of the others
+    private fun moveToFront(moves: PlayerLegalMoves, first: Long) {
+        var index = 0
+        while (moves.bits(index) != first) index++
+        while (index > 0) {
+            moves.swap(index, index - 1)
+            index--
         }
-        return reordered
     }
 
-    private fun updatePv(ply: Int, move: Move) {
+    private fun updatePv(ply: Int, move: Long) {
         pvTable[ply][ply] = move
         val childLength = pvLength[ply + 1]
         for (j in ply + 1 until childLength) {
@@ -240,23 +250,24 @@ open class ChessEngine {
         pvLength[ply] = maxOf(childLength, ply + 1)
     }
 
-    // Returns the best move among the root moves searched completely. If the time limit
-    // cuts the search short, lastIterationComplete is false and the result covers only the
-    // moves finished so far (null if none).
+    // Returns the best move among the root moves searched completely (0 if none). If the
+    // time limit cuts the search short, lastIterationComplete is false and the result
+    // covers only the moves finished so far.
     private fun search(
         chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
         maxDepth: Int,
-    ): Move? {
+    ): Long {
         var alpha = -INFINITY
         val beta = INFINITY
-        var bestMove: Move? = null
+        var bestMove = 0L
         pvLength[0] = 0
         lastIterationComplete = false
         for (i in 0 until moves.size()) {
-            chessBoard.makeMove(moves[i])
+            val move = moves.bits(i)
+            chessBoard.makeMove(move)
             // the first root move is the previous iteration's best: walk its PV
-            followPv = i == 0 && previousPv.isNotEmpty()
+            followPv = i == 0 && previousPvLength > 0
             val score = -negaMax(
                 chessBoard, -beta,
                 -alpha, maxDepth - 1, 1
@@ -269,8 +280,8 @@ open class ChessEngine {
             }
             if (score > alpha) {
                 alpha = score
-                bestMove = moves[i]
-                updatePv(0, moves[i])
+                bestMove = move
+                updatePv(0, move)
             }
         }
         lastIterationComplete = true
@@ -326,13 +337,11 @@ open class ChessEngine {
             }
         }
 
-        val toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
-            chessBoard,
-            toPlayColor
-        )
+        // this ply's reusable move list (no allocation per node)
+        val moves = moveGenerator.generateLegalMovesFor(chessBoard, toPlayColor, moveBuffers[ply])
         // isKingChecked is valid right after move generation
         val inCheck = moveGenerator.isKingChecked(toPlayColor)
-        if (toPlayLegalMoves.size() == 0) {
+        if (moves.size() == 0) {
             // checkmate or stalemate
             return if (inCheck) LOSE_SCORE + ply else 0
         }
@@ -366,19 +375,23 @@ open class ChessEngine {
             }
         }
 
-        val pvMove = if (isOnPv) previousPv.getOrNull(ply) else null
-        val sortedMoves = sortMoves(chessBoard, toPlayLegalMoves, ply, pvMove, hashMove)
+        val pvMove = if (isOnPv && ply < previousPvLength) previousPv[ply] else 0L
+        val scores = scoreBuffers[ply]
+        scoreMoves(chessBoard, moves, scores, ply, pvMove, hashMove)
         var hashFlag = TranspositionTableFlag.UPPER_BOUND
         // on a fail low no move is known to be best; keep the previously stored one
         var bestMove = hashMove
-        for (i in 0 until sortedMoves.size()) {
-            val move = sortedMoves[i]
+        for (i in 0 until moves.size()) {
+            // lazy ordering: bring the best remaining move to position i; most nodes cut
+            // off after one or two moves, so the rest never needs sorting
+            pickNextMove(moves, scores, i)
+            val move = moves.bits(i)
             chessBoard.makeMove(move)
             var score: Int
             if (i == 0 || !usePvs) {
                 // the first (expected best) move is searched with the full window;
                 // the PV move is sorted first and only its subtree continues along the PV
-                followPv = i == 0 && pvMove != null && move.bitValue == pvMove.bitValue
+                followPv = i == 0 && pvMove != 0L && move == pvMove
                 score = -negaMax(chessBoard, -beta, -alpha, depth - 1, ply + 1)
                 followPv = false
             } else {
@@ -386,8 +399,8 @@ open class ChessEngine {
                 // search them one ply shallower first
                 var reduction = 0
                 if (useLateMoveReductions && i >= LMR_FULL_DEPTH_MOVES &&
-                    depth >= LMR_MIN_DEPTH && !inCheck && !move.isCapture &&
-                    !move.isPromote && !isKillerMove(move, ply) &&
+                    depth >= LMR_MIN_DEPTH && !inCheck && !Move.isCapture(move) &&
+                    !Move.isPromotion(move) && !isKillerMove(move, ply) &&
                     !moveGenerator.isKingAttacked(chessBoard, chessBoard.toPlayColor)
                 ) {
                     reduction = 1
@@ -407,14 +420,14 @@ open class ChessEngine {
             chessBoard.unMakeMove()
             if (searchTimeFinished) return 0
             if (score >= beta) {
-                if (!move.isCapture) {
+                if (!Move.isCapture(move)) {
                     //killer moves: shift only for a new move so both slots stay different
                     if (killerMove[0][ply] != move) {
                         killerMove[1][ply] = killerMove[0][ply]
-                        killerMove[0][ply] = Move(move)
+                        killerMove[0][ply] = move
                     }
                     // history moves
-                    history[move.color][move.from][move.to] += depth * depth
+                    history[Move.colorOf(move)][Move.fromOf(move)][Move.toOf(move)] += depth * depth
                 }
                 betaCutOffs++
                 writeTableEntry(
@@ -422,14 +435,14 @@ open class ChessEngine {
                     value = scoreToTable(beta, ply),
                     depth = depth,
                     hashFlag = TranspositionTableFlag.LOWER_BOUND,
-                    bestMove = move.bitValue
+                    bestMove = move
                 )
                 return beta
             }
             if (score > alpha) {
                 alpha = score
                 hashFlag = TranspositionTableFlag.EXACT
-                bestMove = move.bitValue
+                bestMove = move
                 updatePv(ply, move)
             }
         }
@@ -443,7 +456,7 @@ open class ChessEngine {
         return alpha
     }
 
-    private fun isKillerMove(move: Move, ply: Int): Boolean =
+    private fun isKillerMove(move: Long, ply: Int): Boolean =
         killerMove[0][ply] == move || killerMove[1][ply] == move
 
     private fun hasNonPawnMaterial(chessBoard: ChessBoard, color: Int): Boolean =
@@ -465,12 +478,12 @@ open class ChessEngine {
         }
         // only captures are searched here unless in check, so generate just the captures
         // (this also tells us whether the side to move is in check)
-        var toPlayLegalMoves = moveGenerator.generateLegalCapturesFor(chessBoard, toPlayColor)
+        var moves = moveGenerator.generateLegalCapturesFor(chessBoard, toPlayColor, moveBuffers[ply])
         val inCheck = moveGenerator.isKingChecked(toPlayColor)
         if (inCheck) {
             // in check every evasion is searched, and no moves means checkmate
-            toPlayLegalMoves = moveGenerator.generateLegalMovesFor(chessBoard, toPlayColor)
-            if (toPlayLegalMoves.size() == 0) return LOSE_SCORE + ply
+            moves = moveGenerator.generateLegalMovesFor(chessBoard, toPlayColor, moveBuffers[ply])
+            if (moves.size() == 0) return LOSE_SCORE + ply
         } else if (chessBoard.fiftyMovesDrawCount >= 100) {
             return 0
         }
@@ -488,16 +501,14 @@ open class ChessEngine {
                 quiescenceAlpha = eval
             }
             if (useSee) {
-                // captures that lose material cannot improve on standing pat
-                toPlayLegalMoves.removeMovesIf { move ->
-                    !move.isPromote && isPossiblyLosingCapture(move) &&
-                            staticExchangeEvaluation(chessBoard, move) < 0
-                }
+                removeLosingCaptures(chessBoard, moves)
             }
         }
-        toPlayLegalMoves = sortMoves(chessBoard, toPlayLegalMoves, ply)
-        for (i in 0 until toPlayLegalMoves.size()) {
-            chessBoard.makeMove(toPlayLegalMoves[i])
+        val scores = scoreBuffers[ply]
+        scoreMoves(chessBoard, moves, scores, ply, 0L, 0L)
+        for (i in 0 until moves.size()) {
+            pickNextMove(moves, scores, i)
+            chessBoard.makeMove(moves.bits(i))
             val score = -quiescence(
                 chessBoard, -betaArg, -quiescenceAlpha,
                 ply + 1
@@ -514,30 +525,46 @@ open class ChessEngine {
         return quiescenceAlpha
     }
 
+    // captures that lose material cannot improve on standing pat in quiescence search
+    private fun removeLosingCaptures(chessBoard: ChessBoard, moves: PlayerLegalMoves) {
+        var kept = 0
+        for (i in 0 until moves.size()) {
+            val move = moves.bits(i)
+            val losing = !Move.isPromotion(move) && isPossiblyLosingCapture(move) &&
+                    staticExchangeEvaluation(chessBoard, move) < 0
+            if (!losing) moves.setBits(kept++, move)
+        }
+        moves.shrinkTo(kept)
+    }
+
     // ------------------------------------------------------- static exchange evaluation
 
     // a capture can only lose material if the capturing piece is worth more than the victim
-    private fun isPossiblyLosingCapture(move: Move): Boolean =
-        SEE_VALUES[move.pieceType] > SEE_VALUES[move.takenPieceType]
+    private fun isPossiblyLosingCapture(move: Long): Boolean =
+        SEE_VALUES[Move.pieceTypeOf(move)] > SEE_VALUES[Move.takenPieceTypeOf(move)]
+
+    fun staticExchangeEvaluation(chessBoard: ChessBoard, move: Move): Int =
+        staticExchangeEvaluation(chessBoard, move.bitValue)
 
     /**
      * Static exchange evaluation: the material balance (from the mover's side) after the
      * best sequence of captures and recaptures on the target square, where each side
      * may stop capturing when continuing would lose material.
      */
-    fun staticExchangeEvaluation(chessBoard: ChessBoard, move: Move): Int {
-        val target = move.to
-        val gain = IntArray(32)
+    fun staticExchangeEvaluation(chessBoard: ChessBoard, move: Long): Int {
+        val target = Move.toOf(move)
+        val color = Move.colorOf(move)
+        val gain = seeGain
         var depth = 0
-        gain[0] = SEE_VALUES[move.takenPieceType]
-        var occupied = chessBoard.allPieces and (1L shl move.from).inv()
-        if (move.isEnPasant) {
-            val capturedPawn = if (move.color == Piece.WHITE) target - 8 else target + 8
+        gain[0] = SEE_VALUES[Move.takenPieceTypeOf(move)]
+        var occupied = chessBoard.allPieces and (1L shl Move.fromOf(move)).inv()
+        if (Move.isEnPassant(move)) {
+            val capturedPawn = if (color == Piece.WHITE) target - 8 else target + 8
             occupied = occupied and (1L shl capturedPawn).inv()
         }
         // value of the piece now standing on the target square
-        var pieceOnTarget = SEE_VALUES[move.pieceType]
-        var side = Piece.GetOppositeColor(move.color)
+        var pieceOnTarget = SEE_VALUES[Move.pieceTypeOf(move)]
+        var side = Piece.GetOppositeColor(color)
         while (depth < gain.size - 1) {
             val attackers = attackersTo(chessBoard, target, occupied) and occupied
             val attacker = leastValuableAttacker(chessBoard, attackers, side)
@@ -580,23 +607,8 @@ open class ChessEngine {
                 chessBoard.whiteQueens or chessBoard.blackQueens
         val bishopsAndQueens = chessBoard.whiteBishops or chessBoard.blackBishops or
                 chessBoard.whiteQueens or chessBoard.blackQueens
-        for (direction in 0 until 8) {
-            val fileStep = DIRECTION_FILE_STEPS[direction]
-            val rankStep = DIRECTION_RANK_STEPS[direction]
-            val sliders = if (direction < 4) rooksAndQueens else bishopsAndQueens
-            var f = file + fileStep
-            var r = rank + rankStep
-            while (f in 0..7 && r in 0..7) {
-                val bit = 1L shl (r * 8 + f)
-                if (occupied and bit != 0L) {
-                    // the first piece on the ray: an attacker if it slides this way
-                    attackers = attackers or (sliders and bit)
-                    break
-                }
-                f += fileStep
-                r += rankStep
-            }
-        }
+        attackers = attackers or (SliderAttacks.rook(square, occupied) and rooksAndQueens)
+        attackers = attackers or (SliderAttacks.bishop(square, occupied) and bishopsAndQueens)
         return attackers
     }
 
@@ -612,22 +624,48 @@ open class ChessEngine {
         return if (candidates == 0L) -1 else java.lang.Long.numberOfTrailingZeros(candidates)
     }
 
+    // ---------------------------------------------------------------- move ordering
+
+    private fun scoreMoves(
+        chessBoard: ChessBoard,
+        moves: PlayerLegalMoves,
+        scores: IntArray,
+        ply: Int,
+        pvMove: Long,
+        hashMove: Long
+    ) {
+        for (i in 0 until moves.size()) {
+            scores[i] = scoreMove(chessBoard, moves.bits(i), ply, pvMove, hashMove)
+        }
+    }
+
+    // swaps the highest scoring move among positions [start] and later into [start]
+    private fun pickNextMove(moves: PlayerLegalMoves, scores: IntArray, start: Int) {
+        var best = start
+        for (j in start + 1 until moves.size()) {
+            if (scores[j] > scores[best]) best = j
+        }
+        if (best != start) {
+            moves.swap(start, best)
+            val score = scores[start]
+            scores[start] = scores[best]
+            scores[best] = score
+        }
+    }
+
     private fun scoreMove(
         chessBoard: ChessBoard,
-        currentMove: Move,
+        move: Long,
         ply: Int,
-        pvNode: Move?,
+        pvMove: Long,
         hashMove: Long
     ): Int {
-        var currentScore = 0
-
-        // capture score
-        if (currentMove.isCapture) {
-            val victim = currentMove.takenPieceType
-            val attacker = currentMove.pieceType
-            val mvvLva = mvv_lva[(attacker - 1) * 6 + (victim - 1)]
-            currentScore += if (useSee && isPossiblyLosingCapture(currentMove) &&
-                staticExchangeEvaluation(chessBoard, currentMove) < 0
+        var score = 0
+        if (Move.isCapture(move)) {
+            // captures: most valuable victim, least valuable attacker first
+            val mvvLva = mvv_lva[(Move.pieceTypeOf(move) - 1) * 6 + (Move.takenPieceTypeOf(move) - 1)]
+            score += if (useSee && isPossiblyLosingCapture(move) &&
+                staticExchangeEvaluation(chessBoard, move) < 0
             ) {
                 // losing captures go after killer moves
                 mvvLva + LOSING_CAPTURE_SCORE
@@ -635,63 +673,29 @@ open class ChessEngine {
                 mvvLva + 10000
             }
         } else {
-            // killer move score
-            if (ply < MAX_PLY && killerMove[0][ply] != null && killerMove[0][ply] == currentMove) {
-                currentScore += 9000
-            } else if (ply < MAX_PLY && killerMove[1][ply] != null && killerMove[1][ply] == currentMove) {
-                currentScore += 8000
+            // killer moves
+            if (killerMove[0][ply] == move) {
+                score += 9000
+            } else if (killerMove[1][ply] == move) {
+                score += 8000
             }
-
             // history score, capped so it never outranks killers or captures
-            currentScore += minOf(
-                history[currentMove.color][currentMove.from][currentMove.to],
+            score += minOf(
+                history[Move.colorOf(move)][Move.fromOf(move)][Move.toOf(move)],
                 MAX_HISTORY_SCORE
             )
         }
-
-        // promotion score
-        if (currentMove.isPromote) {
-            currentScore += if (currentMove.promotionPieceType == Piece.QUEEN) 10000 else 0
+        if (Move.isPromotion(move) && Move.promotionPieceTypeOf(move) == Piece.QUEEN) {
+            score += 10000
         }
-        //pv move
-        if(currentMove.bitValue == pvNode?.bitValue){
-            currentScore += 500000
+        // the previous iteration's PV move, then the transposition table's best move
+        if (pvMove != 0L && move == pvMove) {
+            score += 500000
         }
-        // best move stored in the transposition table, tried right after the PV move
-        if (hashMove != 0L && currentMove.bitValue == hashMove) {
-            currentScore += 400000
+        if (hashMove != 0L && move == hashMove) {
+            score += 400000
         }
-
-        return currentScore
-    }
-
-    private fun sortMoves(
-        chessBoard: ChessBoard,
-        moves: PlayerLegalMoves,
-        ply: Int,
-        pvNode: Move? = null,
-        hashMove: Long = 0L
-    ): PlayerLegalMoves {
-        val count = moves.size()
-        val scores = IntArray(count) { scoreMove(chessBoard, moves[it], ply, pvNode, hashMove) }
-        // stable insertion sort of the move indices by descending score (lists are short,
-        // and no objects are allocated per move)
-        val order = IntArray(count) { it }
-        for (i in 1 until count) {
-            val index = order[i]
-            val score = scores[index]
-            var j = i - 1
-            while (j >= 0 && scores[order[j]] < score) {
-                order[j + 1] = order[j]
-                j--
-            }
-            order[j + 1] = index
-        }
-        val sortedMoves = PlayerLegalMoves(ArrayList(count))
-        for (index in order) {
-            sortedMoves.add(moves[index])
-        }
-        return sortedMoves
+        return score
     }
 
     private fun isGameFinished(gameStatus: GameStatus): Boolean {
