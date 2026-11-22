@@ -1467,9 +1467,18 @@ class MoveGenerator(
             return GameStatus.FINISHED_DRAW
         }
 
-        //check for third repetition draw
-        // a position can only repeat since the last capture or pawn move, and only
-        // with the same side to move, so only every second state in that window is checked
+        if (isThreefoldRepetition(chessBoard)) {
+            return GameStatus.FINISHED_DRAW
+        }
+        return gameStatus
+    }
+
+    /**
+     * True if the current position has occurred three times. A position can only repeat
+     * since the last capture or pawn move, and only with the same side to move, so only
+     * every second state in that window is checked.
+     */
+    fun isThreefoldRepetition(chessBoard: ChessBoard): Boolean {
         var repeatedPositionCount = 1
         val lastIndex = chessBoard.states.size - 1
         val lastState = chessBoard.states[lastIndex]
@@ -1478,12 +1487,11 @@ class MoveGenerator(
             if (lastState == chessBoard.states[i]) {
                 repeatedPositionCount++
                 if (repeatedPositionCount == 3) {
-                    return GameStatus.FINISHED_DRAW
-
+                    return true
                 }
             }
         }
-        return gameStatus
+        return false
     }
 
     private fun checkCastling(

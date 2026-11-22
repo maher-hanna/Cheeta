@@ -31,6 +31,10 @@ open class ChessEngine {
     private var pvLength = IntArray(MAX_PLY)
     // principal variation of the last completed iteration, used for move ordering
     private var previousPv: Array<Move?> = arrayOfNulls(0)
+    // true only while the search is walking down the previous iteration's PV
+    private var followPv = false
+    // false when the last root search was cut short by the time limit
+    private var lastIterationComplete = false
 
 
     //killerMove[id][ply]
@@ -265,15 +269,23 @@ open class ChessEngine {
             currentDepth++
             val currentSearchMove = search(chessBoard, toPlayLegalMoves, currentDepth)
             if (currentSearchMove == null) {
-                // search was interrupted; keep the result of the last completed depth
+                // interrupted before any root move finished; keep the last completed depth
                 currentDepth--
                 break
             }
+            // a move from an interrupted iteration is still usable: the previous best move is
+            // searched first, so any move returned has been fully searched at this depth
             move = currentSearchMove
+            if (!lastIterationComplete) {
+                currentDepth--
+                break
+            }
             previousPv = pvTable[0].copyOf(pvLength[0])
             // search the best move of this iteration first in the next one
             toPlayLegalMoves = moveToFront(toPlayLegalMoves, currentSearchMove)
-            if (System.currentTimeMillis() - startTime > maxSearchTime) break
+            // each depth takes several times longer than the previous one, so a new depth
+            // started after half the time is used would almost certainly not finish
+            if (System.currentTimeMillis() - startTime > maxSearchTime / 2) break
         }
         lastSearchDepth = currentDepth
         val duration = System.currentTimeMillis() - startTime
@@ -304,7 +316,9 @@ open class ChessEngine {
         pvLength[ply] = maxOf(childLength, ply + 1)
     }
 
-    // returns null if the search was interrupted by the time limit
+    // Returns the best move among the root moves searched completely. If the time limit
+    // cuts the search short, lastIterationComplete is false and the result covers only the
+    // moves finished so far (null if none).
     private fun search(
         chessBoard: ChessBoard,
         moves: PlayerLegalMoves,
@@ -314,15 +328,20 @@ open class ChessEngine {
         val beta = INFINITY
         var bestMove: Move? = null
         pvLength[0] = 0
+        lastIterationComplete = false
         for (i in 0 until moves.size()) {
             chessBoard.makeMove(moves[i])
+            // the first root move is the previous iteration's best: walk its PV
+            followPv = i == 0 && previousPv.isNotEmpty()
             val score = -negaMax(
                 chessBoard, -beta,
                 -alpha, maxDepth - 1, 1
             )
+            followPv = false
             chessBoard.unMakeMove()
             if (searchTimeFinished) {
-                return null
+                // the interrupted move's score is incomplete and is ignored
+                return bestMove
             }
             if (score > alpha) {
                 alpha = score
@@ -330,6 +349,7 @@ open class ChessEngine {
                 updatePv(0, moves[i])
             }
         }
+        lastIterationComplete = true
         // a forced mate was found, deeper searches cannot improve on it
         if (alpha > MATE_BOUND) {
             foundCheckMate = true
@@ -346,22 +366,23 @@ open class ChessEngine {
         ply: Int
     ): Int {
         pvLength[ply] = ply
+        // only the node reached through the PV move keeps following the PV
+        val isOnPv = followPv
+        followPv = false
         if (isTimeUp()) return 0
         var alpha = alphaOriginal
         val toPlayColor = chessBoard.toPlayColor
-        val toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
-            chessBoard,
-            toPlayColor
-        )
-        // game status first so repetition / fifty move draws are not hidden by the table
-        val gameStatus = checkStatus(chessBoard, toPlayLegalMoves)
-        if (isGameFinished(gameStatus)) {
-            return terminalScore(gameStatus, ply)
+
+        // cheap draw checks first: repetition and insufficient material never coincide
+        // with checkmate, so they can be decided before generating any moves
+        if (chessBoard.insufficientMaterial() || moveGenerator.isThreefoldRepetition(chessBoard)) {
+            return 0
         }
         if (depth <= 0 || ply >= MAX_PLY - 1) {
             return quiescence(chessBoard, alpha, beta, ply)
         }
 
+        // probe the table before the (expensive) move generation
         val chessBoardHash = getZobristHash(chessBoard)
         val tableEntry =
             probeTableEntry(hashKey = chessBoardHash, alpha = alpha, beta = beta, depth = depth)
@@ -374,22 +395,41 @@ open class ChessEngine {
             }
         }
 
-        val sortedMoves = sortMoves(toPlayLegalMoves, ply, previousPv.getOrNull(ply))
+        val toPlayLegalMoves = moveGenerator.generateLegalMovesFor(
+            chessBoard,
+            toPlayColor
+        )
+        if (toPlayLegalMoves.size() == 0) {
+            // checkmate or stalemate (isKingChecked is valid right after move generation)
+            return if (moveGenerator.isKingChecked(toPlayColor)) LOSE_SCORE + ply else 0
+        }
+        // fifty move rule is checked after mate: a mate on the 100th half move still counts
+        if (chessBoard.fiftyMovesDrawCount >= 100) {
+            return 0
+        }
+
+        val pvMove = if (isOnPv) previousPv.getOrNull(ply) else null
+        val sortedMoves = sortMoves(toPlayLegalMoves, ply, pvMove)
         var hashFlag = TranspositionTableFlag.UPPER_BOUND
         for (i in 0 until sortedMoves.size()) {
             val move = sortedMoves[i]
             chessBoard.makeMove(move)
+            // the PV move is sorted first; only its subtree continues along the PV
+            followPv = i == 0 && pvMove != null && move.bitValue == pvMove.bitValue
             val score = -negaMax(
                 chessBoard, -beta, -alpha,
                 depth - 1, ply + 1
             )
+            followPv = false
             chessBoard.unMakeMove()
             if (searchTimeFinished) return 0
             if (score >= beta) {
                 if (!move.isCapture) {
-                    //killer moves
-                    killerMove[1][ply] = killerMove[0][ply]
-                    killerMove[0][ply] = Move(move)
+                    //killer moves: shift only for a new move so both slots stay different
+                    if (killerMove[0][ply] != move) {
+                        killerMove[1][ply] = killerMove[0][ply]
+                        killerMove[0][ply] = Move(move)
+                    }
                     // history moves
                     history[move.color][move.from][move.to] += depth * depth
                 }
