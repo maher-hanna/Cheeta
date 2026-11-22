@@ -36,6 +36,13 @@ class ChessBoard {
     private var fiftyMovesHistory: ArrayList<Int> = ArrayList()
     var fullMovesCount = 1
 
+    // Zobrist hash of the pieces only, updated incrementally in setPieceAt/removePiece
+    private var piecesHash = 0L
+
+    /** Zobrist hash of the current position (pieces, side to move, castling, en passant). */
+    val zobristHash: Long
+        get() = states[states.size - 1].hash
+
     //---------------------------------------------------------------------------------
     constructor(copy: ChessBoard?)  {
         if (copy != null) {
@@ -61,6 +68,7 @@ class ChessBoard {
             fiftyMovesDrawCount = copy.fiftyMovesDrawCount
             fiftyMovesHistory = ArrayList(copy.fiftyMovesHistory)
             fullMovesCount = copy.fullMovesCount
+            piecesHash = copy.piecesHash
         }
 
     }
@@ -89,6 +97,7 @@ class ChessBoard {
         copy.emptySquares = emptySquares
         copy.allPieces = allPieces
         copy.toPlayColor = toPlayColor
+        copy.piecesHash = piecesHash
         return copy
     }
 
@@ -252,6 +261,7 @@ class ChessBoard {
             fiftyMovesDrawCount = 0
             fullMovesCount = 0
         }
+        piecesHash = Zobrist.piecesHash(this)
         states.add(createState(enPassantTarget, blackCastlingRights, whiteCastlingRights))
 
     }
@@ -341,6 +351,10 @@ class ChessBoard {
     }
 
     fun removePiece(square: Int) {
+        // keep the Zobrist hash in step with the pieces
+        if (allPieces and (1L shl square) != 0L) {
+            piecesHash = piecesHash xor Zobrist.piece(pieceColor(square), pieceType(square), square)
+        }
         allPieces = BitMath.popBit(allPieces, square)
         allWhitePieces = allPieces and allWhitePieces
         allBlackPieces = allPieces and allBlackPieces
@@ -485,7 +499,10 @@ class ChessBoard {
             whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing,
             blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing
         )
-        return State(pieces, toPlayColor, enPassantTarget, blackCastlingRights, whiteCastlingRights)
+        val hash = piecesHash xor Zobrist.stateHash(
+            this, toPlayColor, whiteCastlingRights, blackCastlingRights, enPassantTarget
+        )
+        return State(pieces, toPlayColor, enPassantTarget, blackCastlingRights, whiteCastlingRights, hash)
     }
 
     fun unMakeMove() {
@@ -566,6 +583,7 @@ class ChessBoard {
                 Piece.KING -> addBlackKing(position)
             }
         }
+        piecesHash = piecesHash xor Zobrist.piece(pieceColor, pieceType, position)
     }
 
 

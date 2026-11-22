@@ -30,7 +30,9 @@ class Uci {
             }
 
             "position" -> {
-                engine.reset()
+                // no engine.reset() here: GUIs send "position" before every move, and
+                // resetting would throw away the transposition table each time
+                // ("ucinewgame" resets the engine for a new game)
                 engine.isUciMode = true
                 chessBoard = ChessBoard(ChessBoard.startPosition)
                 if (splitWords[1] == "fen") {

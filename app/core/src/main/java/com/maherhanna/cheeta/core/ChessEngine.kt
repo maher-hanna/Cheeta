@@ -1,11 +1,8 @@
 package com.maherhanna.cheeta.core
 
-import com.maherhanna.cheeta.core.ChessBoard.Companion.CASTLING_KING_SIDE
-import com.maherhanna.cheeta.core.ChessBoard.Companion.CASTLING_QUEEN_SIDE
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetFile
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetPosition
 import com.maherhanna.cheeta.core.ChessBoard.Companion.GetRank
-import java.security.SecureRandom
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -46,27 +43,20 @@ open class ChessEngine {
     private val tableValues = IntArray(TRANSPOSITION_TABLE_SIZE.toInt())
     private val tableDepths = IntArray(TRANSPOSITION_TABLE_SIZE.toInt())
     private val tableFlags = ByteArray(TRANSPOSITION_TABLE_SIZE.toInt())
+    // best (or cutoff) move found in the position, as Move.bitValue; 0 = none
+    private val tableMoves = LongArray(TRANSPOSITION_TABLE_SIZE.toInt())
 
     private fun clearTranspositionTable() {
         tableKeys.fill(0L)
         tableDepths.fill(-1)
+        tableMoves.fill(0L)
     }
 
     private fun tableIndex(hashKey: ULong): Int =
         (hashKey.toLong() and (TRANSPOSITION_TABLE_SIZE.toLong() - 1)).toInt()
 
-    @OptIn(ExperimentalUnsignedTypes::class)
-    var zobristPiecesArray = Array(2) { Array(6) { ULongArray(64) } }
-
-    @OptIn(ExperimentalUnsignedTypes::class)
-    var zobristEnPassantArray = ULongArray(8)
-
-    @OptIn(ExperimentalUnsignedTypes::class)
-    var zobristCastlingRightsArray = ULongArray(4)
-    var zobristBlackToMove = 0UL
 
     init {
-        fillZobristArrays()
         clearTranspositionTable()
 
     }
@@ -89,90 +79,8 @@ open class ChessEngine {
         moveGenerator.reset()
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
-    fun fillZobristArrays() {
-        val randomGenerator = SecureRandom()
-        for (color in 0..1) {
-            for (pieceType in 0..5) {
-                for (boardPosition in 0..63) {
-                    zobristPiecesArray[color][pieceType][boardPosition] =
-                        randomGenerator.nextLong().toULong()
-                }
-            }
-        }
-
-        for (column in 0..7) {
-            zobristEnPassantArray[column] = randomGenerator.nextLong().toULong()
-        }
-
-        for (right in 0..3) {
-            zobristCastlingRightsArray[right] = randomGenerator.nextLong().toULong()
-        }
-
-        zobristBlackToMove = randomGenerator.nextLong().toULong()
-    }
-
-    @OptIn(ExperimentalUnsignedTypes::class)
-    fun getZobristHash(chessBoard: ChessBoard): ULong {
-        var zobristKey = 0UL
-        for (square in 0..63) {
-            val pieceType = chessBoard.pieceType(square)
-            val pieceColor = chessBoard.pieceColor(square)
-            if (pieceType == Piece.PAWN && pieceColor == Piece.WHITE) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.PAWN - 1][square]
-            } else if (pieceType == Piece.PAWN && pieceColor == Piece.BLACK) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.PAWN - 1][square]
-            } else if (pieceType == Piece.KNIGHT && pieceColor == Piece.WHITE) {
-                zobristKey =
-                    zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.KNIGHT - 1][square]
-            } else if (pieceType == Piece.KNIGHT && pieceColor == Piece.BLACK) {
-                zobristKey =
-                    zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.KNIGHT - 1][square]
-            } else if (pieceType == Piece.BISHOP && pieceColor == Piece.WHITE) {
-                zobristKey =
-                    zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.BISHOP - 1][square]
-            } else if (pieceType == Piece.BISHOP && pieceColor == Piece.BLACK) {
-                zobristKey =
-                    zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.BISHOP - 1][square]
-            } else if (pieceType == Piece.ROOK && pieceColor == Piece.WHITE) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.ROOK - 1][square]
-            } else if (pieceType == Piece.ROOK && pieceColor == Piece.BLACK) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.ROOK - 1][square]
-            } else if (pieceType == Piece.QUEEN && pieceColor == Piece.WHITE) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.QUEEN - 1][square]
-            } else if (pieceType == Piece.QUEEN && pieceColor == Piece.BLACK) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.QUEEN - 1][square]
-            } else if (pieceType == Piece.KING && pieceColor == Piece.WHITE) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.WHITE][Piece.KING - 1][square]
-            } else if (pieceType == Piece.KING && pieceColor == Piece.BLACK) {
-                zobristKey = zobristKey xor zobristPiecesArray[Piece.BLACK][Piece.KING - 1][square]
-            }
-        }
-
-        for (column in 0..7) {
-            if (ChessBoard.GetFile(chessBoard.enPassantTarget) == column) {
-                zobristKey = zobristKey xor zobristEnPassantArray[column]
-            }
-        }
-
-        if (chessBoard.whiteCastlingRights and CASTLING_KING_SIDE != 0) {
-            zobristKey = zobristKey xor zobristCastlingRightsArray[0]
-        }
-        if (chessBoard.whiteCastlingRights and CASTLING_QUEEN_SIDE != 0) {
-            zobristKey = zobristKey xor zobristCastlingRightsArray[1]
-        }
-        if (chessBoard.blackCastlingRights and CASTLING_KING_SIDE != 0) {
-            zobristKey = zobristKey xor zobristCastlingRightsArray[2]
-        }
-        if (chessBoard.blackCastlingRights and CASTLING_QUEEN_SIDE != 0) {
-            zobristKey = zobristKey xor zobristCastlingRightsArray[3]
-        }
-        if (chessBoard.toPlayColor == Piece.BLACK) {
-            zobristKey = zobristKey xor zobristBlackToMove
-        }
-        return zobristKey
-
-    }
+    // the board keeps its Zobrist hash up to date as moves are made (see Zobrist)
+    fun getZobristHash(chessBoard: ChessBoard): ULong = chessBoard.zobristHash.toULong()
 
     fun probeTableEntry(
         hashKey: ULong,
@@ -193,12 +101,19 @@ open class ChessEngine {
         }
     }
 
-    fun writeTableEntry(hashKey: ULong, value: Int, depth: Int, hashFlag: TranspositionTableFlag) {
+    fun writeTableEntry(
+        hashKey: ULong,
+        value: Int,
+        depth: Int,
+        hashFlag: TranspositionTableFlag,
+        bestMove: Long = 0L
+    ) {
         val index = tableIndex(hashKey)
         tableKeys[index] = hashKey.toLong()
         tableValues[index] = value
         tableDepths[index] = depth
         tableFlags[index] = hashFlag.ordinal.toByte()
+        tableMoves[index] = bestMove
 
     }
 
@@ -244,7 +159,8 @@ open class ChessEngine {
         startTime = System.currentTimeMillis()
         this.maxSearchTime = maxSearchTime
         foundCheckMate = false
-        clearTranspositionTable()
+        // the transposition table is kept between moves (positions from the previous
+        // search often come up again); it is cleared by reset() for a new game
         pvTable = Array(MAX_PLY) { arrayOfNulls(MAX_PLY) }
         pvLength = IntArray(MAX_PLY)
         previousPv = arrayOfNulls(0)
@@ -384,14 +300,19 @@ open class ChessEngine {
 
         // probe the table before the (expensive) move generation
         val chessBoardHash = getZobristHash(chessBoard)
-        val tableEntry =
-            probeTableEntry(hashKey = chessBoardHash, alpha = alpha, beta = beta, depth = depth)
-        if (tableEntry != null && tableEntry.depth >= depth) {
-            val tableScore = scoreFromTable(tableEntry.value, ply)
-            when (tableEntry.flag) {
-                TranspositionTableFlag.EXACT -> return tableScore
-                TranspositionTableFlag.LOWER_BOUND -> if (tableScore >= beta) return beta
-                TranspositionTableFlag.UPPER_BOUND -> if (tableScore <= alpha) return alpha
+        val tableSlot = tableIndex(chessBoardHash)
+        // best move stored for this position; used for ordering even when the stored
+        // depth is too shallow to use the score
+        var hashMove = 0L
+        if (tableDepths[tableSlot] >= 0 && tableKeys[tableSlot] == chessBoardHash.toLong()) {
+            hashMove = tableMoves[tableSlot]
+            if (tableDepths[tableSlot] >= depth) {
+                val tableScore = scoreFromTable(tableValues[tableSlot], ply)
+                when (TABLE_FLAGS[tableFlags[tableSlot].toInt()]) {
+                    TranspositionTableFlag.EXACT -> return tableScore
+                    TranspositionTableFlag.LOWER_BOUND -> if (tableScore >= beta) return beta
+                    TranspositionTableFlag.UPPER_BOUND -> if (tableScore <= alpha) return alpha
+                }
             }
         }
 
@@ -409,8 +330,10 @@ open class ChessEngine {
         }
 
         val pvMove = if (isOnPv) previousPv.getOrNull(ply) else null
-        val sortedMoves = sortMoves(toPlayLegalMoves, ply, pvMove)
+        val sortedMoves = sortMoves(toPlayLegalMoves, ply, pvMove, hashMove)
         var hashFlag = TranspositionTableFlag.UPPER_BOUND
+        // on a fail low no move is known to be best; keep the previously stored one
+        var bestMove = hashMove
         for (i in 0 until sortedMoves.size()) {
             val move = sortedMoves[i]
             chessBoard.makeMove(move)
@@ -438,13 +361,15 @@ open class ChessEngine {
                     hashKey = chessBoardHash,
                     value = scoreToTable(beta, ply),
                     depth = depth,
-                    hashFlag = TranspositionTableFlag.LOWER_BOUND
+                    hashFlag = TranspositionTableFlag.LOWER_BOUND,
+                    bestMove = move.bitValue
                 )
                 return beta
             }
             if (score > alpha) {
                 alpha = score
                 hashFlag = TranspositionTableFlag.EXACT
+                bestMove = move.bitValue
                 updatePv(ply, move)
             }
         }
@@ -452,7 +377,8 @@ open class ChessEngine {
             hashKey = chessBoardHash,
             value = scoreToTable(alpha, ply),
             depth = depth,
-            hashFlag = hashFlag
+            hashFlag = hashFlag,
+            bestMove = bestMove
         )
         return alpha
     }
@@ -507,7 +433,12 @@ open class ChessEngine {
     }
 
 
-    private fun scoreMoves(moves: PlayerLegalMoves, ply: Int,pvNode: Move?): ArrayList<MoveScore> {
+    private fun scoreMoves(
+        moves: PlayerLegalMoves,
+        ply: Int,
+        pvNode: Move?,
+        hashMove: Long
+    ): ArrayList<MoveScore> {
         val scores = ArrayList<MoveScore>()
         var currentScore: Int
         var currentMove: Move
@@ -543,14 +474,23 @@ open class ChessEngine {
             if(currentMove.bitValue == pvNode?.bitValue){
                 currentScore += 500000
             }
+            // best move stored in the transposition table, tried right after the PV move
+            if (hashMove != 0L && currentMove.bitValue == hashMove) {
+                currentScore += 400000
+            }
 
             scores.add(MoveScore(currentScore, i))
         }
         return scores
     }
 
-    private fun sortMoves(moves: PlayerLegalMoves, ply: Int,pvNode:Move? = null): PlayerLegalMoves {
-        val scores = scoreMoves(moves, ply,pvNode)
+    private fun sortMoves(
+        moves: PlayerLegalMoves,
+        ply: Int,
+        pvNode: Move? = null,
+        hashMove: Long = 0L
+    ): PlayerLegalMoves {
+        val scores = scoreMoves(moves, ply, pvNode, hashMove)
         scores.sort()
         val sortedMoves = PlayerLegalMoves()
         for (i in 0 until moves.size()) {

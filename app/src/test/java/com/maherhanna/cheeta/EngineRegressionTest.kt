@@ -49,6 +49,67 @@ class EngineRegressionTest {
         }
     }
 
+    // ------------------------------------------------------------- hashing
+
+    @Test
+    fun incrementalHashMatchesFullHashInRandomGames() {
+        val random = java.util.Random(12345)
+        val starts = listOf(
+            ChessBoard.startPosition,
+            "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+            "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
+            "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
+        )
+        val generator = MoveGenerator()
+        for (fen in starts) {
+            repeat(30) {
+                val b = board(fen)
+                val hashes = mutableListOf(b.zobristHash)
+                assertEquals(com.maherhanna.cheeta.core.Zobrist.hash(b), b.zobristHash)
+                // play random moves, checking the incremental hash after each one
+                for (ply in 0 until 40) {
+                    val moves = generator.generateLegalMovesFor(b, b.toPlayColor)
+                    if (moves.size() == 0) break
+                    b.makeMove(moves[random.nextInt(moves.size())])
+                    assertEquals("after make", com.maherhanna.cheeta.core.Zobrist.hash(b), b.zobristHash)
+                    hashes.add(b.zobristHash)
+                }
+                // undo everything, checking the hash is restored at every step
+                while (hashes.size > 1) {
+                    b.unMakeMove()
+                    hashes.removeAt(hashes.size - 1)
+                    assertEquals("after unmake", hashes.last(), b.zobristHash)
+                    assertEquals(com.maherhanna.cheeta.core.Zobrist.hash(b), b.zobristHash)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun transpositionsHaveTheSameHash() {
+        val a = boardAfter("${ChessBoard.startPosition} moves g1f3 g8f6 b1c3 b8c6")
+        val b = boardAfter("${ChessBoard.startPosition} moves b1c3 b8c6 g1f3 g8f6")
+        assertEquals(a.zobristHash, b.zobristHash)
+        // same pieces but different side to move must differ
+        val c = boardAfter("${ChessBoard.startPosition} moves g1f3 g8f6 f3g1 f6g8")
+        assertEquals(board(ChessBoard.startPosition).zobristHash, c.zobristHash)
+        assertNotEquals(a.zobristHash, board(ChessBoard.startPosition).zobristHash)
+    }
+
+    @Test
+    fun enPassantSquareOnlyHashedWhenCapturePossible() {
+        // no black pawn can take on e3: same position as without the en passant square
+        assertEquals(
+            board("4k3/8/8/8/4P3/8/8/4K3 b - e3 0 1").zobristHash,
+            board("4k3/8/8/8/4P3/8/8/4K3 b - - 0 1").zobristHash
+        )
+        // a black pawn on d4 can take on e3: the en passant square matters
+        assertNotEquals(
+            board("4k3/8/8/8/3pP3/8/8/4K3 b - e3 0 1").zobristHash,
+            board("4k3/8/8/8/3pP3/8/8/4K3 b - - 0 1").zobristHash
+        )
+    }
+
     // ---------------------------------------------------------------- perft
 
     @Test
